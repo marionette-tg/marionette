@@ -1,0 +1,5 @@
+importlib
+twisted==15.1.0
+PySocks==1.5.3
+fte==0.1.0
+regex2dfa>=0.1.7

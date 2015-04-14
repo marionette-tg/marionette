@@ -1,0 +1,19 @@
+connection(tcp, 8083):
+  start        client       NULL                    1.0
+  client       server       http_request_keep_alive 0.5
+  client       server_close http_request_close      0.5
+  server       client       http_ok_keep_alive      1.0
+  server_close end          http_response_close     1.0
+
+
+action http_request_keep_alive:
+  client tg.send("http_request_keep_alive")
+
+action http_ok_keep_alive:
+  server tg.send("http_response_keep_alive")
+
+action http_request_close:
+  client tg.send("http_request_close")
+
+action http_response_close:
+  server tg.send("http_response_close")

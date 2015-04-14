@@ -1,0 +1,11 @@
+#! /usr/bin/python
+import sys
+
+from twisted.internet import reactor
+from twisted.protocols import socks
+
+SOCKS_PORT = int(sys.argv[1])
+
+if '__main__' == __name__:
+    reactor.listenTCP(SOCKS_PORT,socks.SOCKSv4Factory("/dev/null"))
+    reactor.run()

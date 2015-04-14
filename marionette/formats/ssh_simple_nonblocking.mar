@@ -1,0 +1,14 @@
+connection(tcp, 8022):
+  start     handshake NULL                 1.0
+  handshake client    client_send_blocking 1.0
+  client    server    client_send          1.0
+  server    client    server_send          1.0
+
+action client_send_blocking:
+  client ftem.send("^SSH\-2\.0\C*$", 128)
+
+action client_send:
+  client ftem.send_async("^SSH\-2\.0\C*$", 128)
+
+action server_send:
+  server ftem.send_async("^SSH\-2\.0\C*$", 128)

@@ -1,0 +1,14 @@
+connection(tcp, 8082):
+  start     handshake NULL                 1.0
+  handshake client    client_send_blocking 1.0
+  client    server    client_send          1.0
+  server    client    server_send          1.0
+
+action client_send_blocking:
+  client ftem.send("^\x00\x00\x00\x7c\xFF\x53\x4d\x42[\x25\x72]\x00\x00\x00\x00\C{115}$", 128)
+
+action client_send:
+  client ftem.send_async("^\x00\x00\x00\x7c\xFF\x53\x4d\x42[\x25\x72]\x00\x00\x00\x00\C{115}$", 128)
+
+action server_send:
+  server ftem.send_async("^\x00\x00\x00\x7c\xFF\x53\x4d\x42[\x25\x72]\x00\x00\x00\x00\C{115}$", 128)

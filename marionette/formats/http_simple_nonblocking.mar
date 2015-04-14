@@ -1,0 +1,14 @@
+connection(tcp, 8082):
+  start      handshake  NULL              1.0
+  handshake  upstream   http_get_blocking 1.0
+  upstream   downstream http_get          1.0
+  downstream upstream   http_ok           1.0
+
+action http_get_blocking:
+  client ftem.send("^GET\ \/([a-zA-Z0-9\.\/]*) HTTP/1\.1\r\n\r\n$", 128)
+
+action http_get:
+  client ftem.send_async("^GET\ \/([a-zA-Z0-9\.\/]*) HTTP/1\.1\r\n\r\n$", 128)
+
+action http_ok:
+  server ftem.send_async("^HTTP/1\.1\ 200 OK\r\nContent-Type:\ ([a-zA-Z0-9]+)\r\n\r\n\C*$", 128)

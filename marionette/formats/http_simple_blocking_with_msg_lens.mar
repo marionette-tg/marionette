@@ -1,0 +1,10 @@
+connection(tcp, 8081):
+  start client  NULL     1.0
+  client server http_get 1.0
+  server end    http_ok  1.0
+
+action http_get:
+  client tg.send("http_request_keep_alive_with_msg_lens")
+
+action http_ok:
+  server tg.send("http_response_keep_alive_with_msg_lens")
