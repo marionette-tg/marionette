@@ -15,7 +15,7 @@ class Tests(unittest.TestCase):
 
     def setproxy(self):
         self.socket_no_proxy_ = socket.socket
-        socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, "127.0.0.1", 8079)
+        socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, "127.0.0.1", 18079)
         socket.socket = socks.socksocket
 
     def unsetproxy(self):
@@ -25,24 +25,32 @@ class Tests(unittest.TestCase):
         try:
             conn = httplib.HTTPConnection("kpdyer.com")
             conn.request("GET", "/")
+            print ['sw', 'conn.getresponse()']
             self.fail()
         except socks.ProxyConnectionError:
             pass
 
-        execute("./bin/marionette_socks 8081 &")
-        execute("./bin/marionette_server 8080 127.0.0.1 8081 &")
-        execute("./bin/marionette_client 8079 127.0.0.1 8080 &")
+        execute("./bin/marionette_socks 18081 &")
+        time.sleep(0.5)
+        execute("./bin/marionette_server 127.0.0.1 18081 &")
+        time.sleep(0.5)
+        execute("./bin/marionette_client 127.0.0.1 18079 &")
 
         time.sleep(1)
 
-        try:
-            conn = httplib.HTTPConnection("kpdyer.com")
-            conn.request("GET", "/")
-            response = conn.getresponse()
-            self.assertEqual(kpdyercom(), response.read())
-        except Exception as e:
-            print e
-            self.fail()
+        for i in range(1):
+            try:
+                start = time.time()
+                conn = httplib.HTTPConnection("kpdyer.com")
+                conn.request("GET", "/")
+                response = conn.getresponse()
+                contents = response.read()
+                elapsed = time.time() - start
+                print [elapsed]
+                self.assertEqual(kpdyercom(), contents)
+                conn.close()
+            except Exception as e:
+                self.fail(e)
 
     def killall(self):
         execute("pkill -9 -f marionette_client")

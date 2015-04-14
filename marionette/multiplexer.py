@@ -67,6 +67,12 @@ class BufferOutgoing(object):
                 break
         return retval
 
+    def terminate_stream(self, stream_id):
+        try:
+            del self.fifo_[stream_id]
+        except:
+            pass
+
 
 class BufferIncoming(object):
     def __init__(self):

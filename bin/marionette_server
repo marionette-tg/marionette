@@ -3,81 +3,129 @@
 # http://musta.sh/2012-03-04/twisted-tcp-proxy.html
 
 import sys
+import time
+import threading
 
 from twisted.internet import defer
 from twisted.internet import protocol
 from twisted.internet import reactor
 from twisted.python import log
+from twisted.internet import task
 
-LOCAL_IP    = "0.0.0.0"
-LOCAL_PORT  = int(sys.argv[1])
-REMOTE_IP   = str(sys.argv[2])
-REMOTE_PORT = int(sys.argv[3])
+sys.path.append(".")
 
-class ProxyClientProtocol(protocol.Protocol):
+import marionette
+
+#LOCAL_IP    = "0.0.0.0"
+#LOCAL_PORT  = int(sys.argv[1])
+REMOTE_IP   = str(sys.argv[1])
+REMOTE_PORT = int(sys.argv[2])
+
+format = 'http_simple_blocking'
+server = marionette.Server(format)
+server.start()
+
+class ProxyServerProtocol(protocol.Protocol):
+    def __init__(self):
+        self.connected = False
+
     def connectionMade(self):
-        log.msg("Client: connected to peer")
+        log.msg("ProxyServerProtocol: connected to peer")
         self.cli_queue = self.factory.cli_queue
         self.cli_queue.get().addCallback(self.serverDataReceived)
+        self.connected = True
 
     def serverDataReceived(self, chunk):
         if chunk is False:
             self.cli_queue = None
-            log.msg("Client: disconnecting from peer")
+            log.msg("ProxyServerProtocol: disconnecting from peer")
             self.factory.continueTrying = False
             self.transport.loseConnection()
         elif self.cli_queue:
-            log.msg("Client: writing %d bytes to peer" % len(chunk))
+            log.msg("ProxyServerProtocol: writing %d bytes to peer" % len(chunk))
             self.transport.write(chunk)
             self.cli_queue.get().addCallback(self.serverDataReceived)
         else:
+            log.msg("ProxyServerProtocol: (2) writing %d bytes to peer" % len(chunk))
             self.factory.cli_queue.put(chunk)
 
     def dataReceived(self, chunk):
-        log.msg("Client: %d bytes received from peer" % len(chunk))
+        log.msg("ProxyServerProtocol: %d bytes received from peer" % len(chunk))
         self.factory.srv_queue.put(chunk)
 
     def connectionLost(self, why):
+        log.msg("ProxyServerProtocol.connectionLost: " + str(why))
         if self.cli_queue:
             self.cli_queue = None
-            log.msg("Client: peer disconnected unexpectedly")
+            log.msg("ProxyServerProtocol: peer disconnected unexpectedly")
+        self.connected = False
+
+    def isConnected(self):
+        return self.connected
 
 
-class ProxyClientFactory(protocol.ReconnectingClientFactory):
+class ProxyServerFactory(protocol.ReconnectingClientFactory):
     maxDelay = 10
     continueTrying = True
-    protocol = ProxyClientProtocol
+    protocol = ProxyServerProtocol
 
     def __init__(self, srv_queue, cli_queue):
         self.srv_queue = srv_queue
         self.cli_queue = cli_queue
+        self.current_protocol_ = None
+
+    def buildProtocol(self, address):
+        p = self.protocol()
+        p.factory = self
+        self.current_protocol_ = p
+        return p
+
+    def connectedProtocol(self):
+        return self.current_protocol_
 
 
-class ProxyServer(protocol.Protocol):
-    def connectionMade(self):
-        self.srv_queue = defer.DeferredQueue()
-        self.cli_queue = defer.DeferredQueue()
-        self.srv_queue.get().addCallback(self.clientDataReceived)
+class ServerThread(threading.Thread):
+    def __init__(self, stream_id):
+        threading.Thread.__init__(self)
+        self.stream_id_ = stream_id
 
-        factory = ProxyClientFactory(self.srv_queue, self.cli_queue)
-        reactor.connectTCP(REMOTE_IP, REMOTE_PORT, factory)
+    def run(self):
+        while factories[self.stream_id_].connectedProtocol() is None:
+            time.sleep(0)
+        while server.get_stream(self.stream_id_):
+            while server.get_stream(self.stream_id_).peek():
+                chunk = server.get_stream(self.stream_id_).pop()
+                factories[self.stream_id_].cli_queue.put(chunk)
+            time.sleep(0)
+        del factories[self.stream_id_]
+        server.terminate_stream(self.stream_id_)
 
     def clientDataReceived(self, chunk):
-        log.msg("Server: writing %d bytes to original client" % len(chunk))
-        self.transport.write(chunk)
-        self.srv_queue.get().addCallback(self.clientDataReceived)
+        log.msg("ServerThread.clientDataReceived: writing %d bytes to original client" % len(chunk))
+        server.get_stream(self.stream_id_).push(chunk)
+        factories[self.stream_id_].srv_queue.get().addCallback(self.clientDataReceived)
 
-    def dataReceived(self, chunk):
-        log.msg("Server: %d bytes received" % len(chunk))
-        self.cli_queue.put(chunk)
 
-    def connectionLost(self, why):
-        self.cli_queue.put(False)
+factories = {}
+def checkForNewStreams():
+    #print server.get_streams()
+    #print len(server.get_streams())
+    for stream_id in server.get_streams():
+        if not factories.get(stream_id):
+            t = ServerThread(stream_id)
 
+            srv_queue = defer.DeferredQueue()
+            cli_queue = defer.DeferredQueue()
+            srv_queue.get().addCallback(t.clientDataReceived)
+            factory = ProxyServerFactory(srv_queue, cli_queue)
+            factories[stream_id] = factory
+            reactor.connectTCP(REMOTE_IP, REMOTE_PORT, factory)
+
+            t.start()
+        time.sleep(0)
 
 if __name__ == "__main__":
     #log.startLogging(sys.stdout)
-    factory = protocol.Factory()
-    factory.protocol = ProxyServer
-    reactor.listenTCP(LOCAL_PORT, factory, interface=LOCAL_IP)
+    l = task.LoopingCall(checkForNewStreams)
+    l.start(0.01)
     reactor.run()
