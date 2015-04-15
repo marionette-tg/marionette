@@ -8,6 +8,7 @@ import marionette.record_layer
 class BufferOutgoing(object):
     def __init__(self):
         self.fifo_ = {}
+        self.terminate_ = []
 
     def push(self, stream_id, s):
         if not self.fifo_.get(stream_id):
@@ -25,6 +26,15 @@ class BufferOutgoing(object):
         if len(list(self.fifo_.keys())) > 0:
             stream_id = random.choice(list(self.fifo_.keys()))
 
+        # determine if we should terminate the stream
+        if not self.fifo_.get(stream_id) and stream_id in self.terminate_:
+            cell_obj = marionette.record_layer.Cell(model_uuid, model_instance_id, stream_id,
+                                sequence_id, 0, marionette.record_layer.END_OF_STREAM)
+            self.terminate_.remove(stream_id)
+            del self.fifo_[stream_id]
+            return cell_obj
+
+        # determine if we should proceed normally
         if n > 0:
             if self.has_data(stream_id):
                 cell_obj = marionette.record_layer.Cell(model_uuid, model_instance_id, stream_id,
@@ -67,11 +77,8 @@ class BufferOutgoing(object):
                 break
         return retval
 
-    def terminate_stream(self, stream_id):
-        try:
-            del self.fifo_[stream_id]
-        except:
-            pass
+    def terminate(self, stream_id):
+        self.terminate_.append(stream_id)
 
 
 class BufferIncoming(object):

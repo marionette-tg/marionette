@@ -3,6 +3,7 @@
 # http://musta.sh/2012-03-04/twisted-tcp-proxy.html
 
 import sys
+import time
 
 from twisted.internet import defer
 from twisted.internet import protocol
@@ -17,7 +18,6 @@ import marionette
 LOCAL_IP    = "0.0.0.0"
 REMOTE_IP   = str(sys.argv[1])
 LOCAL_PORT  = int(sys.argv[2])
-#REMOTE_PORT = int(sys.argv[3])
 
 format = 'http_simple_blocking'
 client = marionette.Client(format)
@@ -47,6 +47,7 @@ class ProxyClient(protocol.Protocol):
         self.client_stream_.push(chunk)
 
     def connectionLost(self, why):
+        log.msg("ProxyClient.connectionLost: " + str(why))
         self.cli_queue.put(False)
         self.connected = False
 
@@ -57,12 +58,14 @@ def checkForNewStreams():
     global proxyclients
 
     for proxyclient in proxyclients:
+        time.sleep(0)
         while proxyclient.client_stream_.peek():
             chunk = proxyclient.client_stream_.pop()
             proxyclient.clientDataReceived(chunk)
 
     proxyclients_tmp = []
     for proxyclient in proxyclients:
+        time.sleep(0)
         if proxyclient.isConnected():
             proxyclients_tmp.append(proxyclient)
         else:

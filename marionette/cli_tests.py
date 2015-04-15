@@ -25,7 +25,6 @@ class Tests(unittest.TestCase):
         try:
             conn = httplib.HTTPConnection("kpdyer.com")
             conn.request("GET", "/")
-            print ['sw', 'conn.getresponse()']
             self.fail()
         except socks.ProxyConnectionError:
             pass
@@ -38,15 +37,14 @@ class Tests(unittest.TestCase):
 
         time.sleep(1)
 
-        for i in range(1):
+        for i in range(10):
             try:
                 start = time.time()
-                conn = httplib.HTTPConnection("kpdyer.com")
+                conn = httplib.HTTPConnection("kpdyer.com", 80, False, timeout=10)
                 conn.request("GET", "/")
                 response = conn.getresponse()
                 contents = response.read()
                 elapsed = time.time() - start
-                print [elapsed]
                 self.assertEqual(kpdyercom(), contents)
                 conn.close()
             except Exception as e:

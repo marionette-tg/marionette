@@ -3,20 +3,24 @@
 
 import binascii
 
-PAYLOAD_HEADER_SIZE_IN_BITS = 192
+PAYLOAD_HEADER_SIZE_IN_BITS = 200
 PAYLOAD_HEADER_SIZE_IN_BYTES = PAYLOAD_HEADER_SIZE_IN_BITS / 8
+
+NORMAL = 0x1
+END_OF_STREAM = 0x2
 
 class Cell(object):
     def __init__(self, model_uuid, model_instance_id, stream_id, seq_id,
-                 length=0):
+                 length=0, cell_type=NORMAL):
         assert stream_id != None
 
+        self.cell_type_ = cell_type
         self.payload_ = ''
         self.payload_length_ = 0
         self.sequence_id_ = seq_id
         self.cell_length_ = length
         self.stream_id_ = stream_id
-        self.model_uui_ = model_uuid
+        self.model_uuid_ = model_uuid
         self.model_instance_id_ = model_instance_id
 
     def __eq__(self, other):
@@ -26,6 +30,9 @@ class Cell(object):
                  (self.get_model_instance_id() == other.get_model_instance_id()) and \
                  (self.get_seq_id() == other.get_seq_id())
         return retval
+
+    def get_cell_type(self):
+        return self.cell_type_
 
     def get_payload(self):
         return str(self.payload_)
@@ -37,7 +44,7 @@ class Cell(object):
         return self.stream_id_
 
     def get_model_uuid(self):
-        return self.model_uui_
+        return self.model_uuid_
 
     def get_model_instance_id(self):
         return self.model_instance_id_
@@ -52,6 +59,12 @@ class Cell(object):
     def to_string(self):
         return serialize(self, self.cell_length_)
 
+class EndOfStreamException(Exception):
+    def set_stream_id(self, stream_id):
+        self.stream_id_ = stream_id
+
+    def get_stream_id(self):
+        return self.stream_id_
 
 def pad_to_bytes(n, val):
     val = str(val)
@@ -107,6 +120,7 @@ def serialize(cell_obj, pad_to=0):
     payload = cell_obj.get_payload()
     padding = '\x00' * (
         (pad_to / 8) - len(payload) - PAYLOAD_HEADER_SIZE_IN_BYTES)
+    cell_type = cell_obj.get_cell_type()
 
     bytes_cell_len = pad_to_bytes(4, long_to_bytes(
         PAYLOAD_HEADER_SIZE_IN_BYTES + len(payload) + len(padding)))
@@ -115,6 +129,7 @@ def serialize(cell_obj, pad_to=0):
     bytes_model_instance_id = pad_to_bytes(4, long_to_bytes(model_instance_id))
     bytes_stream_id = pad_to_bytes(4, long_to_bytes(stream_id))
     bytes_seq_id = pad_to_bytes(4, long_to_bytes(seq_id))
+    bytes_cell_type = pad_to_bytes(1, long_to_bytes(cell_type))
 
     retval += bytes_cell_len
     retval += bytes_payload_len
@@ -122,6 +137,7 @@ def serialize(cell_obj, pad_to=0):
     retval += bytes_model_instance_id
     retval += bytes_stream_id
     retval += bytes_seq_id
+    retval += bytes_cell_type
     retval += payload
     retval += padding
 
@@ -133,19 +149,20 @@ def serialize(cell_obj, pad_to=0):
 
 def unserialize(cell_str):
 
+    cell_len = bytes_to_long(cell_str[:4])
+    payload_len = bytes_to_long(cell_str[4:8])
     model_uuid = bytes_to_long(cell_str[8:12])
     model_instance_id = bytes_to_long(cell_str[12:16])
     stream_id = bytes_to_long(cell_str[16:20])
     seq_id = bytes_to_long(cell_str[20:24])
-    cell_len = bytes_to_long(cell_str[:4])
+    cell_type = bytes_to_long(cell_str[24:25])
 
     assert cell_len == len(cell_str)
 
-    payload_len = bytes_to_long(cell_str[4:8])
     payload = cell_str[PAYLOAD_HEADER_SIZE_IN_BYTES:
                        PAYLOAD_HEADER_SIZE_IN_BYTES + payload_len]
 
-    retval = Cell(model_uuid, model_instance_id, stream_id, seq_id)
+    retval = Cell(model_uuid, model_instance_id, stream_id, seq_id, payload_len, cell_type)
     retval.set_payload(payload)
 
     return retval

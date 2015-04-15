@@ -94,8 +94,6 @@ def recv(channel, global_args, local_args, input_args, blocking=True):
         retval = False
     except fte.encrypter.UnrecoverableDecryptionError as e:
         retval = False
-    except Exception as e:
-        retval = False
 
     if not retval:
         channel.rollback()

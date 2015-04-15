@@ -16,8 +16,6 @@ sys.path.append(".")
 
 import marionette
 
-#LOCAL_IP    = "0.0.0.0"
-#LOCAL_PORT  = int(sys.argv[1])
 REMOTE_IP   = str(sys.argv[1])
 REMOTE_PORT = int(sys.argv[2])
 
@@ -64,7 +62,7 @@ class ProxyServerProtocol(protocol.Protocol):
         return self.connected
 
 
-class ProxyServerFactory(protocol.ReconnectingClientFactory):
+class ProxyServerFactory(protocol.ClientFactory):
     maxDelay = 10
     continueTrying = True
     protocol = ProxyServerProtocol
@@ -72,16 +70,6 @@ class ProxyServerFactory(protocol.ReconnectingClientFactory):
     def __init__(self, srv_queue, cli_queue):
         self.srv_queue = srv_queue
         self.cli_queue = cli_queue
-        self.current_protocol_ = None
-
-    def buildProtocol(self, address):
-        p = self.protocol()
-        p.factory = self
-        self.current_protocol_ = p
-        return p
-
-    def connectedProtocol(self):
-        return self.current_protocol_
 
 
 class ServerThread(threading.Thread):
@@ -90,27 +78,28 @@ class ServerThread(threading.Thread):
         self.stream_id_ = stream_id
 
     def run(self):
-        while factories[self.stream_id_].connectedProtocol() is None:
-            time.sleep(0)
-        while server.get_stream(self.stream_id_):
-            while server.get_stream(self.stream_id_).peek():
+        while True:
+            stream = server.get_stream(self.stream_id_)
+            if not stream or not stream.is_active(): break
+            while stream.peek():
                 chunk = server.get_stream(self.stream_id_).pop()
-                factories[self.stream_id_].cli_queue.put(chunk)
-            time.sleep(0)
+                #print ['got it!', chunk]
+                factories[self.stream_id_][0].cli_queue.put(chunk)
+                time.sleep(0)
+
+        factories[self.stream_id_][1].disconnect()
         del factories[self.stream_id_]
         server.terminate_stream(self.stream_id_)
 
     def clientDataReceived(self, chunk):
         log.msg("ServerThread.clientDataReceived: writing %d bytes to original client" % len(chunk))
         server.get_stream(self.stream_id_).push(chunk)
-        factories[self.stream_id_].srv_queue.get().addCallback(self.clientDataReceived)
+        factories[self.stream_id_][0].srv_queue.get().addCallback(self.clientDataReceived)
 
 
 factories = {}
 def checkForNewStreams():
-    #print server.get_streams()
-    #print len(server.get_streams())
-    for stream_id in server.get_streams():
+    for stream_id in server.get_streams().keys():
         if not factories.get(stream_id):
             t = ServerThread(stream_id)
 
@@ -118,11 +107,10 @@ def checkForNewStreams():
             cli_queue = defer.DeferredQueue()
             srv_queue.get().addCallback(t.clientDataReceived)
             factory = ProxyServerFactory(srv_queue, cli_queue)
-            factories[stream_id] = factory
-            reactor.connectTCP(REMOTE_IP, REMOTE_PORT, factory)
+            connector = reactor.connectTCP(REMOTE_IP, REMOTE_PORT, factory)
+            factories[stream_id] = [factory, connector]
 
             t.start()
-        time.sleep(0)
 
 if __name__ == "__main__":
     #log.startLogging(sys.stdout)

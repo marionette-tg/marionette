@@ -15,6 +15,7 @@ class MarionetteStream(object):
         self.multiplexer_outgoing_ = multiplexer_outgoing
         self.stream_id_ = stream_id
         self.buffer_ = ''
+        self.active_ = True
 
     def get_stream_id(self):
         return self.stream_id_
@@ -29,6 +30,13 @@ class MarionetteStream(object):
 
     def peek(self):
         return self.buffer_
+
+    def terminate(self):
+        self.multiplexer_outgoing_.terminate(self.stream_id_)
+        self.active_ = False
+
+    def is_active(self):
+        return self.active_
 
 
 class Client(threading.Thread):
@@ -67,7 +75,6 @@ class Client(threading.Thread):
                 if stream_id == 0:
                     continue
                 payload = cell_obj.get_payload()
-                #print ['client', stream_id, payload]
                 if payload:
                     self.streams_[stream_id].buffer_ += payload
 
@@ -94,8 +101,9 @@ class Client(threading.Thread):
 
     def terminate_stream(self, stream_id):
         # TODO: make this threadsafe
-        self.multiplexer_outgoing_.terminate_stream(stream_id)
+        self.multiplexer_outgoing_.terminate(stream_id)
         if self.streams_.get(stream_id):
+            self.streams_[stream_id].terminate()
             del self.streams_[stream_id]
 
 
@@ -107,6 +115,7 @@ class Server(threading.Thread):
         self.multiplexer_incoming_ = marionette.multiplexer.BufferIncoming()
         self.format_name_ = format_name
         self.streams_ = {}
+        self.streams_lock_ = threading.RLock()
         self.running_ = threading.Event()
 
         self.buffer_ = ""
@@ -131,32 +140,41 @@ class Server(threading.Thread):
         while self.multiplexer_incoming_.has_data():
             cell_obj = self.multiplexer_incoming_.pop()
             if cell_obj:
+                cell_type = cell_obj.get_cell_type()
                 stream_id = cell_obj.get_stream_id()
-                payload = cell_obj.get_payload()
-                if not self.streams_.get(stream_id):
-                    self.streams_[stream_id] = MarionetteStream(
-                        self.multiplexer_incoming_, self.multiplexer_outgoing_,
-                        stream_id)
-                if payload:
-                    self.streams_[stream_id].buffer_ += payload
+                if cell_type == marionette.record_layer.END_OF_STREAM:
+                    self.terminate_stream(stream_id)
+                elif cell_type == marionette.record_layer.NORMAL:
+                    payload = cell_obj.get_payload()
+                    with self.streams_lock_:
+                        if stream_id>0 and not self.streams_.get(stream_id):
+                            self.streams_[stream_id] = MarionetteStream(
+                                self.multiplexer_incoming_, self.multiplexer_outgoing_,
+                                stream_id)
+                        if payload:
+                            self.streams_[stream_id].buffer_ += payload
 
     def stop(self):
         self.running_.clear()
 
     def get_stream(self, stream_id):
         # TODO: make this threadsafe
-        if not self.streams_.get(stream_id):
-            self.streams_[stream_id] = MarionetteStream(
-                self.multiplexer_incoming_, self.multiplexer_outgoing_,
-                stream_id)
-        return self.streams_.get(stream_id)
+        # if not self.streams_.get(stream_id):
+        #     self.streams_[stream_id] = MarionetteStream(
+        #         self.multiplexer_incoming_, self.multiplexer_outgoing_,
+        #         stream_id)
+        with self.streams_lock_:
+            return self.streams_.get(stream_id)
 
     def get_streams(self):
         # TODO: make this threadsafe (i.e., protect self.streams_)
-        return self.streams_
+        with self.streams_lock_:
+            return self.streams_
 
     def terminate_stream(self, stream_id):
         # TODO: figure out how to call this server side, special cell + exception?
-        self.multiplexer_outgoing_.terminate_stream(stream_id)
-        if self.streams_.get(stream_id):
-            del self.streams_[stream_id]
+        #self.multiplexer_outgoing_.terminate(stream_id)
+        with self.streams_lock_:
+            if self.streams_.get(stream_id):
+                self.streams_[stream_id].terminate()
+                del self.streams_[stream_id]

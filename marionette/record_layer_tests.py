@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
 import unittest
 import random
+
+sys.path.append('.')
 
 import marionette.record_layer
 import marionette.multiplexer
@@ -88,3 +91,7 @@ class Tests(unittest.TestCase):
 
             cell_actual = buffer.pop()
             self.assertEqual(cell_actual.get_stream_id(), stream_id)
+
+
+if __name__ == '__main__':
+    unittest.main()

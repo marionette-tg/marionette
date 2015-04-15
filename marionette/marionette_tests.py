@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
 import time
 import unittest
+
+sys.path.append(".")
 
 import marionette.driver
 import marionette.multiplexer
@@ -31,12 +34,17 @@ class Tests(unittest.TestCase):
         client.start()
 
         client_stream = client.start_new_stream()
-        server_stream = server.get_stream(client_stream.get_stream_id())
+        client_stream.push(CLIENT_MESSAGE)
+
+        while len(server.get_streams()) == 0:
+            time.sleep(0)
+
+        server_stream = server.get_stream(server.get_streams().keys()[0])
+        server_stream.push(SERVER_MESSAGE)
 
         start = time.time()
 
         if PERF_DEBUG: yappi.start()
-        server_stream.push(SERVER_MESSAGE)
         while True:
             if client_stream \
                     and client_stream.peek() == SERVER_MESSAGE:
@@ -49,7 +57,6 @@ class Tests(unittest.TestCase):
 
         if PERF_DEBUG: print('\n',[seconds, bytes, mbps(bytes, seconds)])
 
-        client_stream.push(CLIENT_MESSAGE)
         while True:
             if server_stream and server_stream.peek() == CLIENT_MESSAGE:
                 break
@@ -90,3 +97,7 @@ class Tests(unittest.TestCase):
     #
     # def test_clientServer_http_simple_blocking(self):
     #     self.doExperiment("amazon_connection")
+
+
+if __name__ == '__main__':
+    unittest.main()
