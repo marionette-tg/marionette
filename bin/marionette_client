@@ -19,6 +19,7 @@ LOCAL_PORT  = int(sys.argv[2])
 
 class ProxyClient(protocol.Protocol):
     def connectionMade(self):
+        log.msg("ProxyClient.connectionMade")
         self.srv_queue = defer.DeferredQueue()
         self.srv_queue.get().addCallback(self.clientDataReceived)
         self.client_stream_ = client.start_new_stream(self.srv_queue)
@@ -35,6 +36,7 @@ class ProxyClient(protocol.Protocol):
 
     def connectionLost(self, why):
         log.msg("ProxyClient.connectionLost: " + str(why))
+        self.client_stream_.terminate()
 
 
 if __name__ == "__main__":

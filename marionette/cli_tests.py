@@ -23,16 +23,15 @@ class Tests(unittest.TestCase):
         time.sleep(1)
 
     def dodownload(self):
-        for i in range(10000):
+        for i in range(10):
             start = time.time()
-            conn = httplib.HTTPConnection("127.0.0.1", 18079, False, timeout=1)
+            conn = httplib.HTTPConnection("127.0.0.1", 18079, False, timeout=5)
             conn.request("GET", "/")
             response = conn.getresponse()
             actual_response = response.read()
             conn.close()
             elapsed = time.time() - start
-
-            print [i, elapsed]
+            #print [i, elapsed]
             expected_response = ''.join([str(x) for x in range(2**16)])
             self.assertEqual(expected_response, actual_response)
 

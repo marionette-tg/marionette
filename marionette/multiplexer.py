@@ -9,11 +9,14 @@ class BufferOutgoing(object):
     def __init__(self):
         self.fifo_ = {}
         self.terminate_ = []
+        self.streams_with_data_ = set()
 
     def push(self, stream_id, s):
         if not self.fifo_.get(stream_id):
             self.fifo_[stream_id] = ''
         self.fifo_[stream_id] += s
+        if s:
+            self.streams_with_data_.add(stream_id)
         return True
 
     def pop(self, model_uuid, model_instance_id, sequence_id, n=0):
@@ -23,8 +26,8 @@ class BufferOutgoing(object):
         cell_obj = None
 
         stream_id = 0
-        if len(list(self.fifo_.keys())) > 0:
-            stream_id = random.choice(list(self.fifo_.keys()))
+        if len(list(self.streams_with_data_)) > 0:
+            stream_id = random.choice(list(self.streams_with_data_))
 
         # determine if we should terminate the stream
         if not self.fifo_.get(stream_id) and stream_id in self.terminate_:
@@ -44,7 +47,7 @@ class BufferOutgoing(object):
                 self.fifo_[stream_id] = self.fifo_[stream_id][payload_length:]
                 cell_obj.set_payload(payload)
             else:
-                cell_obj = marionette.record_layer.Cell(model_uuid, model_instance_id, stream_id,
+                cell_obj = marionette.record_layer.Cell(model_uuid, model_instance_id, 0,
                                 sequence_id, n)
         else:
             if self.has_data(stream_id):
@@ -54,6 +57,9 @@ class BufferOutgoing(object):
                 payload = self.fifo_[stream_id][:payload_length]
                 self.fifo_[stream_id] = self.fifo_[stream_id][payload_length:]
                 cell_obj.set_payload(payload)
+
+        if self.fifo_.get(stream_id) == '':
+            self.streams_with_data_.remove(stream_id)
 
         return cell_obj
 

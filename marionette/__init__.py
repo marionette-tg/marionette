@@ -76,6 +76,7 @@ class Client(threading.Thread):
                 if stream_id == 0:
                     continue
                 payload = cell_obj.get_payload()
+                #print [stream_id, payload[:32]]
                 if payload:
                     if self.streams_[stream_id].srv_queue:
                         self.streams_[stream_id].srv_queue.put(payload)

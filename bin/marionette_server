@@ -69,7 +69,6 @@ class ProxyServer(object):
         self.factory = ProxyServerFactory(self.srv_queue, self.cli_queue)
         self.connector = reactor.connectTCP(REMOTE_IP, REMOTE_PORT, self.factory)
 
-
     def clientDataReceived(self, chunk):
         log.msg("ProxyServer.clientDataReceived: writing %d bytes to original client" % len(chunk))
         self.marionette_stream.push(chunk)
@@ -92,7 +91,7 @@ if __name__ == "__main__":
     server = marionette.Server(format)
     server.factory = ProxyServer
     #server.start()
-    
+
     l = task.LoopingCall(server.do_one_run)
     l.start(0.01)
 
