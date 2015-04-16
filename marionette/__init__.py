@@ -55,7 +55,6 @@ class Client(threading.Thread):
         self.driver.setFormat(self.format_name_)
 
     def run(self):
-        # TODO: make this threadsafe
         self.running_.set()
         while self.running_.is_set():
             while self.running_.is_set() and self.driver.isRunning():
@@ -67,7 +66,6 @@ class Client(threading.Thread):
             self.driver.reset()
 
     def process_multiplexer_incoming(self):
-        # TODO: make this threadsafe
         while self.multiplexer_incoming_.has_data():
             cell_obj = self.multiplexer_incoming_.pop()
             if cell_obj:
@@ -79,11 +77,9 @@ class Client(threading.Thread):
                     self.streams_[stream_id].buffer_ += payload
 
     def stop(self):
-        # TODO: make this threadsafe
         self.running_.clear()
 
     def start_new_stream(self):
-        # TODO: make this threadsafe
         stream = MarionetteStream(self.multiplexer_incoming_,
                                   self.multiplexer_outgoing_,
                                   self.stream_counter_)
@@ -92,15 +88,12 @@ class Client(threading.Thread):
         return stream
 
     def get_stream(self, stream_id):
-        # TODO: make this threadsafe
         return self.streams_.get(stream_id)
 
     def get_streams(self):
-        # TODO: make this threadsafe
         return self.streams_
 
     def terminate_stream(self, stream_id):
-        # TODO: make this threadsafe
         self.multiplexer_outgoing_.terminate(stream_id)
         if self.streams_.get(stream_id):
             self.streams_[stream_id].terminate()
@@ -125,7 +118,6 @@ class Server(threading.Thread):
         self.driver_.setFormat(self.format_name_)
 
     def run(self):
-        # TODO: make this threadsafe
         self.running_.set()
         while self.running_.is_set() and True:
             self.driver_.execute()
@@ -136,7 +128,6 @@ class Server(threading.Thread):
         self.driver_.stop()
 
     def process_multiplexer_incoming(self):
-        # TODO: make this threadsafe
         while self.multiplexer_incoming_.has_data():
             cell_obj = self.multiplexer_incoming_.pop()
             if cell_obj:
@@ -158,22 +149,14 @@ class Server(threading.Thread):
         self.running_.clear()
 
     def get_stream(self, stream_id):
-        # TODO: make this threadsafe
-        # if not self.streams_.get(stream_id):
-        #     self.streams_[stream_id] = MarionetteStream(
-        #         self.multiplexer_incoming_, self.multiplexer_outgoing_,
-        #         stream_id)
         with self.streams_lock_:
             return self.streams_.get(stream_id)
 
     def get_streams(self):
-        # TODO: make this threadsafe (i.e., protect self.streams_)
         with self.streams_lock_:
             return self.streams_
 
     def terminate_stream(self, stream_id):
-        # TODO: figure out how to call this server side, special cell + exception?
-        #self.multiplexer_outgoing_.terminate(stream_id)
         with self.streams_lock_:
             if self.streams_.get(stream_id):
                 self.streams_[stream_id].terminate()

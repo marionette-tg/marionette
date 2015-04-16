@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # coding: utf-8
-# http://musta.sh/2012-03-04/twisted-tcp-proxy.html
 
 import sys
 import time
@@ -83,7 +82,6 @@ class ServerThread(threading.Thread):
             if not stream or not stream.is_active(): break
             while stream.peek():
                 chunk = server.get_stream(self.stream_id_).pop()
-                #print ['got it!', chunk]
                 factories[self.stream_id_][0].cli_queue.put(chunk)
                 time.sleep(0)
 
@@ -113,7 +111,7 @@ def checkForNewStreams():
             t.start()
 
 if __name__ == "__main__":
-    #log.startLogging(sys.stdout)
+    log.startLogging(sys.stdout)
     l = task.LoopingCall(checkForNewStreams)
-    l.start(0.01)
+    l.start(0.1)
     reactor.run()

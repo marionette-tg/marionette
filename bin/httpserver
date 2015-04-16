@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+from twisted.web import proxy, http
+from twisted.internet import reactor
+from twisted.python import log
+from twisted.protocols import basic
+import sys
+
+LOCAL_PORT  = int(sys.argv[1])
+
+class InformixProtocol(basic.LineReceiver):
+    def lineReceived(self, user):
+        response = '\n'.join([str(x) for x in range(2**16)])
+        self.transport.write(response)
+        self.transport.loseConnection()
+
+class ProxyFactory(http.HTTPFactory):
+    protocol = InformixProtocol
+
+if __name__ == "__main__":
+    #log.startLogging(sys.stdout)
+    reactor.listenTCP(LOCAL_PORT, ProxyFactory())
+    reactor.run()

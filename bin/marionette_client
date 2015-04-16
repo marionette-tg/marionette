@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # coding: utf-8
-# http://musta.sh/2012-03-04/twisted-tcp-proxy.html
 
 import sys
 import time
@@ -39,6 +38,7 @@ class ProxyClient(protocol.Protocol):
 
     def clientDataReceived(self, chunk):
         log.msg("ProxyClient: writing %d bytes to original client" % len(chunk))
+        print [chunk]
         self.transport.write(chunk)
         self.srv_queue.get().addCallback(self.clientDataReceived)
 
@@ -62,6 +62,8 @@ def checkForNewStreams():
         while proxyclient.client_stream_.peek():
             chunk = proxyclient.client_stream_.pop()
             proxyclient.clientDataReceived(chunk)
+        #if not proxyclient.client_stream_.is_active():
+        #    proxyclient.transport.disconnect()
 
     proxyclients_tmp = []
     for proxyclient in proxyclients:
@@ -73,7 +75,7 @@ def checkForNewStreams():
     proxyclients = proxyclients_tmp
 
 if __name__ == "__main__":
-    #log.startLogging(sys.stdout)
+    log.startLogging(sys.stdout)
     factory = protocol.Factory()
     factory.protocol = ProxyClient
     reactor.listenTCP(LOCAL_PORT, factory, interface=LOCAL_IP)

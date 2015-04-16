@@ -8,61 +8,44 @@ import unittest
 def execute(cmd):
     os.system(cmd)
 
-def kpdyercom():
-    return '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">\n<html><head>\n<title>302 Found</title>\n</head><body>\n<h1>Found</h1>\n<p>The document has moved <a href="https://kpdyer.com/">here</a>.</p>\n<hr>\n<address>Apache/2.4.7 (Ubuntu) Server at kpdyer.com Port 80</address>\n</body></html>\n'
-
 class Tests(unittest.TestCase):
 
-    def setproxy(self):
-        self.socket_no_proxy_ = socket.socket
-        socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, "127.0.0.1", 18079)
-        socket.socket = socks.socksocket
-
-    def unsetproxy(self):
-        socket.socket = self.socket_no_proxy_
-
-    def dodownload(self):
-        try:
-            conn = httplib.HTTPConnection("kpdyer.com")
-            conn.request("GET", "/")
-            self.fail()
-        except socks.ProxyConnectionError:
-            pass
-
-        execute("./bin/marionette_socks 18081 &")
+    def startservers(self):
+        execute("./bin/httpserver 18081 &")
         time.sleep(0.5)
         execute("./bin/marionette_server 127.0.0.1 18081 &")
         time.sleep(0.5)
         execute("./bin/marionette_client 127.0.0.1 18079 &")
+        time.sleep(0.5)
 
+    def stopservers(self):
+        execute("pkill -9 -f marionette_client")
+        time.sleep(0.5)
+        execute("pkill -9 -f marionette_server")
+        time.sleep(0.5)
+        execute("pkill -9 -f httpserver")
         time.sleep(1)
 
-        for i in range(10):
-            try:
-                start = time.time()
-                conn = httplib.HTTPConnection("kpdyer.com", 80, False, timeout=10)
-                conn.request("GET", "/")
-                response = conn.getresponse()
-                contents = response.read()
-                elapsed = time.time() - start
-                self.assertEqual(kpdyercom(), contents)
-                conn.close()
-            except Exception as e:
-                self.fail(e)
+    def dodownload(self):
+        for i in range(10000):
+            start = time.time()
+            conn = httplib.HTTPConnection("127.0.0.1", 18079, False, timeout=5)
+            conn.request("GET", "/")
+            response = conn.getresponse()
+            actual_response = response.read()
+            conn.close()
+            elapsed = time.time() - start
 
-    def killall(self):
-        execute("pkill -9 -f marionette_client")
-        execute("pkill -9 -f marionette_server")
-        execute("pkill -9 -f marionette_socks")
+            print [i, elapsed]
+            expected_response = '\n'.join([str(x) for x in range(2**16)])
+            self.assertEqual(expected_response, actual_response)
 
     def test_cli_curl(self):
         try:
-            self.setproxy()
-            self.killall()
+            self.startservers()
             self.dodownload()
         finally:
-            self.killall()
-            self.unsetproxy()
+            self.stopservers()
 
 if __name__ == '__main__':
     unittest.main()
