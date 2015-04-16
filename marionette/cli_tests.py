@@ -1,7 +1,5 @@
 import os
 import time
-import socks
-import socket
 import httplib
 import unittest
 
@@ -20,16 +18,14 @@ class Tests(unittest.TestCase):
 
     def stopservers(self):
         execute("pkill -9 -f marionette_client")
-        time.sleep(0.5)
         execute("pkill -9 -f marionette_server")
-        time.sleep(0.5)
         execute("pkill -9 -f httpserver")
         time.sleep(1)
 
     def dodownload(self):
         for i in range(10000):
             start = time.time()
-            conn = httplib.HTTPConnection("127.0.0.1", 18079, False, timeout=5)
+            conn = httplib.HTTPConnection("127.0.0.1", 18079, True, timeout=5)
             conn.request("GET", "/")
             response = conn.getresponse()
             actual_response = response.read()
@@ -37,7 +33,7 @@ class Tests(unittest.TestCase):
             elapsed = time.time() - start
 
             print [i, elapsed]
-            expected_response = '\n'.join([str(x) for x in range(2**16)])
+            expected_response = ''.join([str(x) for x in range(2**16)])
             self.assertEqual(expected_response, actual_response)
 
     def test_cli_curl(self):

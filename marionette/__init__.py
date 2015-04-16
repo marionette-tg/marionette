@@ -10,10 +10,11 @@ import marionette.record_layer
 
 
 class MarionetteStream(object):
-    def __init__(self, multiplexer_incoming, multiplexer_outgoing, stream_id):
+    def __init__(self, multiplexer_incoming, multiplexer_outgoing, stream_id, srv_queue=None):
         self.multiplexer_incoming_ = multiplexer_incoming
         self.multiplexer_outgoing_ = multiplexer_outgoing
         self.stream_id_ = stream_id
+        self.srv_queue = srv_queue
         self.buffer_ = ''
         self.active_ = True
 
@@ -74,15 +75,19 @@ class Client(threading.Thread):
                     continue
                 payload = cell_obj.get_payload()
                 if payload:
-                    self.streams_[stream_id].buffer_ += payload
+                    if self.streams_[stream_id].srv_queue:
+                        self.streams_[stream_id].srv_queue.put(payload)
+                    else:
+                        self.streams_[stream_id].buffer_ += payload
 
     def stop(self):
         self.running_.clear()
 
-    def start_new_stream(self):
+    def start_new_stream(self, srv_queue=None):
         stream = MarionetteStream(self.multiplexer_incoming_,
                                   self.multiplexer_outgoing_,
-                                  self.stream_counter_)
+                                  self.stream_counter_,
+                                  srv_queue)
         self.streams_[self.stream_counter_] = stream
         self.stream_counter_ += 1
         return stream

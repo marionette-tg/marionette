@@ -111,7 +111,7 @@ def checkForNewStreams():
             t.start()
 
 if __name__ == "__main__":
-    log.startLogging(sys.stdout)
+    #log.startLogging(sys.stdout)
     l = task.LoopingCall(checkForNewStreams)
-    l.start(0.1)
+    l.start(0.01)
     reactor.run()

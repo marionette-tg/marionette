@@ -2,44 +2,30 @@
 # coding: utf-8
 
 import sys
-import time
 
 from twisted.internet import defer
 from twisted.internet import protocol
 from twisted.internet import reactor
 from twisted.python import log
-from twisted.internet import task
 
 sys.path.append(".")
 
 import marionette
 
-LOCAL_IP    = "0.0.0.0"
-REMOTE_IP   = str(sys.argv[1])
+LOCAL_IP    = str(sys.argv[1])
 LOCAL_PORT  = int(sys.argv[2])
 
-format = 'http_simple_blocking'
-client = marionette.Client(format)
-client.start()
-
-proxyclients = []
 
 class ProxyClient(protocol.Protocol):
-    def __init__(self):
-        self.connected = False
-
     def connectionMade(self):
         self.srv_queue = defer.DeferredQueue()
-        self.cli_queue = defer.DeferredQueue()
         self.srv_queue.get().addCallback(self.clientDataReceived)
-        self.client_stream_ = client.start_new_stream()
-        self.connected = True
-        proxyclients.append(self)
+        self.client_stream_ = client.start_new_stream(self.srv_queue)
 
     def clientDataReceived(self, chunk):
         log.msg("ProxyClient: writing %d bytes to original client" % len(chunk))
-        print [chunk]
         self.transport.write(chunk)
+        self.transport.doWrite()
         self.srv_queue.get().addCallback(self.clientDataReceived)
 
     def dataReceived(self, chunk):
@@ -48,37 +34,16 @@ class ProxyClient(protocol.Protocol):
 
     def connectionLost(self, why):
         log.msg("ProxyClient.connectionLost: " + str(why))
-        self.cli_queue.put(False)
-        self.connected = False
 
-    def isConnected(self):
-        return self.connected
-
-def checkForNewStreams():
-    global proxyclients
-
-    for proxyclient in proxyclients:
-        time.sleep(0)
-        while proxyclient.client_stream_.peek():
-            chunk = proxyclient.client_stream_.pop()
-            proxyclient.clientDataReceived(chunk)
-        #if not proxyclient.client_stream_.is_active():
-        #    proxyclient.transport.disconnect()
-
-    proxyclients_tmp = []
-    for proxyclient in proxyclients:
-        time.sleep(0)
-        if proxyclient.isConnected():
-            proxyclients_tmp.append(proxyclient)
-        else:
-            client.terminate_stream(proxyclient.client_stream_.get_stream_id())
-    proxyclients = proxyclients_tmp
 
 if __name__ == "__main__":
-    log.startLogging(sys.stdout)
+    #log.startLogging(sys.stdout)
+
+    format = 'http_simple_blocking'
+    client = marionette.Client(format)
+    client.start()
+
     factory = protocol.Factory()
     factory.protocol = ProxyClient
     reactor.listenTCP(LOCAL_PORT, factory, interface=LOCAL_IP)
-    l = task.LoopingCall(checkForNewStreams)
-    l.start(0.01)
     reactor.run()

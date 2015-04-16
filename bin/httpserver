@@ -11,7 +11,8 @@ LOCAL_PORT  = int(sys.argv[1])
 
 class InformixProtocol(basic.LineReceiver):
     def lineReceived(self, user):
-        response = '\n'.join([str(x) for x in range(2**16)])
+        payload = ''.join([str(x) for x in range(2**16)])
+        response = "HTTP/1.1 200 OK\r\nContent-length: "+str(len(payload))+"\r\n\r\n"+payload
         self.transport.write(response)
         self.transport.loseConnection()
 
