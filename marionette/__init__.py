@@ -59,12 +59,14 @@ class Client(threading.Thread):
         self.running_.set()
         while self.running_.is_set():
             while self.running_.is_set() and self.driver.isRunning():
-                self.driver.execute()
-                time.sleep(0)
-                self.process_multiplexer_incoming()
-                time.sleep(0)
+                self.do_one_run()
             self.driver.stop()
             self.driver.reset()
+
+    def do_one_run(self):
+        if self.driver.isRunning():
+            self.driver.execute()
+            self.process_multiplexer_incoming()
 
     def process_multiplexer_incoming(self):
         while self.multiplexer_incoming_.has_data():
@@ -106,6 +108,8 @@ class Client(threading.Thread):
 
 
 class Server(threading.Thread):
+    factory = None
+
     def __init__(self, format_name):
         super(Server, self).__init__()
         self.buffer_ = ""
@@ -122,15 +126,17 @@ class Server(threading.Thread):
         self.driver_.set_multiplexer_outgoing(self.multiplexer_outgoing_)
         self.driver_.setFormat(self.format_name_)
 
+        self.factory_instances = {}
+
     def run(self):
         self.running_.set()
-        while self.running_.is_set() and True:
-            self.driver_.execute()
-            time.sleep(0)
-            self.process_multiplexer_incoming()
-            time.sleep(0)
-
+        while self.running_.is_set():
+            self.do_one_run()
         self.driver_.stop()
+
+    def do_one_run(self):
+        self.driver_.execute()
+        self.process_multiplexer_incoming()
 
     def process_multiplexer_incoming(self):
         while self.multiplexer_incoming_.has_data():
@@ -139,7 +145,9 @@ class Server(threading.Thread):
                 cell_type = cell_obj.get_cell_type()
                 stream_id = cell_obj.get_stream_id()
                 if cell_type == marionette.record_layer.END_OF_STREAM:
-                    self.terminate_stream(stream_id)
+                    if self.factory:
+                        self.factory_instances[stream_id].connectionLost()
+                        del self.factory_instances[stream_id]
                 elif cell_type == marionette.record_layer.NORMAL:
                     payload = cell_obj.get_payload()
                     with self.streams_lock_:
@@ -147,8 +155,14 @@ class Server(threading.Thread):
                             self.streams_[stream_id] = MarionetteStream(
                                 self.multiplexer_incoming_, self.multiplexer_outgoing_,
                                 stream_id)
+
+                            if self.factory:
+                                self.factory_instances[stream_id] = self.factory()
+                                self.factory_instances[stream_id].connectionMade(self.streams_[stream_id])
                         if payload:
                             self.streams_[stream_id].buffer_ += payload
+                            if self.factory:
+                                self.factory_instances[stream_id].dataReceived(payload)
 
     def stop(self):
         self.running_.clear()

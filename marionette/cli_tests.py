@@ -25,7 +25,7 @@ class Tests(unittest.TestCase):
     def dodownload(self):
         for i in range(10000):
             start = time.time()
-            conn = httplib.HTTPConnection("127.0.0.1", 18079, True, timeout=5)
+            conn = httplib.HTTPConnection("127.0.0.1", 18079, False, timeout=1)
             conn.request("GET", "/")
             response = conn.getresponse()
             actual_response = response.read()

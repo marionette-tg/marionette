@@ -2,8 +2,6 @@
 # coding: utf-8
 
 import sys
-import time
-import threading
 
 from twisted.internet import defer
 from twisted.internet import protocol
@@ -18,19 +16,11 @@ import marionette
 REMOTE_IP   = str(sys.argv[1])
 REMOTE_PORT = int(sys.argv[2])
 
-format = 'http_simple_blocking'
-server = marionette.Server(format)
-server.start()
-
 class ProxyServerProtocol(protocol.Protocol):
-    def __init__(self):
-        self.connected = False
-
     def connectionMade(self):
         log.msg("ProxyServerProtocol: connected to peer")
         self.cli_queue = self.factory.cli_queue
         self.cli_queue.get().addCallback(self.serverDataReceived)
-        self.connected = True
 
     def serverDataReceived(self, chunk):
         if chunk is False:
@@ -55,15 +45,9 @@ class ProxyServerProtocol(protocol.Protocol):
         if self.cli_queue:
             self.cli_queue = None
             log.msg("ProxyServerProtocol: peer disconnected unexpectedly")
-        self.connected = False
-
-    def isConnected(self):
-        return self.connected
 
 
 class ProxyServerFactory(protocol.ClientFactory):
-    maxDelay = 10
-    continueTrying = True
     protocol = ProxyServerProtocol
 
     def __init__(self, srv_queue, cli_queue):
@@ -71,47 +55,45 @@ class ProxyServerFactory(protocol.ClientFactory):
         self.cli_queue = cli_queue
 
 
-class ServerThread(threading.Thread):
-    def __init__(self, stream_id):
-        threading.Thread.__init__(self)
-        self.stream_id_ = stream_id
+class ProxyServer(object):
+    def __init__(self):
+        self.connector = None
 
-    def run(self):
-        while True:
-            stream = server.get_stream(self.stream_id_)
-            if not stream or not stream.is_active(): break
-            while stream.peek():
-                chunk = server.get_stream(self.stream_id_).pop()
-                factories[self.stream_id_][0].cli_queue.put(chunk)
-                time.sleep(0)
+    def connectionMade(self, marionette_stream):
+        log.msg("ProxyServer.connectionMade")
+        self.cli_queue = defer.DeferredQueue()
+        self.srv_queue = defer.DeferredQueue()
+        self.marionette_stream = marionette_stream
+        self.srv_queue.get().addCallback(self.clientDataReceived)
 
-        factories[self.stream_id_][1].disconnect()
-        del factories[self.stream_id_]
-        server.terminate_stream(self.stream_id_)
+        self.factory = ProxyServerFactory(self.srv_queue, self.cli_queue)
+        self.connector = reactor.connectTCP(REMOTE_IP, REMOTE_PORT, self.factory)
+
 
     def clientDataReceived(self, chunk):
-        log.msg("ServerThread.clientDataReceived: writing %d bytes to original client" % len(chunk))
-        server.get_stream(self.stream_id_).push(chunk)
-        factories[self.stream_id_][0].srv_queue.get().addCallback(self.clientDataReceived)
+        log.msg("ProxyServer.clientDataReceived: writing %d bytes to original client" % len(chunk))
+        self.marionette_stream.push(chunk)
+        self.srv_queue.get().addCallback(self.clientDataReceived)
 
+    def dataReceived(self, chunk):
+        log.msg("ProxyServer.dataReceived: %s bytes" % len(chunk))
+        self.cli_queue.put(chunk)
 
-factories = {}
-def checkForNewStreams():
-    for stream_id in server.get_streams().keys():
-        if not factories.get(stream_id):
-            t = ServerThread(stream_id)
+    def connectionLost(self):
+        log.msg("ProxyServer.connectionLost")
+        self.cli_queue.put(False)
+        self.connector.disconnect()
 
-            srv_queue = defer.DeferredQueue()
-            cli_queue = defer.DeferredQueue()
-            srv_queue.get().addCallback(t.clientDataReceived)
-            factory = ProxyServerFactory(srv_queue, cli_queue)
-            connector = reactor.connectTCP(REMOTE_IP, REMOTE_PORT, factory)
-            factories[stream_id] = [factory, connector]
-
-            t.start()
 
 if __name__ == "__main__":
     #log.startLogging(sys.stdout)
-    l = task.LoopingCall(checkForNewStreams)
+
+    format = 'http_simple_blocking'
+    server = marionette.Server(format)
+    server.factory = ProxyServer
+    #server.start()
+    
+    l = task.LoopingCall(server.do_one_run)
     l.start(0.01)
+
     reactor.run()

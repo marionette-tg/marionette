@@ -7,6 +7,7 @@ from twisted.internet import defer
 from twisted.internet import protocol
 from twisted.internet import reactor
 from twisted.python import log
+from twisted.internet import task
 
 sys.path.append(".")
 
@@ -46,4 +47,8 @@ if __name__ == "__main__":
     factory = protocol.Factory()
     factory.protocol = ProxyClient
     reactor.listenTCP(LOCAL_PORT, factory, interface=LOCAL_IP)
+
+    #l = task.LoopingCall(client.do_one_run)
+    #l.start(0.01)
+
     reactor.run()

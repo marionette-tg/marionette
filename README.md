@@ -23,7 +23,7 @@ OK
 And then testing with the servers...
 
 ```console
-$ ./bin/marionette_socks 8081 &
+$ ./bin/socksserver 8081 &
 $ ./bin/marionette_server 8080 127.0.0.1 8081 &
 $ ./bin/marionette_client 8079 127.0.0.1 8080 &
 $ curl --socks4a 127.0.0.1:8079 example.com
