@@ -1,4 +1,4 @@
-importlib=1.0.3
+importlib==1.0.3
 twisted==15.1.0
 PySocks==1.5.3
 fte==0.1.0
