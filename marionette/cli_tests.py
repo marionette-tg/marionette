@@ -67,11 +67,15 @@ class Tests(unittest.TestCase):
             #print ['parallel-'+str(simultaneous), i, elapsed, total_elapsed/i]
 
     def test_cli_curl(self):
-        for format in ['http_simple_blocking']:
+        print ''
+        for format in ['http_simple_blocking',]:
             try:
                 self.startservers(format)
                 self.dodownload_serial()
                 self.dodownload_parallel()
+                print '\t', format, '...', 'SUCCESS'
+            except:
+                print '\t', format, '...', 'FAILED'
             finally:
                 self.stopservers()
 
