@@ -25,9 +25,9 @@ class Tests(unittest.TestCase):
     def startservers(self, format):
         execute("./bin/httpserver 18081 %s &" % format)
         execute("./bin/marionette_server 127.0.0.1 18081 %s &" % format)
-        time.sleep(0.25)
+        time.sleep(1)
         execute("./bin/marionette_client 127.0.0.1 18079 %s &" % format)
-        time.sleep(0.25)
+        time.sleep(1)
 
     def stopservers(self):
         execute("pkill -9 -f marionette_client")
@@ -68,11 +68,15 @@ class Tests(unittest.TestCase):
 
     def test_cli_curl(self):
         print ''
-        for format in ['http_simple_blocking',]:
+        for format in ['http_simple_blocking',
+                       'http_simple_nonblocking',
+                       'ssh_simple_nonblocking',
+                       'smb_simple_nonblocking',
+                       ]:
             try:
                 self.startservers(format)
                 self.dodownload_serial()
-                self.dodownload_parallel()
+                #self.dodownload_parallel()
                 print '\t', format, '...', 'SUCCESS'
             except:
                 print '\t', format, '...', 'FAILED'
