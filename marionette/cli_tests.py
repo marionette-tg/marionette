@@ -16,8 +16,6 @@ def exec_download():
 
     expected_response = ''.join([str(x) for x in range(2**16)])
 
-    #print [actual_response[:32], expected_response[:32]]
-    #print actual_response
     assert actual_response == expected_response
 
     return actual_response
@@ -48,7 +46,7 @@ class Tests(unittest.TestCase):
             elapsed = time.time() - start
             total_elapsed += elapsed
 
-            #print ['serial-1', i, elapsed, total_elapsed/i]
+            print ['serial-1', i, elapsed, total_elapsed/i]
 
     def dodownload_parallel(self):
         simultaneous = 10
@@ -68,7 +66,7 @@ class Tests(unittest.TestCase):
             elapsed = time.time() - start
             total_elapsed += elapsed
 
-            #print ['parallel-'+str(simultaneous), i, elapsed, total_elapsed/i]
+            print ['parallel-'+str(simultaneous), i, elapsed, total_elapsed/i]
 
     def test_cli_curl(self):
         try:

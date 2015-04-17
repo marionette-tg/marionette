@@ -2,11 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import os
-import sys
 import time
 import random
 import importlib
-import traceback
 import threading
 
 import regex2dfa

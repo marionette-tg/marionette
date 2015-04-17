@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#import threading
-
 import marionette.driver
 import marionette.multiplexer
 import marionette.record_layer
@@ -28,14 +26,11 @@ class Client(object):
 
         if self.driver.isRunning():
             self.driver.execute()
-            #self.process_multiplexer_incoming()
 
         if reactor:
             reactor.callInThread(self.do_one_run, reactor)
 
-    # change to async call
     def process_multiplexer_incoming(self):
-        #if self.multiplexer_incoming_.has_data():
         cell_obj = self.multiplexer_incoming_.pop()
         if cell_obj:
             stream_id = cell_obj.get_stream_id()
@@ -67,8 +62,6 @@ class Server(object):
         self.multiplexer_incoming_.addCallback(self.process_multiplexer_incoming)
         self.format_name_ = format_name
         self.streams_ = {}
-        #self.streams_lock_ = threading.RLock()
-        #self.running_ = threading.Event()
 
         self.driver_ = marionette.driver.Driver("server")
         self.driver_.set_multiplexer_incoming(self.multiplexer_incoming_)
@@ -93,7 +86,6 @@ class Server(object):
                     del self.factory_instances[stream_id]
             elif cell_type == marionette.record_layer.NORMAL:
                 payload = cell_obj.get_payload()
-                #with self.streams_lock_:
                 if stream_id>0 and not self.streams_.get(stream_id):
                     self.streams_[stream_id] = marionette.multiplexer.MarionetteStream(
                         self.multiplexer_incoming_, self.multiplexer_outgoing_,

@@ -41,7 +41,6 @@ class ProxyServerProtocol(protocol.Protocol):
         self.factory.srv_queue.put(chunk)
 
     def connectionLost(self, why):
-        #print ['proxyConnectionDone', threading.activeCount()]
         log.msg("ProxyServerProtocol.connectionLost: " + str(why))
         if self.cli_queue:
             self.cli_queue = None
@@ -73,7 +72,6 @@ class ProxyServer(object):
     def clientDataReceived(self, chunk):
         log.msg("ProxyServer.clientDataReceived: writing %d bytes to original client" % len(chunk))
         self.marionette_stream.push(chunk)
-        #print ['glot it', chunk[:32], chunk[-32:]]
         self.srv_queue.get().addCallback(self.clientDataReceived)
 
     def dataReceived(self, chunk):
@@ -81,7 +79,6 @@ class ProxyServer(object):
         self.cli_queue.put(chunk)
 
     def connectionLost(self):
-        #print ['glot it', 'connectionLost']
         log.msg("ProxyServer.connectionLost")
         self.cli_queue.put(False)
         self.connector.disconnect()
