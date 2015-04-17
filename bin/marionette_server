@@ -3,8 +3,6 @@
 
 import sys
 
-import threading
-
 from twisted.internet import defer
 from twisted.internet import protocol
 from twisted.internet import reactor
@@ -97,4 +95,6 @@ if __name__ == "__main__":
     server.factory = ProxyServer
 
     reactor.callInThread(server.do_one_run, reactor)
+
+    reactor.suggestThreadPoolSize(30)
     reactor.run()

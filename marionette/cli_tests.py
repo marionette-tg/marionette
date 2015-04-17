@@ -48,7 +48,7 @@ class Tests(unittest.TestCase):
             elapsed = time.time() - start
             total_elapsed += elapsed
 
-            print ['serial-1', i, elapsed, total_elapsed/i]
+            #print ['serial-1', i, elapsed, total_elapsed/i]
 
     def dodownload_parallel(self):
         simultaneous = 10
@@ -68,7 +68,7 @@ class Tests(unittest.TestCase):
             elapsed = time.time() - start
             total_elapsed += elapsed
 
-            print ['parallel-'+str(simultaneous), i, elapsed, total_elapsed/i]
+            #print ['parallel-'+str(simultaneous), i, elapsed, total_elapsed/i]
 
     def test_cli_curl(self):
         try:

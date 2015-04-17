@@ -98,6 +98,7 @@ def recv(channel, global_args, local_args, input_args, blocking=True):
             local_args["model_instance_id"] = cell_obj.get_model_instance_id()
             ##
 
+            #print [local_args.get("model_instance_id"), cell_obj.get_stream_id(), cell_obj.get_payload()]
             if local_args.get("model_instance_id"):
                 if cell_obj.get_stream_id()>0:
                     #local_args["sequence_id"] = int(cell_obj.get_seq_id()) + 1

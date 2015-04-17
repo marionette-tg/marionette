@@ -52,12 +52,12 @@ def recv(channel, global_args, local_args, input_args):
             cell_obj = marionette.record_layer.unserialize(cell_str)
             assert cell_obj.get_model_uuid() == local_args["model_uuid"]
 
-            if cell_obj.get_seq_id() == 0:
+            if cell_obj.get_seq_id() == 1:
                 local_args["model_instance_id"] = cell_obj.get_model_instance_id()
             ##
 
             if local_args.get("model_instance_id"):
-                local_args["sequence_id"] = int(cell_obj.get_seq_id()) + 1
+                #local_args["sequence_id"] = int(cell_obj.get_seq_id()) + 1
                 global_args["multiplexer_incoming"].push(cell_str)
                 retval = True
     except socket.timeout as e:
@@ -102,9 +102,9 @@ def execute_handler_sender(global_args, local_args, grammar, handler_key,
     if cell_len_in_bits > 0:
         cell = multiplexer.pop(local_args["model_uuid"],
                                local_args["model_instance_id"],
-                               local_args["sequence_id"], cell_len_in_bits)
+                               cell_len_in_bits)
         to_embed = cell.to_string()
-        local_args["sequence_id"] += 1
+        #local_args["sequence_id"] += 1
     value_to_embed = to_execute.encode(template, to_embed)
     template = do_embed(grammar, template, handler_key, value_to_embed)
 

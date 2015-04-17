@@ -7,7 +7,6 @@ from twisted.internet import defer
 from twisted.internet import protocol
 from twisted.internet import reactor
 from twisted.python import log
-from twisted.internet import task
 
 sys.path.append(".")
 
@@ -50,4 +49,5 @@ if __name__ == "__main__":
     reactor.listenTCP(LOCAL_PORT, factory, interface=LOCAL_IP)
     reactor.callInThread(client.do_one_run, reactor)
 
+    reactor.suggestThreadPoolSize(30)
     reactor.run()

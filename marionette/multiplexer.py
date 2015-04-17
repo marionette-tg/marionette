@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import random
+import threading
+
+from twisted.internet import reactor
 
 import marionette.record_layer
 
@@ -133,10 +136,18 @@ class BufferIncoming(object):
         self.fifo_ = ''
         self.fifo_len_ = 0
         self.has_data_ = False
+        self.callback_  = None
+
+    def addCallback(self, callback):
+        self.callback_ = callback
 
     def push(self, s):
         self.fifo_ += s
         self.fifo_len_ += len(s)
+
+        if self.callback_:
+            reactor.callFromThread(self.callback_)
+
         return True
 
     def pop(self):
@@ -155,4 +166,4 @@ class BufferIncoming(object):
         return self.fifo_
 
     def has_data(self):
-        return (self.fifo_len_ > 0)
+        return (self.fifo_len_ >= 8)
