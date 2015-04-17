@@ -2,9 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
 import time
 import random
 import importlib
+import traceback
 import threading
 
 import regex2dfa
@@ -38,7 +40,8 @@ class PA(threading.Thread):
         self.local_args_["current_state"] = "start"
         self.local_args_["next_state"] = None
         self.local_args_["state_history"] = []
-        self.local_args_["sequence_id"] = 0
+        #self.local_args_["sequence_id"] = 0
+        #traceback.print_stack()
 
         self.multiplexer_outgoing_ = None
         self.multiplexer_incoming_ = None
@@ -174,8 +177,7 @@ class PA(threading.Thread):
         action_key = 'action_key-' + action
         [methodToCall, args] = self.global_args_[action_key]
 
-        success = methodToCall(channel, self.global_args_, self.local_args_,
-                               args)
+        success = methodToCall(channel, self.global_args_, self.local_args_, args)
 
         return success
 

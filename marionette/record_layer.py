@@ -41,7 +41,7 @@ class Cell(object):
         self.payload_ = payload
 
     def get_stream_id(self):
-        return self.stream_id_
+        return int(self.stream_id_)
 
     def get_model_uuid(self):
         return self.model_uuid_
@@ -50,7 +50,7 @@ class Cell(object):
         return self.model_instance_id_
 
     def get_seq_id(self):
-        return self.sequence_id_
+        return int(self.sequence_id_)
 
     def is_valid(self):
         retval = True

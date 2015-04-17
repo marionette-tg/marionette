@@ -5,11 +5,43 @@ import random
 
 import marionette.record_layer
 
+class MarionetteStream(object):
+    def __init__(self, multiplexer_incoming, multiplexer_outgoing, stream_id, srv_queue=None):
+        self.multiplexer_incoming_ = multiplexer_incoming
+        self.multiplexer_outgoing_ = multiplexer_outgoing
+        self.stream_id_ = stream_id
+        self.srv_queue = srv_queue
+        self.buffer_ = ''
+        self.active_ = True
+
+    def get_stream_id(self):
+        return self.stream_id_
+
+    def push(self, data):
+        self.multiplexer_outgoing_.push(self.stream_id_, data)
+
+    def pop(self):
+        retval = self.buffer_
+        self.buffer_ = ''
+        return retval
+
+    def peek(self):
+        return self.buffer_
+
+    def terminate(self):
+        self.multiplexer_outgoing_.terminate(self.stream_id_)
+        self.active_ = False
+
+    def is_active(self):
+        return self.active_
+
+
 class BufferOutgoing(object):
     def __init__(self):
         self.fifo_ = {}
-        self.terminate_ = []
+        self.terminate_ = set()
         self.streams_with_data_ = set()
+        self.sequence_nums = {}
 
     def push(self, stream_id, s):
         if not self.fifo_.get(stream_id):
@@ -19,18 +51,27 @@ class BufferOutgoing(object):
             self.streams_with_data_.add(stream_id)
         return True
 
-    def pop(self, model_uuid, model_instance_id, sequence_id, n=0):
+    def pop(self, model_uuid, model_instance_id, n=0):
         assert model_uuid is not None
         assert model_instance_id is not None
 
         cell_obj = None
 
         stream_id = 0
-        if len(list(self.streams_with_data_)) > 0:
-            stream_id = random.choice(list(self.streams_with_data_))
+        interesting = self.streams_with_data_.union(self.terminate_)
+        if len(list(interesting)) > 0:
+            stream_id = random.choice(list(interesting))
+
+        if not self.sequence_nums.get(stream_id):
+            self.sequence_nums[stream_id] = 1
+        if stream_id == 0:
+            sequence_id = 1
+        else:
+            sequence_id = self.sequence_nums[stream_id]
+            self.sequence_nums[stream_id] += 1
 
         # determine if we should terminate the stream
-        if not self.fifo_.get(stream_id) and stream_id in self.terminate_:
+        if self.fifo_.get(stream_id) == '' and stream_id in self.terminate_:
             cell_obj = marionette.record_layer.Cell(model_uuid, model_instance_id, stream_id,
                                 sequence_id, 0, marionette.record_layer.END_OF_STREAM)
             self.terminate_.remove(stream_id)
@@ -84,7 +125,7 @@ class BufferOutgoing(object):
         return retval
 
     def terminate(self, stream_id):
-        self.terminate_.append(stream_id)
+        self.terminate_.add(stream_id)
 
 
 class BufferIncoming(object):

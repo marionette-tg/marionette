@@ -44,13 +44,10 @@ if __name__ == "__main__":
 
     format = 'http_simple_blocking'
     client = marionette.Client(format)
-    client.start()
 
     factory = protocol.Factory()
     factory.protocol = ProxyClient
     reactor.listenTCP(LOCAL_PORT, factory, interface=LOCAL_IP)
-
-    #l = task.LoopingCall(client.do_one_run)
-    #l.start(0.01)
+    reactor.callInThread(client.do_one_run, reactor)
 
     reactor.run()
