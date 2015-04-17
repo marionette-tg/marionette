@@ -120,10 +120,8 @@ class BufferOutgoing(object):
 
     def has_data_for_any_stream(self):
         retval = None
-        for stream_id in list(self.fifo_.keys()):
-            if len(self.fifo_[stream_id]) > 0:
-                retval = stream_id
-                break
+        if len(self.streams_with_data_)>0:
+            retval = random.choice(list(self.streams_with_data_))
         return retval
 
     def terminate(self, stream_id):

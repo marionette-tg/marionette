@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import time
 import random
 import importlib
 import threading
@@ -141,6 +140,7 @@ class PA(threading.Thread):
 
             success = True
             for action in actions_to_execute:
+                #print action
                 action_retval = self.eval_action(action, self.channel_)
                 if not action_retval:
                     success = False

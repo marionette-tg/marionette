@@ -76,10 +76,11 @@ class Tests(unittest.TestCase):
             try:
                 self.startservers(format)
                 self.dodownload_serial()
-                #self.dodownload_parallel()
+                self.dodownload_parallel()
                 print '\t', format, '...', 'SUCCESS'
-            except:
+            except Exception as e:
                 print '\t', format, '...', 'FAILED'
+                self.assertFalse(True,e)
             finally:
                 self.stopservers()
 
