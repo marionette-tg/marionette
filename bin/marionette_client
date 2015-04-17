@@ -14,9 +14,13 @@ import marionette
 
 LOCAL_IP    = str(sys.argv[1])
 LOCAL_PORT  = int(sys.argv[2])
-
+if len(sys.argv)>=4:
+    FORMAT  = str(sys.argv[3])
+else:
+    FORMAT = 'http_simple_blocking'
 
 class ProxyClient(protocol.Protocol):
+
     def connectionMade(self):
         log.msg("ProxyClient.connectionMade")
         self.srv_queue = defer.DeferredQueue()
@@ -41,13 +45,11 @@ class ProxyClient(protocol.Protocol):
 if __name__ == "__main__":
     #log.startLogging(sys.stdout)
 
-    format = 'http_simple_blocking'
-    client = marionette.Client(format)
+    client = marionette.Client(FORMAT)
 
     factory = protocol.Factory()
     factory.protocol = ProxyClient
     reactor.listenTCP(LOCAL_PORT, factory, interface=LOCAL_IP)
-    reactor.callInThread(client.do_one_run, reactor)
+    reactor.callInThread(client.execute, reactor)
 
-    reactor.suggestThreadPoolSize(30)
     reactor.run()

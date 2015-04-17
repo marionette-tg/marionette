@@ -15,6 +15,10 @@ import marionette
 
 REMOTE_IP   = str(sys.argv[1])
 REMOTE_PORT = int(sys.argv[2])
+if len(sys.argv)>=4:
+    FORMAT  = str(sys.argv[3])
+else:
+    FORMAT = 'http_simple_blocking'
 
 class ProxyServerProtocol(protocol.Protocol):
     def connectionMade(self):
@@ -87,11 +91,9 @@ class ProxyServer(object):
 if __name__ == "__main__":
     #log.startLogging(sys.stdout)
 
-    format = 'http_simple_blocking'
-    server = marionette.Server(format)
+    server = marionette.Server(FORMAT)
     server.factory = ProxyServer
 
-    reactor.callInThread(server.do_one_run, reactor)
+    reactor.callInThread(server.execute, reactor)
 
-    reactor.suggestThreadPoolSize(30)
     reactor.run()

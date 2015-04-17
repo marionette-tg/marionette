@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import random
-import threading
 
 from twisted.internet import reactor
 
@@ -15,7 +14,12 @@ class MarionetteStream(object):
         self.stream_id_ = stream_id
         self.srv_queue = srv_queue
         self.buffer_ = ''
-        self.active_ = True
+        self.host = None
+
+    def terminate(self):
+        self.multiplexer_outgoing_.terminate(self.stream_id_)
+        if self.host:
+            self.host.terminate(self.stream_id_)
 
     def get_stream_id(self):
         return self.stream_id_
@@ -31,13 +35,6 @@ class MarionetteStream(object):
     def peek(self):
         return self.buffer_
 
-    def terminate(self):
-        self.multiplexer_outgoing_.terminate(self.stream_id_)
-        self.active_ = False
-
-    def is_active(self):
-        return self.active_
-
 
 class BufferOutgoing(object):
     def __init__(self):
@@ -50,8 +47,10 @@ class BufferOutgoing(object):
         if not self.fifo_.get(stream_id):
             self.fifo_[stream_id] = ''
         self.fifo_[stream_id] += s
+
         if s:
             self.streams_with_data_.add(stream_id)
+
         return True
 
     def pop(self, model_uuid, model_instance_id, n=0):

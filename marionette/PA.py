@@ -53,7 +53,6 @@ class PA(threading.Thread):
         self.running_.set()
         while self.running_.is_set() and self.isRunning():
             self.transition()
-            time.sleep(0)
 
     def build_cache(self):
         # do fte stuff

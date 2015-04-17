@@ -22,19 +22,17 @@ def exec_download():
 
 class Tests(unittest.TestCase):
 
-    def startservers(self):
-        execute("./bin/httpserver 18081 &")
-        time.sleep(0.5)
-        execute("./bin/marionette_server 127.0.0.1 18081 &")
-        time.sleep(0.5)
-        execute("./bin/marionette_client 127.0.0.1 18079 &")
-        time.sleep(0.5)
+    def startservers(self, format):
+        execute("./bin/httpserver 18081 %s &" % format)
+        execute("./bin/marionette_server 127.0.0.1 18081 %s &" % format)
+        time.sleep(0.25)
+        execute("./bin/marionette_client 127.0.0.1 18079 %s &" % format)
+        time.sleep(0.25)
 
     def stopservers(self):
         execute("pkill -9 -f marionette_client")
         execute("pkill -9 -f marionette_server")
         execute("pkill -9 -f httpserver")
-        time.sleep(1)
 
     def dodownload_serial(self):
         total_elapsed = 0
@@ -46,7 +44,7 @@ class Tests(unittest.TestCase):
             elapsed = time.time() - start
             total_elapsed += elapsed
 
-            print ['serial-1', i, elapsed, total_elapsed/i]
+            #print ['serial-1', i, elapsed, total_elapsed/i]
 
     def dodownload_parallel(self):
         simultaneous = 10
@@ -66,15 +64,16 @@ class Tests(unittest.TestCase):
             elapsed = time.time() - start
             total_elapsed += elapsed
 
-            print ['parallel-'+str(simultaneous), i, elapsed, total_elapsed/i]
+            #print ['parallel-'+str(simultaneous), i, elapsed, total_elapsed/i]
 
     def test_cli_curl(self):
-        try:
-            self.startservers()
-            self.dodownload_serial()
-            self.dodownload_parallel()
-        finally:
-            self.stopservers()
+        for format in ['http_simple_blocking']:
+            try:
+                self.startservers(format)
+                self.dodownload_serial()
+                self.dodownload_parallel()
+            finally:
+                self.stopservers()
 
 if __name__ == '__main__':
     unittest.main()

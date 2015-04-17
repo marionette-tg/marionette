@@ -146,7 +146,6 @@ class Driver(object):
     def execute(self):
         if self.party_ == "server":
             for executable in self.clean_executeables_:
-                time.sleep(0)
                 channel = self.acceptNewChannel(executable)
                 if channel:
                     new_executable = executable.replicate()
@@ -155,7 +154,6 @@ class Driver(object):
                     new_executable.start()
         elif self.party_ == "client":
             for executable in self.executeables_:
-                time.sleep(0)
                 if not executable.get_channel():
                     channel = self.openNewChannel(executable)
                     executable.set_channel(channel)
@@ -163,7 +161,6 @@ class Driver(object):
 
         executables_ = []
         for executable in self.executeables_:
-            time.sleep(0)
             if executable.isRunning():
                 executables_.append(executable)
             else:
@@ -182,8 +179,6 @@ class Driver(object):
                 not_opened += [new_executable]
 
         while len(self.executeables_) > 0:
-            time.sleep(0)
-
             ###
             if self.party_ == "server":
                 if len(not_opened):

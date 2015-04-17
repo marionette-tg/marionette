@@ -20,7 +20,7 @@ class Client(object):
         self.driver.set_multiplexer_outgoing(self.multiplexer_outgoing_)
         self.driver.setFormat(self.format_name_)
 
-    def do_one_run(self, reactor=None):
+    def execute(self, reactor=None):
         if not self.driver.isRunning():
             self.driver.reset()
 
@@ -28,29 +28,28 @@ class Client(object):
             self.driver.execute()
 
         if reactor:
-            reactor.callInThread(self.do_one_run, reactor)
+            reactor.callInThread(self.execute, reactor)
 
     def process_multiplexer_incoming(self):
         cell_obj = self.multiplexer_incoming_.pop()
         if cell_obj:
             stream_id = cell_obj.get_stream_id()
-            if stream_id == 0:
-                return
             payload = cell_obj.get_payload()
             if payload:
-                if self.streams_[stream_id].srv_queue:
-                    self.streams_[stream_id].srv_queue.put(payload)
-                else:
-                    self.streams_[stream_id].buffer_ += payload
+                self.streams_[stream_id].srv_queue.put(payload)
 
     def start_new_stream(self, srv_queue=None):
         stream = marionette.multiplexer.MarionetteStream(self.multiplexer_incoming_,
                                   self.multiplexer_outgoing_,
                                   self.stream_counter_,
                                   srv_queue)
+        stream.host = self
         self.streams_[self.stream_counter_] = stream
         self.stream_counter_ += 1
         return stream
+
+    def terminate(self, stream_id):
+        del self.streams_[stream_id]
 
 
 class Server(object):
@@ -61,7 +60,6 @@ class Server(object):
         self.multiplexer_incoming_ = marionette.multiplexer.BufferIncoming()
         self.multiplexer_incoming_.addCallback(self.process_multiplexer_incoming)
         self.format_name_ = format_name
-        self.streams_ = {}
 
         self.driver_ = marionette.driver.Driver("server")
         self.driver_.set_multiplexer_incoming(self.multiplexer_incoming_)
@@ -70,31 +68,29 @@ class Server(object):
 
         self.factory_instances = {}
 
-    def do_one_run(self, reactor=None):
+    def execute(self, reactor=None):
         self.driver_.execute()
+
         if reactor:
-            reactor.callInThread(self.do_one_run, reactor)
+            reactor.callInThread(self.execute, reactor)
 
     def process_multiplexer_incoming(self):
         cell_obj = self.multiplexer_incoming_.pop()
         if cell_obj:
             cell_type = cell_obj.get_cell_type()
             stream_id = cell_obj.get_stream_id()
+
             if cell_type == marionette.record_layer.END_OF_STREAM:
-                if self.factory:
-                    self.factory_instances[stream_id].connectionLost()
-                    del self.factory_instances[stream_id]
+                self.factory_instances[stream_id].connectionLost()
+                del self.factory_instances[stream_id]
             elif cell_type == marionette.record_layer.NORMAL:
-                payload = cell_obj.get_payload()
-                if stream_id>0 and not self.streams_.get(stream_id):
-                    self.streams_[stream_id] = marionette.multiplexer.MarionetteStream(
+                if not self.factory_instances.get(stream_id):
+                    stream = marionette.multiplexer.MarionetteStream(
                         self.multiplexer_incoming_, self.multiplexer_outgoing_,
                         stream_id)
+                    self.factory_instances[stream_id] = self.factory()
+                    self.factory_instances[stream_id].connectionMade(stream)
 
-                    if self.factory:
-                        self.factory_instances[stream_id] = self.factory()
-                        self.factory_instances[stream_id].connectionMade(self.streams_[stream_id])
+                payload = cell_obj.get_payload()
                 if payload:
-                    self.streams_[stream_id].buffer_ += payload
-                    if self.factory:
-                        self.factory_instances[stream_id].dataReceived(payload)
+                    self.factory_instances[stream_id].dataReceived(payload)
