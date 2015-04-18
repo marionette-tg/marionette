@@ -1,136 +1,96 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import time
-import threading
-
 import marionette.driver
+import marionette.multiplexer
 import marionette.record_layer
 
 
-class MarionetteStream(object):
-    def __init__(self, multiplexer_incoming, multiplexer_outgoing, stream_id):
-        self.multiplexer_incoming_ = multiplexer_incoming
-        self.multiplexer_outgoing_ = multiplexer_outgoing
-        self.stream_id_ = stream_id
-        self.buffer_ = ''
-
-    def get_stream_id(self):
-        return self.stream_id_
-
-    def push(self, data):
-        self.multiplexer_outgoing_.push(self.stream_id_, data)
-
-    def pop(self):
-        retval = self.buffer_
-        self.buffer_ = ''
-        return retval
-
-    def peek(self):
-        return self.buffer_
-
-
-class Client(threading.Thread):
+class Client(object):
     def __init__(self, format_name):
-        super(Client, self).__init__()
         self.multiplexer_outgoing_ = marionette.multiplexer.BufferOutgoing()
         self.multiplexer_incoming_ = marionette.multiplexer.BufferIncoming()
+        self.multiplexer_incoming_.addCallback(self.process_multiplexer_incoming)
         self.format_name_ = format_name
         self.streams_ = {}
         self.stream_counter_ = 1
-        self.running_ = threading.Event()
 
         self.driver = marionette.driver.Driver("client")
         self.driver.set_multiplexer_incoming(self.multiplexer_incoming_)
         self.driver.set_multiplexer_outgoing(self.multiplexer_outgoing_)
         self.driver.setFormat(self.format_name_)
 
-    def run(self):
-        self.running_.set()
-        while self.running_.is_set():
-            while self.running_.is_set() and self.driver.isRunning():
-                self.driver.execute()
-                time.sleep(0)
-                self.process_multiplexer_incoming()
-                time.sleep(0)
-            self.driver.stop()
+    def execute(self, reactor=None):
+        if not self.driver.isRunning():
             self.driver.reset()
 
+        if self.driver.isRunning():
+            self.driver.execute()
+
+        if reactor:
+            reactor.callInThread(self.execute, reactor)
+
     def process_multiplexer_incoming(self):
-        while self.multiplexer_incoming_.has_data():
-            cell_obj = self.multiplexer_incoming_.pop()
-            if cell_obj:
-                stream_id = cell_obj.get_stream_id()
-                if stream_id == 0:
-                    continue
-                payload = cell_obj.get_payload()
-                self.streams_[stream_id].buffer_ += payload
+        cell_obj = self.multiplexer_incoming_.pop()
+        if cell_obj:
+            stream_id = cell_obj.get_stream_id()
+            payload = cell_obj.get_payload()
+            if payload:
+                self.streams_[stream_id].srv_queue.put(payload)
 
-    def stop(self):
-        self.running_.clear()
-
-    def start_new_stream(self):
-        stream = MarionetteStream(self.multiplexer_incoming_,
+    def start_new_stream(self, srv_queue=None):
+        stream = marionette.multiplexer.MarionetteStream(self.multiplexer_incoming_,
                                   self.multiplexer_outgoing_,
-                                  self.stream_counter_)
+                                  self.stream_counter_,
+                                  srv_queue)
+        stream.host = self
         self.streams_[self.stream_counter_] = stream
         self.stream_counter_ += 1
         return stream
 
-    def get_stream(self, stream_id):
-        return self.streams_.get(stream_id)
-
-    def get_streams(self):
-        return self.streams_
+    def terminate(self, stream_id):
+        del self.streams_[stream_id]
 
 
-class Server(threading.Thread):
+class Server(object):
+    factory = None
+
     def __init__(self, format_name):
-        super(Server, self).__init__()
-        self.buffer_ = ""
         self.multiplexer_outgoing_ = marionette.multiplexer.BufferOutgoing()
         self.multiplexer_incoming_ = marionette.multiplexer.BufferIncoming()
+        self.multiplexer_incoming_.addCallback(self.process_multiplexer_incoming)
         self.format_name_ = format_name
-        self.streams_ = {}
-        self.running_ = threading.Event()
 
-        self.buffer_ = ""
         self.driver_ = marionette.driver.Driver("server")
         self.driver_.set_multiplexer_incoming(self.multiplexer_incoming_)
         self.driver_.set_multiplexer_outgoing(self.multiplexer_outgoing_)
         self.driver_.setFormat(self.format_name_)
 
-    def run(self):
-        self.running_.set()
-        while self.running_.is_set() and True:
-            self.driver_.execute()
-            time.sleep(0)
-            self.process_multiplexer_incoming()
-            time.sleep(0)
+        self.factory_instances = {}
 
-        self.driver_.stop()
+    def execute(self, reactor=None):
+        self.driver_.execute()
+
+        if reactor:
+            reactor.callInThread(self.execute, reactor)
 
     def process_multiplexer_incoming(self):
-        while self.multiplexer_incoming_.has_data():
-            cell_obj = self.multiplexer_incoming_.pop()
-            if cell_obj:
-                stream_id = cell_obj.get_stream_id()
-                payload = cell_obj.get_payload()
-                if not self.streams_.get(stream_id):
-                    self.streams_[stream_id] = MarionetteStream(
+        cell_obj = self.multiplexer_incoming_.pop()
+        if cell_obj:
+            cell_type = cell_obj.get_cell_type()
+            stream_id = cell_obj.get_stream_id()
+
+            if cell_type == marionette.record_layer.END_OF_STREAM:
+                self.factory_instances[stream_id].connectionLost()
+                del self.factory_instances[stream_id]
+            elif cell_type == marionette.record_layer.NORMAL:
+                if not self.factory_instances.get(stream_id):
+                    stream = marionette.multiplexer.MarionetteStream(
                         self.multiplexer_incoming_, self.multiplexer_outgoing_,
                         stream_id)
-                self.streams_[stream_id].buffer_ += payload
+                    self.factory_instances[stream_id] = self.factory()
+                    self.factory_instances[stream_id].connectionMade(stream)
 
-    def stop(self):
-        self.running_.clear()
-
-    def get_stream(self, stream_id):
-        if not self.streams_.get(stream_id):
-            self.streams_[stream_id] = MarionetteStream(
-                self.multiplexer_incoming_, self.multiplexer_outgoing_,
-                stream_id)
-        return self.streams_.get(stream_id)
-
-    def get_streams(self):
-        return self.streams_
+                payload = cell_obj.get_payload()
+                if payload:
+                    self.factory_instances[stream_id].dataReceived(payload)

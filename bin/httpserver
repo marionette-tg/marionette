@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+from twisted.python import log
+import sys
+
+from twisted.web import server, resource
+from twisted.internet import reactor
+
+LOCAL_PORT  = int(sys.argv[1])
+
+class GetResource(resource.Resource):
+    isLeaf = True
+
+    def render_GET(self, request):
+        retval = ''
+        for x in range(2**16):
+            retval += '_'+str(x)
+        return retval
+
+if __name__ == "__main__":
+    #log.startLogging(sys.stdout)
+    reactor.listenTCP(LOCAL_PORT, server.Site(GetResource()))
+    reactor.run()

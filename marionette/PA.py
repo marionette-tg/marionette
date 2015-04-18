@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import time
 import random
 import importlib
 import threading
@@ -38,7 +37,8 @@ class PA(threading.Thread):
         self.local_args_["current_state"] = "start"
         self.local_args_["next_state"] = None
         self.local_args_["state_history"] = []
-        self.local_args_["sequence_id"] = 0
+        #self.local_args_["sequence_id"] = 0
+        #traceback.print_stack()
 
         self.multiplexer_outgoing_ = None
         self.multiplexer_incoming_ = None
@@ -51,9 +51,7 @@ class PA(threading.Thread):
     def run(self):
         self.running_.set()
         while self.running_.is_set() and self.isRunning():
-            success = self.transition()
-            if not success:
-                time.sleep(0)
+            self.transition()
 
     def build_cache(self):
         # do fte stuff
@@ -142,6 +140,7 @@ class PA(threading.Thread):
 
             success = True
             for action in actions_to_execute:
+                #print action
                 action_retval = self.eval_action(action, self.channel_)
                 if not action_retval:
                     success = False
@@ -175,8 +174,7 @@ class PA(threading.Thread):
         action_key = 'action_key-' + action
         [methodToCall, args] = self.global_args_[action_key]
 
-        success = methodToCall(channel, self.global_args_, self.local_args_,
-                               args)
+        success = methodToCall(channel, self.global_args_, self.local_args_, args)
 
         return success
 

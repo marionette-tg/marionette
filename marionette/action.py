@@ -8,6 +8,7 @@ class MarionetteAction(object):
         self.action_name_ = action_name
         self.party_ = party
 
+        # TODO: fix the following io. hack
         if to_do.startswith("io."):
             self.to_do_ = string.replace(to_do, "\\n", "\n")
         else:
