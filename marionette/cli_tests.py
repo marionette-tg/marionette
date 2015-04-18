@@ -14,7 +14,9 @@ def exec_download():
     actual_response = response.read()
     conn.close()
 
-    expected_response = ''.join([str(x) for x in range(2**16)])
+    expected_response = ''
+    for x in range(2**16):
+        expected_response += '_'+str(x)
 
     assert actual_response == expected_response
 
@@ -68,10 +70,11 @@ class Tests(unittest.TestCase):
 
     def test_cli_curl(self):
         print ''
-        for format in ['http_simple_blocking',
-                       'http_simple_nonblocking',
-                       'ssh_simple_nonblocking',
-                       'smb_simple_nonblocking',
+        for format in [
+                'http_simple_blocking',
+                'http_simple_nonblocking',
+                'ssh_simple_nonblocking',
+                'smb_simple_nonblocking',
                        ]:
             try:
                 self.startservers(format)

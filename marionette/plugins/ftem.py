@@ -29,7 +29,6 @@ def send(channel, global_args, local_args, input_args, blocking=True):
         fte_key = 'fte_key-' + regex + str(msg_len)
         fteObj = global_args[fte_key]
 
-        #print [global_args["multiplexer_outgoing"].peek(stream_id)]
         bits_in_buffer = len(
             global_args["multiplexer_outgoing"].peek(stream_id)) * 8
         min_cell_len_in_bytes = int(math.floor(fteObj.getCapacity() / 8.0)) \
@@ -42,12 +41,9 @@ def send(channel, global_args, local_args, input_args, blocking=True):
         cell_len_in_bits = min(cell_len_in_bits+cell_headers_in_bits,
                                MAX_CELL_LENGTH_IN_BITS)
 
-        #print [global_args["multiplexer_outgoing"].peek(stream_id)[:32],
-        #       global_args["multiplexer_outgoing"].peek(stream_id)[-32:]]
         cell = global_args["multiplexer_outgoing"].pop(
             local_args["model_uuid"], local_args["model_instance_id"], cell_len_in_bits)
         ptxt = cell.to_string()
-        #print [bits_in_buffer, cell_len_in_bits, cell.get_payload()[:32], cell.get_payload()[-32:]]
 
         ctxt = fteObj.encode(ptxt)
         ctxt_len = len(ctxt)
