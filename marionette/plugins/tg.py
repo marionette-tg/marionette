@@ -52,8 +52,8 @@ def recv(channel, global_args, local_args, input_args):
             cell_obj = marionette.record_layer.unserialize(cell_str)
             assert cell_obj.get_model_uuid() == local_args["model_uuid"]
 
-            if cell_obj.get_seq_id() == 1:
-                local_args["model_instance_id"] = cell_obj.get_model_instance_id()
+            #if cell_obj.get_seq_id() == 1:
+            local_args["model_instance_id"] = cell_obj.get_model_instance_id()
             ##
 
             if local_args.get("model_instance_id"):
@@ -64,8 +64,8 @@ def recv(channel, global_args, local_args, input_args):
         pass
     except socket.error as e:
         pass
-    except Exception as e:
-        print('exception6', e)
+    except marionette.record_layer.UnserializeException as e:
+        pass
 
     if not retval:
         channel.rollback()
@@ -104,7 +104,6 @@ def execute_handler_sender(global_args, local_args, grammar, handler_key,
                                local_args["model_instance_id"],
                                cell_len_in_bits)
         to_embed = cell.to_string()
-        #local_args["sequence_id"] += 1
     value_to_embed = to_execute.encode(template, to_embed)
     template = do_embed(grammar, template, handler_key, value_to_embed)
 

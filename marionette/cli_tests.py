@@ -38,7 +38,7 @@ class Tests(unittest.TestCase):
 
     def dodownload_serial(self):
         total_elapsed = 0
-        for i in range(1,11):
+        for i in range(1,2):
             start = time.time()
 
             exec_download()
@@ -51,7 +51,7 @@ class Tests(unittest.TestCase):
     def dodownload_parallel(self):
         simultaneous = 10
         total_elapsed = 0
-        for i in range(1,11):
+        for i in range(1,2):
             start = time.time()
 
             threads = []
@@ -72,7 +72,9 @@ class Tests(unittest.TestCase):
         print ''
         for format in [
                 'http_simple_blocking',
+                'http_squid_blocking',
                 'http_simple_nonblocking',
+                'http_simple_blocking_with_msg_lens',
                 'ssh_simple_nonblocking',
                 'smb_simple_nonblocking',
                        ]:

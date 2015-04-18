@@ -79,7 +79,8 @@ class BufferOutgoing(object):
             # determine if we should terminate the stream
             if self.fifo_.get(stream_id) == '' and stream_id in self.terminate_:
                 cell_obj = marionette.record_layer.Cell(model_uuid, model_instance_id, stream_id,
-                                    sequence_id, 0, marionette.record_layer.END_OF_STREAM)
+                                    sequence_id, n, marionette.record_layer.END_OF_STREAM)
+
                 self.terminate_.remove(stream_id)
                 del self.fifo_[stream_id]
                 return cell_obj

@@ -157,7 +157,8 @@ def unserialize(cell_str):
     seq_id = bytes_to_long(cell_str[20:24])
     cell_type = bytes_to_long(cell_str[24:25])
 
-    assert cell_len == len(cell_str)
+    if cell_len != len(cell_str):
+        raise UnserializeException()
 
     payload = cell_str[PAYLOAD_HEADER_SIZE_IN_BYTES:
                        PAYLOAD_HEADER_SIZE_IN_BYTES + payload_len]
@@ -166,3 +167,6 @@ def unserialize(cell_str):
     retval.set_payload(payload)
 
     return retval
+
+class UnserializeException(Exception):
+    pass
