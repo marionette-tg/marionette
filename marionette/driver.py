@@ -110,7 +110,7 @@ def parseMarionetteFormat(mar_str):
                 settings.add_action(action)
                 continue
 
-            comp_action_cmd = ''
+            comp_action_cmd = action_cmd
             for module in ['ftem', 'tg']:
                 if module+".send" in action_cmd:
                     comp_action_cmd = string.replace(action_cmd,
@@ -257,8 +257,7 @@ class Driver(object):
         settings = parseMarionetteFormat(mar_str)
 
         first_sender = 'client'
-        if format_name in ["http_probabilistic_blocking_server_first",
-                           "ftp_pasv_transfer_get"]:
+        if format_name in ["ftp_pasv_transfer"]:
             first_sender = "server"
 
         executable = marionette.PA.PA(self.party_, first_sender)

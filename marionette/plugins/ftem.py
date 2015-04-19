@@ -24,7 +24,6 @@ def send(channel, global_args, local_args, input_args, blocking=True):
     msg_len = int(input_args[1])
 
     stream_id = global_args["multiplexer_outgoing"].has_data_for_any_stream()
-    #print [stream_id, blocking]
     if stream_id or blocking:
         fte_key = 'fte_key-' + regex + str(msg_len)
         fteObj = global_args[fte_key]
@@ -47,7 +46,7 @@ def send(channel, global_args, local_args, input_args, blocking=True):
 
         ctxt = fteObj.encode(ptxt)
         ctxt_len = len(ctxt)
-
+        #print ['s', local_args["model_uuid"], regex, ctxt[:128]]
         while len(ctxt) > 0:
             try:
                 bytes_sent = channel.send(ctxt)
@@ -69,32 +68,30 @@ def recv(channel, global_args, local_args, input_args, blocking=True):
     fte_key = 'fte_key-' + regex + str(msg_len)
     fteObj = global_args[fte_key]
 
-    while True:
-        try:
-            ctxt = channel.recv()
-            if len(ctxt) >= msg_len:
-                [ptxt, remainder] = fteObj.decode(ctxt)
+    #while True:
+    try:
+        ctxt = channel.recv()
+        #print ['r', local_args["model_uuid"], regex, ctxt[:128]]
+        if len(ctxt) >= msg_len:
+            [ptxt, remainder] = fteObj.decode(ctxt)
 
-                cell_obj = marionette.record_layer.unserialize(ptxt)
-                assert cell_obj.get_model_uuid() == local_args["model_uuid"]
+            cell_obj = marionette.record_layer.unserialize(ptxt)
+            assert cell_obj.get_model_uuid() == local_args["model_uuid"]
 
-                local_args["model_instance_id"] = cell_obj.get_model_instance_id()
-                if local_args.get("model_instance_id"):
-                    if cell_obj.get_stream_id()>0:
-                        global_args["multiplexer_incoming"].push(ptxt)
-                    retval = True
-        except fte.encrypter.RecoverableDecryptionError as e:
-            retval = False
+            local_args["model_instance_id"] = cell_obj.get_model_instance_id()
+            if local_args.get("model_instance_id"):
+                if cell_obj.get_stream_id()>0:
+                    global_args["multiplexer_incoming"].push(ptxt)
+                retval = True
+    except fte.encrypter.RecoverableDecryptionError as e:
+        retval = False
+    except Exception as e:
+        retval = False
 
-        if not retval:
-            channel.rollback()
-        else:
-            if len(remainder) > 0:
-                channel.rollback(len(remainder))
-
-        if blocking and not retval:
-            continue
-        else:
-            break
+    if not retval:
+        channel.rollback()
+    else:
+        if len(remainder) > 0:
+            channel.rollback(len(remainder))
 
     return retval

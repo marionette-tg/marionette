@@ -71,9 +71,11 @@ class Tests(unittest.TestCase):
     def test_cli_curl(self):
         print ''
         for format in [
+                'ftp_simple_blocking',
                 'http_simple_blocking',
                 'http_squid_blocking',
                 'http_simple_nonblocking',
+                'http_probabilistic_blocking',
                 'http_simple_blocking_with_msg_lens',
                 'ssh_simple_nonblocking',
                 'smb_simple_nonblocking',

@@ -1,0 +1,55 @@
+connection(tcp, 2121):
+    start ready do_ready 1
+    ready username do_username 1
+    username username_ok do_username_ok 1
+    username_ok password do_password 1
+    password password_ok do_password_ok 1
+    password_ok pasv_mode do_pasv_mode 1
+    pasv_mode pasv_mode_ok do_pasv_mode_ok 1
+    pasv_mode_ok ftp_get_file_request do_ftp_get_file_request 1
+    ftp_get_file_request ftp_get_file_response_started do_ftp_get_file_response_started 1
+    ftp_get_file_response_started ftp_pasv_transfer do_ftp_pasv_transfer 1
+    ftp_pasv_transfer ftp_pasv_transfer_ok do_ftp_pasv_transfer_ok 1
+    ftp_pasv_transfer_ok sign_off_quit do_sign_off_quit 1
+    sign_off_quit sign_off_ok do_sign_off_ok 1
+    sign_off_ok end NULL 1
+    
+action do_ready:
+    server io.puts("220 My FTP Server.\n")
+
+action do_username:
+    client io.puts("USER MyUsername\n")
+
+action do_username_ok:
+    server io.puts("Password required for MyUsername\n")
+
+action do_password:
+    client tg.send("pop3_password")
+
+action do_password_ok:
+    server io.puts("230 User MyUsername logged in.\n")
+    
+action do_pasv_mode:
+    client io.puts("PASV\n")
+
+action do_pasv_mode_ok:
+    server io.puts("227 Entering Passive Mode (127,0,0,1,195,86).\n")
+
+action do_ftp_get_file_request:
+    client io.puts("get MyFile.mp3\n")
+
+action do_ftp_get_file_response_started:
+    server io.puts("150 Data connection starting for MyFile.mp3.\n")
+
+action do_ftp_pasv_transfer:
+    server model.spawn("ftp_pasv_transfer", 1)
+    client model.spawn("ftp_pasv_transfer", 1)
+
+action do_ftp_pasv_transfer_ok:
+    server io.puts("226 Transfer Complete.\n")
+    
+action do_sign_off_quit:
+    client io.puts("quit\n")
+
+action do_sign_off_ok:
+    server io.puts("221 Goodbye.\n")
