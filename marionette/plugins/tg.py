@@ -568,7 +568,6 @@ def pop3_password_parser(msg):
         assert msg.endswith('\n')
         retval["PASSWORD"] = msg[5:-1]
     except Exception as e:
-        print(e)
         retval = {}
 
     return retval

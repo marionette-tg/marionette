@@ -109,6 +109,8 @@ class PA(threading.Thread):
     def transition(self):
         retval = False
 
+        #print ['derp',self.local_args_.get("rng"),
+        #       self.local_args_.get("model_instance_id")]
         if not self.local_args_.get("rng") and self.local_args_.get(
             "model_instance_id"):
             self.local_args_["rng"] = random.Random()
@@ -140,7 +142,6 @@ class PA(threading.Thread):
 
             success = True
             for action in actions_to_execute:
-                #print action
                 action_retval = self.eval_action(action, self.channel_)
                 if not action_retval:
                     success = False

@@ -1,0 +1,25 @@
+connection(tcp, 8080):
+  start http_get http_get 0.5
+  start http_post http_post 0.5
+  http_get http10_ok http10_ok 0.5
+  http_get http11_ok http11_ok 0.5
+  http_post http10_ok http10_ok 0.5
+  http_post http11_ok http11_ok 0.5
+  http10_ok http_get NULL 0.33
+  http10_ok http_post NULL 0.33
+  http10_ok end NULL 0.33
+  http11_ok http_get NULL 0.33
+  http11_ok http_post NULL 0.33
+  http11_ok end NULL 0.33
+
+action http_get:
+  client ftem.send("GET\s/.*", 128)
+
+action http10_ok:
+  server ftem.send("HTTP/1\.0.*", 128)
+
+action http_post:
+  client ftem.send("POST\s/.*", 128)
+
+action http11_ok:
+  server ftem.send("HTTP/1\.1.*", 128)
