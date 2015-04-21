@@ -8,10 +8,10 @@ from twisted.internet import protocol
 from twisted.internet import reactor
 from twisted.python import log
 
-
 sys.path.append(".")
 
 import marionette
+import marionette.conf
 
 REMOTE_IP   = str(sys.argv[1])
 REMOTE_PORT = int(sys.argv[2])
@@ -89,7 +89,8 @@ class ProxyServer(object):
 
 
 if __name__ == "__main__":
-    #log.startLogging(sys.stdout)
+    if marionette.conf.get("general.debug"):
+        log.startLogging(sys.stdout)
 
     server = marionette.Server(FORMAT)
     server.factory = ProxyServer

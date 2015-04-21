@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from twisted.python import log
 import sys
 
+from twisted.python import log
 from twisted.web import server, resource
 from twisted.internet import reactor
+
+sys.path.append('.')
+
+import marionette.conf
 
 LOCAL_PORT  = int(sys.argv[1])
 
@@ -19,6 +23,8 @@ class GetResource(resource.Resource):
         return retval
 
 if __name__ == "__main__":
-    #log.startLogging(sys.stdout)
+    if marionette.conf.get("general.debug"):
+        log.startLogging(sys.stdout)
+
     reactor.listenTCP(LOCAL_PORT, server.Site(GetResource()))
     reactor.run()
