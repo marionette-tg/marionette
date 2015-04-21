@@ -469,12 +469,14 @@ def generate_template(grammar):
 
 templates = {}
 
+server_listen_iface = marionette.conf.get("server.listen_iface")
+
 templates["http_request_keep_alive"] = [
-    "GET http://127.0.0.1:8080/%%URL%% HTTP/1.1\r\nUser-Agent: marionette 0.1\r\nConnection: keep-alive\r\n\r\n",
+    "GET http://"+server_listen_iface+":8080/%%URL%% HTTP/1.1\r\nUser-Agent: marionette 0.1\r\nConnection: keep-alive\r\n\r\n",
 ]
 
 templates["http_request_close"] = [
-    "GET http://127.0.0.1:8080/%%URL%% HTTP/1.1\r\nUser-Agent: marionette 0.1\r\nConnection: close\r\n\r\n",
+    "GET http://"+server_listen_iface+":8080/%%URL%% HTTP/1.1\r\nUser-Agent: marionette 0.1\r\nConnection: close\r\n\r\n",
 ]
 
 templates["http_response_keep_alive"] = [

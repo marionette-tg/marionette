@@ -1,0 +1,14 @@
+connection(tcp, 8082):
+  start      handshake  NULL               1.0
+  handshake  upstream   upstream_handshake 1.0
+  upstream   downstream upstream_async     1.0
+  downstream upstream   downstream_async   1.0
+
+action upstream_handshake:
+  client ftem.send("^.*$", 128)
+
+action upstream_async:
+  client ftem.send_async("^.*$", 128)
+
+action downstream_async:
+  server ftem.send_async("^.*$", 128)

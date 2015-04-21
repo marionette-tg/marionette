@@ -1,9 +1,10 @@
+
+
 import socket
 import math
 
 import fte.encoder
 import marionette.record_layer
-import time
 
 MAX_CELL_LENGTH_IN_BITS = (2 ** 16) * 8
 

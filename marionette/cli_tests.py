@@ -4,11 +4,16 @@ import httplib
 import unittest
 import threading
 
+import marionette.conf
+
+
 def execute(cmd):
     os.system(cmd)
 
+
 def exec_download():
-    conn = httplib.HTTPConnection("127.0.0.1", 18079, False, timeout=10)
+    client_listen_iface = marionette.conf.get("client.listen_iface")
+    conn = httplib.HTTPConnection(client_listen_iface, 18079, False, timeout=10)
     conn.request("GET", "/")
     response = conn.getresponse()
     actual_response = response.read()
@@ -25,11 +30,14 @@ def exec_download():
 class Tests(unittest.TestCase):
 
     def startservers(self, format):
+        client_listen_iface = marionette.conf.get("client.listen_iface")
+        server_proxy_iface = marionette.conf.get("server.proxy_iface")
+
         execute("./bin/httpserver 18081 %s &" % format)
         time.sleep(1)
-        execute("./bin/marionette_server 127.0.0.1 18081 %s &" % format)
+        execute("./bin/marionette_server %s 18081 %s &" % (server_proxy_iface, format))
         time.sleep(1)
-        execute("./bin/marionette_client 127.0.0.1 18079 %s &" % format)
+        execute("./bin/marionette_client %s 18079 %s &" % (client_listen_iface, format))
         time.sleep(1)
 
     def stopservers(self):
@@ -38,40 +46,23 @@ class Tests(unittest.TestCase):
         execute("pkill -9 -f httpserver")
 
     def dodownload_serial(self):
-        total_elapsed = 0
-        for i in range(1,11):
-            start = time.time()
-
-            exec_download()
-
-            elapsed = time.time() - start
-            total_elapsed += elapsed
-
-            #print ['serial-1', i, elapsed, total_elapsed/i]
+        exec_download()
 
     def dodownload_parallel(self):
         simultaneous = 10
-        total_elapsed = 0
-        for i in range(1,2):
-            start = time.time()
-
-            threads = []
-            for j in range(simultaneous):
-                t = threading.Thread(target=exec_download)
-                threads.append(t)
-            for t in threads:
-                t.start()
-            for t in threads:
-                t.join()
-
-            elapsed = time.time() - start
-            total_elapsed += elapsed
-
-            #print ['parallel-'+str(simultaneous), i, elapsed, total_elapsed/i]
+        threads = []
+        for j in range(simultaneous):
+            t = threading.Thread(target=exec_download)
+            threads.append(t)
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
 
     def test_cli_curl(self):
         print ''
         for format in [
+                'dummy',
                 'http_timings',
                 'ftp_simple_blocking',
                 'http_simple_blocking',

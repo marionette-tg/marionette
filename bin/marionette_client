@@ -43,7 +43,7 @@ class ProxyClient(protocol.Protocol):
 
 
 if __name__ == "__main__":
-    if marionette.conf["general.debug"]:
+    if marionette.conf.get("general.debug"):
         log.startLogging(sys.stdout)
 
     client = marionette.Client(FORMAT)
