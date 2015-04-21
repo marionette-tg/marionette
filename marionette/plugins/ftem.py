@@ -3,6 +3,7 @@ import math
 
 import fte.encoder
 import marionette.record_layer
+import time
 
 MAX_CELL_LENGTH_IN_BITS = (2 ** 16) * 8
 
@@ -46,7 +47,6 @@ def send(channel, global_args, local_args, input_args, blocking=True):
 
         ctxt = fteObj.encode(ptxt)
         ctxt_len = len(ctxt)
-        #print ['s', local_args["model_uuid"], regex, ctxt[:128]]
         while len(ctxt) > 0:
             try:
                 bytes_sent = channel.send(ctxt)
@@ -68,10 +68,8 @@ def recv(channel, global_args, local_args, input_args, blocking=True):
     fte_key = 'fte_key-' + regex + str(msg_len)
     fteObj = global_args[fte_key]
 
-    #while True:
     try:
         ctxt = channel.recv()
-        #print ['r', local_args["model_uuid"], regex, ctxt[:128]]
         if len(ctxt) >= msg_len:
             [ptxt, remainder] = fteObj.decode(ctxt)
 

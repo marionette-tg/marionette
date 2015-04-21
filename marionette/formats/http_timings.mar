@@ -1,0 +1,14 @@
+connection(tcp, 8081):
+  start  client       http_get      1.0
+  client server_delay http_ok_delay 1.0
+  server_delay server http_ok       1.0
+  server end          NULL          1.0
+
+action http_get:
+  client ftem.send("^GET\ \/([a-zA-Z0-9\.\/]*) HTTP/1\.1\r\n\r\n$", 128)
+
+action http_ok:
+  server ftem.send("^HTTP/1\.1\ 200 OK\r\nContent-Type:\ ([a-zA-Z0-9]+)\r\n\r\n\C*$", 128)
+
+action http_ok_delay:
+  server model.sleep({'0.025':0.25,'0.050':0.25,'0.075':0.25,'0.1':0.25})

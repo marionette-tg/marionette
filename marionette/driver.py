@@ -93,23 +93,17 @@ def parseMarionetteFormat(mar_str):
                                    line.strip().split(' ')[2],
                                    line.strip().split(' ')[3])
         if mode == "action":
-            action = marionette.action.MarionetteAction(action_name,
-                                      line.strip().split(' ')[0],
-                                      ' '.join(line.strip().split(' ')[1:]))
-            settings.add_action(action)
-
-            # add complementatry action
             party = line.strip().split(' ')[0]
             action_cmd = ' '.join(line.strip().split(' ')[1:])
-            comp_party = "server" if party=="client" else "client"
+            action = marionette.action.MarionetteAction(action_name,
+                                                        party,
+                                                        action_cmd)
+            settings.add_action(action)
 
-            if action_cmd.startswith("module"):
-                action = marionette.action.MarionetteAction(action_name,
-                                                            comp_party,
-                                                            action_cmd)
-                settings.add_action(action)
+            if action_cmd.startswith("model"):
                 continue
 
+            comp_party = "server" if party=="client" else "client"
             comp_action_cmd = action_cmd
             for module in ['ftem', 'tg']:
                 if module+".send" in action_cmd:

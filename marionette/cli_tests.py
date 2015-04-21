@@ -8,7 +8,7 @@ def execute(cmd):
     os.system(cmd)
 
 def exec_download():
-    conn = httplib.HTTPConnection("127.0.0.1", 18079, False, timeout=5)
+    conn = httplib.HTTPConnection("127.0.0.1", 18079, False, timeout=10)
     conn.request("GET", "/")
     response = conn.getresponse()
     actual_response = response.read()
@@ -26,6 +26,7 @@ class Tests(unittest.TestCase):
 
     def startservers(self, format):
         execute("./bin/httpserver 18081 %s &" % format)
+        time.sleep(1)
         execute("./bin/marionette_server 127.0.0.1 18081 %s &" % format)
         time.sleep(1)
         execute("./bin/marionette_client 127.0.0.1 18079 %s &" % format)
@@ -38,7 +39,7 @@ class Tests(unittest.TestCase):
 
     def dodownload_serial(self):
         total_elapsed = 0
-        for i in range(1,2):
+        for i in range(1,11):
             start = time.time()
 
             exec_download()
@@ -71,6 +72,7 @@ class Tests(unittest.TestCase):
     def test_cli_curl(self):
         print ''
         for format in [
+                'http_timings',
                 'ftp_simple_blocking',
                 'http_simple_blocking',
                 'http_squid_blocking',

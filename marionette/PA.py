@@ -37,8 +37,6 @@ class PA(threading.Thread):
         self.local_args_["current_state"] = "start"
         self.local_args_["next_state"] = None
         self.local_args_["state_history"] = []
-        #self.local_args_["sequence_id"] = 0
-        #traceback.print_stack()
 
         self.multiplexer_outgoing_ = None
         self.multiplexer_incoming_ = None
