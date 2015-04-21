@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import string
+import hashlib
+
+import fte.bit_ops
 
 import marionette.action
 
@@ -43,7 +46,7 @@ class MarionetteSettings(object):
         return self.actions_
 
 
-def loads(mar_str):
+def str_to_settings(mar_str):
     settings = MarionetteSettings()
     connection_type = None
     connection_port = None
@@ -113,3 +116,41 @@ def loads(mar_str):
     settings.setPort(connection_port)
 
     return settings
+
+def load(party, format_name):
+    with open("marionette/formats/" + format_name + ".mar") as f:
+        mar_str = f.read()
+
+    settings = str_to_settings(mar_str)
+
+    first_sender = 'client'
+    if format_name in ["ftp_pasv_transfer"]:
+        first_sender = "server"
+
+    executable = marionette.PA.PA(party, first_sender)
+    executable.set_transport(settings.getTransport())
+    executable.set_port(settings.getPort())
+    executable.local_args_["model_uuid"] = get_model_uuid(mar_str)
+    for transition in settings.getTransitions():
+        executable.add_state(transition[0])
+        executable.add_state(transition[1])
+        executable.states_[transition[0]].add_transition(transition[1],
+                                                         transition[2],
+                                                         transition[3])
+    executable.actions_ = settings.get_actions()
+
+    if executable.states_.get("end"):
+        executable.add_state("dead")
+        executable.states_["end"].add_transition("dead", 'NULL', 1)
+        executable.states_["dead"].add_transition("dead", 'NULL', 1)
+
+    executable.build_cache()
+
+    return executable
+
+
+def get_model_uuid(format_str):
+    m = hashlib.md5()
+    m.update(format_str)
+    bytes = m.digest()
+    return fte.bit_ops.bytes_to_long(bytes[:4])

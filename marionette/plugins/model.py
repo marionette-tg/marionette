@@ -1,6 +1,7 @@
 import time
 import random
 
+import marionette
 import marionette.driver
 
 def sleep(channel, global_args, local_args, input_args, blocking=True):
@@ -30,12 +31,21 @@ def spawn(channel, global_args, local_args, input_args, blocking=True):
     format_name_ = input_args[0]
     num_models = int(input_args[1])
 
-    driver = marionette.driver.Driver(local_args["party"])
+    if local_args["party"] == 'server':
+        driver = marionette.driver.ServerDriver(local_args["party"])
+    elif local_args["party"] == 'client':
+        driver = marionette.driver.ClientDriver(local_args["party"])
+
     driver.set_multiplexer_incoming(global_args["multiplexer_incoming"])
     driver.set_multiplexer_outgoing(global_args["multiplexer_outgoing"])
     driver.setFormat(format_name_)
 
-    driver.one_execution_cycle(num_models)
-    driver.stop()
+    if local_args["party"] == 'server':
+        while driver.num_executables_completed_ < num_models:
+            driver.execute()
+    elif local_args["party"] == 'client':
+        driver.reset(num_models)
+        while driver.isRunning():
+            driver.execute()
 
     return True

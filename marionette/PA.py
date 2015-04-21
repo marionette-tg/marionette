@@ -2,13 +2,24 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
 import random
+import socket
+import struct
 import importlib
 import threading
 
 import regex2dfa
 import fte.encoder
 import fte.bit_ops
+
+sys.path.append('.')
+
+import marionette.channel
+import marionette.conf
+
+SERVER_IFACE = marionette.conf.get("server.listen_iface")
+SERVER_TIMEOUT = 0.001
 
 
 class PA(threading.Thread):
@@ -38,6 +49,8 @@ class PA(threading.Thread):
         self.local_args_["next_state"] = None
         self.local_args_["state_history"] = []
 
+        self.global_args_['listening_socket'] = {}
+
         self.multiplexer_outgoing_ = None
         self.multiplexer_incoming_ = None
         self.port_ = None
@@ -50,6 +63,45 @@ class PA(threading.Thread):
         self.running_.set()
         while self.running_.is_set() and self.isRunning():
             self.transition()
+        self.channel_.close()
+
+    def openNewChannel(self):
+        port = self.get_port()
+        assert port
+
+        for i in range(10):
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect((SERVER_IFACE, int(port)))
+                channel = marionette.channel.new(s)
+            except Exception as e:
+                channel = None
+            finally:
+                if channel: break
+
+        return channel
+
+    def acceptNewChannel(self):
+        port = self.get_port()
+        assert port
+
+        if not self.global_args_['listening_socket'].get(port):
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
+                         struct.pack('ii', 0, 0))
+            s.bind((SERVER_IFACE, int(port)))
+            s.listen(5)
+            s.settimeout(SERVER_TIMEOUT)
+            self.global_args_['listening_socket'][port] = s
+
+        try:
+            conn, addr = self.global_args_['listening_socket'][port].accept()
+            channel = marionette.channel.new(conn)
+        except socket.timeout:
+            channel = None
+
+        return channel
 
     def build_cache(self):
         # do fte stuff
@@ -107,8 +159,11 @@ class PA(threading.Thread):
     def transition(self):
         retval = False
 
-        #print ['derp',self.local_args_.get("rng"),
-        #       self.local_args_.get("model_instance_id")]
+        if not self.get_channel():
+            if self.local_args_["party"] == "client":
+                channel = self.openNewChannel()
+                self.set_channel(channel)
+
         if not self.local_args_.get("rng") and self.local_args_.get(
             "model_instance_id"):
             self.local_args_["rng"] = random.Random()
@@ -153,6 +208,18 @@ class PA(threading.Thread):
                 break
 
         return retval
+
+    def spawn(self):
+        retval = None
+
+        if self.local_args_["party"] == "server":
+            channel = self.acceptNewChannel()
+            if channel:
+                retval = self.replicate()
+                retval.set_channel(channel)
+
+        return retval
+
 
     def replicate(self):
         retval = PA(self.local_args_["party"], self.first_sender_)

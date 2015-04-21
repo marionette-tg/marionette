@@ -6,6 +6,10 @@ import marionette.multiplexer
 import marionette.record_layer
 
 
+class MarionetteException(Exception):
+    pass
+
+
 class Client(object):
     def __init__(self, format_name):
         self.multiplexer_outgoing_ = marionette.multiplexer.BufferOutgoing()
@@ -15,7 +19,7 @@ class Client(object):
         self.streams_ = {}
         self.stream_counter_ = 1
 
-        self.driver = marionette.driver.Driver("client")
+        self.driver = marionette.driver.ClientDriver("client")
         self.driver.set_multiplexer_incoming(self.multiplexer_incoming_)
         self.driver.set_multiplexer_outgoing(self.multiplexer_outgoing_)
         self.driver.setFormat(self.format_name_)
@@ -61,7 +65,7 @@ class Server(object):
         self.multiplexer_incoming_.addCallback(self.process_multiplexer_incoming)
         self.format_name_ = format_name
 
-        self.driver_ = marionette.driver.Driver("server")
+        self.driver_ = marionette.driver.ServerDriver("server")
         self.driver_.set_multiplexer_incoming(self.multiplexer_incoming_)
         self.driver_.set_multiplexer_outgoing(self.multiplexer_outgoing_)
         self.driver_.setFormat(self.format_name_)
