@@ -4,6 +4,8 @@
 import time
 import random
 
+from twisted.internet import reactor
+
 import marionette
 import marionette.driver
 
@@ -45,10 +47,10 @@ def spawn(channel, marionette_state, input_args, blocking=True):
 
     if marionette_state.get_local("party") == 'server':
         while driver.num_executables_completed_ < num_models:
-            driver.execute()
+            driver.execute(reactor)
     elif marionette_state.get_local("party") == 'client':
         driver.reset(num_models)
         while driver.isRunning():
-            driver.execute()
+            driver.execute(reactor)
 
     return True
