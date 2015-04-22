@@ -63,12 +63,6 @@ class ServerDriver(object):
         self.multiplexer_outgoing_ = None
         self.multiplexer_incoming_ = None
 
-    def __del__(self):
-        for executable in self.running_:
-            executable.join()
-
-        super(ServerDriver, self).__del__()
-
     def execute(self):
         while True:
             new_executable = self.executable_.check_for_incoming_connections()
