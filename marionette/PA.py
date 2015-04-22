@@ -128,7 +128,7 @@ class PA(threading.Thread):
                         args.append(arg[1:-1])
                     else:
                         args.append(arg)
-                i = importlib.import_module("marionette.plugins." + module)
+                i = importlib.import_module("marionette.plugins._" + module)
                 self.marionette_state_.set_global(action_key, [getattr(i, function), args])
 
         for src_state in self.states_:
@@ -285,16 +285,23 @@ class PAState(object):
 class MarionetteSystemState(object):
     def __init__(self):
         self.global_ = {}
+        self.global_lock_ = threading.RLock()
+
         self.local_ = {}
+        self.local_lock_ = threading.RLock()
 
     def set_global(self, key, val):
-        self.global_[key] = val
+        with self.global_lock_:
+            self.global_[key] = val
 
     def get_global(self, key):
-        return self.global_.get(key)
+        with self.global_lock_:
+            return self.global_.get(key)
 
     def set_local(self, key, val):
-        self.local_[key] = val
+        with self.local_lock_:
+            self.local_[key] = val
 
     def get_local(self, key):
-        return self.local_.get(key)
+        with self.local_lock_:
+            return self.local_.get(key)

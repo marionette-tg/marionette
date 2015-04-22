@@ -5,10 +5,10 @@ connection(tcp, 8082):
   downstream upstream   downstream_async   1.0
 
 action upstream_handshake:
-  client ftem.send("^.*$", 128)
+  client fte.send("^.*$", 128)
 
 action upstream_async:
-  client ftem.send_async("^.*$", 128)
+  client fte.send_async("^.*$", 128)
 
 action downstream_async:
-  server ftem.send_async("^.*$", 128)
+  server fte.send_async("^.*$", 128)

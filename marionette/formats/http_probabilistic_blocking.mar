@@ -13,13 +13,13 @@ connection(tcp, 8080):
   http11_ok end NULL 0.33
 
 action http_get:
-  client ftem.send("GET\s/.*", 128)
+  client fte.send("GET\s/.*", 128)
 
 action http10_ok:
-  server ftem.send("HTTP/1\.0.*", 128)
+  server fte.send("HTTP/1\.0.*", 128)
 
 action http_post:
-  client ftem.send("POST\s/.*", 128)
+  client fte.send("POST\s/.*", 128)
 
 action http11_ok:
-  server ftem.send("HTTP/1\.1.*", 128)
+  server fte.send("HTTP/1\.1.*", 128)

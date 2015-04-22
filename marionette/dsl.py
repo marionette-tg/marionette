@@ -95,7 +95,7 @@ def str_to_settings(mar_str):
 
             comp_party = "server" if party=="client" else "client"
             comp_action_cmd = action_cmd
-            for module in ['ftem', 'tg']:
+            for module in ['fte', 'tg']:
                 if module+".send" in action_cmd:
                     comp_action_cmd = string.replace(action_cmd,
                                                      module+".send",

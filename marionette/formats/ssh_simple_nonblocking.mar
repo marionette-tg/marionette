@@ -5,10 +5,10 @@ connection(tcp, 8022):
   server    client    server_send          1.0
 
 action client_send_blocking:
-  client ftem.send("^SSH\-2\.0\C*$", 128)
+  client fte.send("^SSH\-2\.0\C*$", 128)
 
 action client_send:
-  client ftem.send_async("^SSH\-2\.0\C*$", 128)
+  client fte.send_async("^SSH\-2\.0\C*$", 128)
 
 action server_send:
-  server ftem.send_async("^SSH\-2\.0\C*$", 128)
+  server fte.send_async("^SSH\-2\.0\C*$", 128)

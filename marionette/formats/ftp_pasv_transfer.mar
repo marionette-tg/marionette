@@ -3,4 +3,4 @@ connection(tcp, 50006):
     ftp_pasv_transfer end NULL 1
 
 action do_ftp_pasv_transfer:
-    server ftem.send("ID3.*", 512)
+    server fte.send("ID3.*", 512)

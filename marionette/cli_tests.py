@@ -2,10 +2,13 @@
 # coding: utf-8
 
 import os
+import sys
 import time
 import httplib
 import unittest
 import threading
+
+sys.path.append('.')
 
 import marionette.conf
 

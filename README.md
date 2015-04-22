@@ -62,10 +62,10 @@ connection(tcp, 80):
   server end    http_ok  1.0
 
 action http_get:
-  client ftem.send("^GET\ \/([a-zA-Z0-9\.\/]*) HTTP/1\.1\r\n\r\n$", 128)
+  client fte.send("^GET\ \/([a-zA-Z0-9\.\/]*) HTTP/1\.1\r\n\r\n$", 128)
 
 action http_ok:
-  server ftem.send("^HTTP/1\.1\ 200 OK\r\nContent-Type:\ ([a-zA-Z0-9]+)\r\n\r\n\C*$", 128)
+  server fte.send("^HTTP/1\.1\ 200 OK\r\nContent-Type:\ ([a-zA-Z0-9]+)\r\n\r\n\C*$", 128)
 ```
 
 ### Asynchronous HTTP
@@ -78,13 +78,13 @@ connection(tcp, 80):
   downstream upstream   http_ok           1.0
 
 action http_get_blocking:
-  client ftem.send("^GET\ \/([a-zA-Z0-9\.\/]*) HTTP/1\.1\r\n\r\n$", 128)
+  client fte.send("^GET\ \/([a-zA-Z0-9\.\/]*) HTTP/1\.1\r\n\r\n$", 128)
 
 action http_get:
-  client ftem.send_async("^GET\ \/([a-zA-Z0-9\.\/]*) HTTP/1\.1\r\n\r\n$", 128)
+  client fte.send_async("^GET\ \/([a-zA-Z0-9\.\/]*) HTTP/1\.1\r\n\r\n$", 128)
 
 action http_ok:
-  server ftem.send_async("^HTTP/1\.1\ 200 OK\r\nContent-Type:\ ([a-zA-Z0-9]+)\r\n\r\n\C*$", 128)
+  server fte.send_async("^HTTP/1\.1\ 200 OK\r\nContent-Type:\ ([a-zA-Z0-9]+)\r\n\r\n\C*$", 128)
 ```
 
 ### Nondeterministic HTTP
@@ -105,14 +105,14 @@ connection(tcp, 80):
   http11_ok end NULL 0.33
 
 action http_get:
-  client ftem.send("GET\s/.*", 128)
+  client fte.send("GET\s/.*", 128)
 
 action http10_ok:
-  server ftem.send("HTTP/1\.0.*", 128)
+  server fte.send("HTTP/1\.0.*", 128)
 
 action http_post:
-  client ftem.send("POST\s/.*", 128)
+  client fte.send("POST\s/.*", 128)
 
 action http11_ok:
-  server ftem.send("HTTP/1\.1.*", 128)
+  server fte.send("HTTP/1\.1.*", 128)
 ```

@@ -85,7 +85,6 @@ class BufferOutgoing(object):
                 del self.fifo_[stream_id]
                 return cell_obj
 
-            # determine if we should proceed normally
             if n > 0:
                 if self.has_data(stream_id):
                     cell_obj = marionette.record_layer.Cell(model_uuid, model_instance_id, stream_id,
@@ -155,7 +154,9 @@ class BufferIncoming(object):
             self.fifo_len_ += len(s)
 
         if self.callback_:
-            reactor.callFromThread(self.callback_)
+            cell_obj = self.pop()
+            if cell_obj:
+                reactor.callFromThread(self.callback_, cell_obj)
 
         return True
 
@@ -171,11 +172,3 @@ class BufferIncoming(object):
                 self.fifo_len_ = max(self.fifo_len_, 0)
 
         return cell_obj
-
-    def peek(self):
-        with self.lock_:
-            return self.fifo_
-
-    def has_data(self):
-        with self.lock_:
-            return (self.fifo_len_ >= 8)

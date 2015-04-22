@@ -40,6 +40,7 @@ class Tests(unittest.TestCase):
 
     def test_serializeUnserialize_offBoundaries1(self):
         buffer = marionette.multiplexer.BufferIncoming()
+        buffer.addCallback(None)
 
         n = 100
 
