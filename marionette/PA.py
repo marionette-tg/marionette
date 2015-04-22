@@ -20,10 +20,10 @@ import marionette.channel
 import marionette.conf
 
 SERVER_IFACE = marionette.conf.get("server.listen_iface")
-SERVER_TIMEOUT = 0.01
+SERVER_TIMEOUT = 0.001
 
 
-class PA(threading.Thread):
+class PA(object):
     def __init__(self, party, first_sender):
         super(PA, self).__init__()
 
@@ -38,7 +38,6 @@ class PA(threading.Thread):
         self.port_ = None
         self.listening_sockets_ = {}
         self.rng_ = None
-        self.running_ = threading.Event()
         self.state_history_ = []
         self.states_ = {}
 
@@ -47,11 +46,12 @@ class PA(threading.Thread):
             self.rng_ = random.Random()
             self.rng_.seed(self.marionette_state_.get_local("model_instance_id"))
 
-    def run(self):
-        self.running_.set()
-        while self.running_.is_set() and self.isRunning():
+    def execute(self, reactor):
+        if self.isRunning():
             self.transition()
-        self.channel_.close()
+            reactor.callInThread(self.execute, reactor)
+        else:
+            self.channel_.close()
 
     def openNewChannel(self):
         port = self.get_port()
@@ -202,7 +202,6 @@ class PA(threading.Thread):
         self.marionette_state_.set_global("multiplexer_incoming", multiplexer)
 
     def stop(self):
-        self.running_.clear()
         self.current_state_ = "dead"
 
     def set_port(self, port):
@@ -239,26 +238,19 @@ class PAState(object):
 class MarionetteSystemState(object):
     def __init__(self):
         self.global_ = {}
-        self.global_lock_ = threading.RLock()
-
         self.local_ = {}
-        self.local_lock_ = threading.RLock()
 
     def set_global(self, key, val):
-        with self.global_lock_:
-            self.global_[key] = val
+        self.global_[key] = val
 
     def get_global(self, key):
-        with self.global_lock_:
-            return self.global_.get(key)
+        return self.global_.get(key)
 
     def set_local(self, key, val):
-        with self.local_lock_:
-            self.local_[key] = val
+        self.local_[key] = val
 
     def get_local(self, key):
-        with self.local_lock_:
-            return self.local_.get(key)
+        return self.local_.get(key)
 
     def get_fte_obj(self, regex, msg_len):
         fte_key = 'fte_obj-'+regex+str(msg_len)

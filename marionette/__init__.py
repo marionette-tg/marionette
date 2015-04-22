@@ -19,16 +19,16 @@ class Client(object):
         self.streams_ = {}
         self.stream_counter_ = 1
 
-        self.driver = marionette.driver.ClientDriver("client")
-        self.driver.set_multiplexer_incoming(self.multiplexer_incoming_)
-        self.driver.set_multiplexer_outgoing(self.multiplexer_outgoing_)
-        self.driver.setFormat(self.format_name_)
+        self.driver_ = marionette.driver.ClientDriver("client")
+        self.driver_.set_multiplexer_incoming(self.multiplexer_incoming_)
+        self.driver_.set_multiplexer_outgoing(self.multiplexer_outgoing_)
+        self.driver_.setFormat(self.format_name_)
 
     def execute(self, reactor):
-        if self.driver.isRunning():
-            self.driver.execute()
+        if self.driver_.isRunning():
+            self.driver_.execute(reactor)
         else:
-            self.driver.reset()
+            self.driver_.reset()
 
         reactor.callInThread(self.execute, reactor)
 
@@ -69,8 +69,7 @@ class Server(object):
         self.factory_instances = {}
 
     def execute(self, reactor):
-        self.driver_.execute()
-
+        self.driver_.execute(reactor)
         reactor.callInThread(self.execute, reactor)
 
     def process_cell(self, cell_obj):

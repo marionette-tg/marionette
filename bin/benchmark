@@ -45,7 +45,7 @@ def stopservers():
 
 def dodownload_serial():
     total = 0
-    trials = 10
+    trials = 1000
     for i in xrange(1,trials+1):
         start = time.time()
         exec_download()

@@ -27,7 +27,7 @@ class Channel(object):
         self.buffer_ = ''
         return retval
 
-    def do_recv(self, bufsize=2 ** 16, select_timeout=0):
+    def do_recv(self, bufsize=2 ** 16, select_timeout=0.001):
         retval = ''
 
         try:

@@ -48,7 +48,6 @@ class MarionetteSettings(object):
 
 def str_to_settings(mar_str):
     settings = MarionetteSettings()
-    connection_type = None
     connection_port = None
     mode = ""
 
@@ -72,7 +71,6 @@ def str_to_settings(mar_str):
         if line.strip().startswith("connection"):
             mode = "connection"
             if "(" in line:
-                connection_type = line.strip()[11:-2].split(',')[0].strip()
                 connection_port = line.strip()[11:-2].split(',')[1].strip()
             continue
 

@@ -19,11 +19,11 @@ class ClientDriver(object):
         self.multiplexer_outgoing_ = None
         self.multiplexer_incoming_ = None
 
-    def execute(self):
+    def execute(self, reactor):
         while len(self.to_start_)>0:
             executable = self.to_start_.pop()
             self.running_.append(executable)
-            executable.start()
+            reactor.callInThread(executable.execute, reactor)
 
         self.running_ = [executable for executable \
                                     in self.running_ \
@@ -63,12 +63,12 @@ class ServerDriver(object):
         self.multiplexer_outgoing_ = None
         self.multiplexer_incoming_ = None
 
-    def execute(self):
+    def execute(self, reactor):
         while True:
             new_executable = self.executable_.check_for_incoming_connections()
             if new_executable is None: break
             self.running_.append(new_executable)
-            new_executable.start()
+            reactor.callInThread(new_executable.execute, reactor)
 
         running_count = len(self.running_)
         self.running_ = [executable for executable \

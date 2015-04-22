@@ -3,9 +3,9 @@
 
 import sys
 
-from twisted.python import log
 from twisted.web import server, resource
 from twisted.internet import reactor
+from twisted.python import log
 
 sys.path.append('.')
 
