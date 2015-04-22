@@ -3,24 +3,16 @@
 
 import os
 import sys
-import time
 import random
-import socket
-import struct
 import importlib
-import threading
+
+sys.path.append('.')
 
 import regex2dfa
 import fte.encoder
 import fte.bit_ops
 
-sys.path.append('.')
-
 import marionette.channel
-import marionette.conf
-
-SERVER_IFACE = marionette.conf.get("server.listen_iface")
-SERVER_TIMEOUT = 0.001
 
 
 class PA(object):
@@ -53,47 +45,10 @@ class PA(object):
         else:
             self.channel_.close()
 
-    def openNewChannel(self):
-        port = self.get_port()
-
-        for i in range(10):
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect((SERVER_IFACE, int(port)))
-                channel = marionette.channel.new(s)
-            except Exception as e:
-                channel = None
-            finally:
-                if channel: break
-                else: time.sleep(i*0.1)
-
-        return channel
-
-    def acceptNewChannel(self):
-        port = self.get_port()
-
-        if not self.listening_sockets_.get(port):
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
-                         struct.pack('ii', 0, 0))
-            s.bind((SERVER_IFACE, int(port)))
-            s.listen(10)
-            s.settimeout(SERVER_TIMEOUT)
-            self.listening_sockets_[port] = s
-
-        try:
-            conn, addr = self.listening_sockets_[port].accept()
-            channel = marionette.channel.new(conn)
-        except socket.timeout:
-            channel = None
-
-        return channel
-
     def check_channel_state(self):
         if self.party_ == "client":
             if not self.channel_:
-                channel = self.openNewChannel()
+                channel = marionette.channel.open_new_channel(self.get_port())
                 self.channel_ = channel
 
     def check_rng_state(self):
@@ -158,7 +113,7 @@ class PA(object):
         retval = None
 
         if self.party_ == "server":
-            channel = self.acceptNewChannel()
+            channel = marionette.channel.accept_new_channel(self.listening_sockets_,self.get_port())
             if channel:
                 retval = self.replicate()
                 retval.channel_ = channel
