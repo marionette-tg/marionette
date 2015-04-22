@@ -28,8 +28,7 @@ def send(channel, marionette_state, input_args, blocking=True):
 
     stream_id = marionette_state.get_global("multiplexer_outgoing").has_data_for_any_stream()
     if stream_id or blocking:
-        fte_key = 'fte_key-' + regex + str(msg_len)
-        fteObj = marionette_state.get_global(fte_key)
+        fteObj = marionette_state.get_fte_obj(regex, msg_len)
 
         bits_in_buffer = len(
             marionette_state.get_global("multiplexer_outgoing").peek(stream_id)) * 8
@@ -67,8 +66,7 @@ def recv(channel, marionette_state, input_args, blocking=True):
     regex = input_args[0]
     msg_len = int(input_args[1])
 
-    fte_key = 'fte_key-' + regex + str(msg_len)
-    fteObj = marionette_state.get_global(fte_key)
+    fteObj = marionette_state.get_fte_obj(regex, msg_len)
 
     try:
         ctxt = channel.recv()

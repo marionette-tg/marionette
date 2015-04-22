@@ -130,7 +130,6 @@ def execute_handler_receiver(marionette_state, grammar, handler_key,
 regex_cache_ = {}
 fte_cache_ = {}
 
-
 class RankerHandler(object):
     def __init__(self, regex, msg_len):
         self.regex_ = regex

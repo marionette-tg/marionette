@@ -44,12 +44,14 @@ def stopservers():
     execute("pkill -9 -f httpserver")
 
 def dodownload_serial():
+    total = 0
     trials = 10
-    for i in range(trials):
+    for i in xrange(1,trials+1):
         start = time.time()
         exec_download()
         elapsed = time.time() - start
-        print elapsed
+        total += elapsed
+        print [i, elapsed, total/i]
 
 def main():
     try:

@@ -3,6 +3,7 @@
 
 import os
 import sys
+import time
 import random
 import socket
 import struct
@@ -19,35 +20,32 @@ import marionette.channel
 import marionette.conf
 
 SERVER_IFACE = marionette.conf.get("server.listen_iface")
-SERVER_TIMEOUT = 0.001
+SERVER_TIMEOUT = 0.01
 
 
 class PA(threading.Thread):
     def __init__(self, party, first_sender):
         super(PA, self).__init__()
 
-        self.states_ = {}
         self.actions_ = []
-        self.marionette_state_ = MarionetteSystemState()
-        self.actions_to_execute_ = {}
-        self.first_sender_ = first_sender
-
-        self.marionette_state_.set_local("party", party)
-
-        if self.marionette_state_.get_local("party") == first_sender:
-            self.marionette_state_.set_local("model_instance_id", fte.bit_ops.bytes_to_long(os.urandom(4)))
-            self.marionette_state_.set_local("rng", random.Random())
-            self.marionette_state_.get_local("rng").seed(self.marionette_state_.get_local("model_instance_id"))
-
-        self.marionette_state_.set_local("current_state", "start")
-        self.marionette_state_.set_local("state_history", [])
-        self.marionette_state_.set_global("listening_socket", {})
-
-        self.port_ = None
         self.channel_ = None
+        self.current_state_ = 'start'
+        self.first_sender_ = first_sender
+        self.next_state_ = None
+        self.marionette_state_ = MarionetteSystemState()
+        self.marionette_state_.set_local("party", party)
+        self.party_ = party
+        self.port_ = None
+        self.listening_sockets_ = {}
+        self.rng_ = None
         self.running_ = threading.Event()
+        self.state_history_ = []
+        self.states_ = {}
 
-        self.build_cache()
+        if self.party_ == first_sender:
+            self.marionette_state_.set_local("model_instance_id", fte.bit_ops.bytes_to_long(os.urandom(4)))
+            self.rng_ = random.Random()
+            self.rng_.seed(self.marionette_state_.get_local("model_instance_id"))
 
     def run(self):
         self.running_.set()
@@ -57,7 +55,6 @@ class PA(threading.Thread):
 
     def openNewChannel(self):
         port = self.get_port()
-        assert port
 
         for i in range(10):
             try:
@@ -68,175 +65,135 @@ class PA(threading.Thread):
                 channel = None
             finally:
                 if channel: break
+                else: time.sleep(i*0.1)
 
         return channel
 
     def acceptNewChannel(self):
         port = self.get_port()
-        assert port
 
-        if not self.marionette_state_.get_global('listening_socket').get(port):
+        if not self.listening_sockets_.get(port):
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
                          struct.pack('ii', 0, 0))
             s.bind((SERVER_IFACE, int(port)))
-            s.listen(5)
+            s.listen(10)
             s.settimeout(SERVER_TIMEOUT)
-            self.marionette_state_.get_global('listening_socket')[port] = s
+            self.listening_sockets_[port] = s
 
         try:
-            conn, addr = self.marionette_state_.get_global('listening_socket')[port].accept()
+            conn, addr = self.listening_sockets_[port].accept()
             channel = marionette.channel.new(conn)
         except socket.timeout:
             channel = None
 
         return channel
 
-    def build_cache(self):
-        # do fte stuff
+    def check_channel_state(self):
+        if self.party_ == "client":
+            if not self.channel_:
+                channel = self.openNewChannel()
+                self.channel_ = channel
+
+    def check_rng_state(self):
+        if not self.rng_:
+            if self.marionette_state_.get_local("model_instance_id"):
+                self.rng_ = random.Random()
+                self.rng_.seed(self.marionette_state_.get_local("model_instance_id"))
+                transitions = len(self.state_history_)
+
+                self.state_history_ = []
+                self.current_state_ = 'start'
+                for i in range(transitions):
+                    self.state_history_.append(self.current_state_)
+                    self.current_state_ = self.states_[self.current_state_].transition(self.rng_)
+                self.next_state_ = None
+
+    def determine_action_block(self, src_state, dst_state):
+        retval = []
         for action in self.actions_:
-            # precompute FTE
-            if action.to_do_.startswith("fte"):
-                args_str = action.to_do_.partition(".")[2].partition(
-                    "(")[2][:-1]
-                args_tmp = args_str.split(', ')
-                args = []
-                for arg in args_tmp:
-                    if len(arg) > 0 and arg[0] == "\"" and arg[-1] == "\"":
-                        args.append(arg[1:-1])
-                    else:
-                        args.append(arg)
-                regex = args[0]
-                msg_len = int(args[1])
-                fte_key = 'fte_key-' + regex + str(msg_len)
-                if not self.marionette_state_.get_global(fte_key):
-                    dfa = regex2dfa.regex2dfa(regex)
-                    self.marionette_state_.set_global(fte_key, fte.encoder.DfaEncoder(dfa, msg_len))
+            action_name = self.states_[src_state].transitions_[dst_state][0]
+            success = action.execute(self.party_, action_name)
+            if success is not None:
+                retval.append(action)
+        return retval
 
-            # load plugin
-            action_key = 'action_key-' + action.to_do_
-            if not self.marionette_state_.get_global(action_key):
-                module = action.to_do_.partition(".")[0]
-                function = action.to_do_.partition(".")[2].partition("(")[0]
-                args_str = action.to_do_.partition(".")[2].partition(
-                    "(")[2][:-1]
-                args_tmp = args_str.split(', ')
-                args = []
-                for arg in args_tmp:
-                    if len(arg) > 0 and arg[0] == "\"" and arg[-1] == "\"":
-                        args.append(arg[1:-1])
-                    else:
-                        args.append(arg)
-                i = importlib.import_module("marionette.plugins._" + module)
-                self.marionette_state_.set_global(action_key, [getattr(i, function), args])
-
-        for src_state in self.states_:
-            for dst_state in self.states_[src_state].transitions_:
-                if not self.marionette_state_.get_global(
-                    'ate-' + src_state + '-' + dst_state):
-                    actions_to_execute = []
-                    for action in self.actions_:
-                        action_name = self.states_[src_state].transitions_[dst_state][0]
-                        retval = action.execute(self.marionette_state_.get_local("party"),
-                                                action_name)
-                        if retval is not None:
-                            actions_to_execute.append(retval)
-                    self.marionette_state_.set_global('ate-' + src_state + '-' + dst_state, actions_to_execute)
-
-    def transition(self):
+    def advance_to_next_state(self):
         retval = False
 
-        if not self.get_channel():
-            if self.marionette_state_.get_local("party") == "client":
-                channel = self.openNewChannel()
-                self.set_channel(channel)
-
-        if not self.marionette_state_.get_local("rng") and self.marionette_state_.get_local("model_instance_id"):
-            self.marionette_state_.set_local("rng", random.Random())
-            self.marionette_state_.get_local("rng").seed(self.marionette_state_.get_local("model_instance_id"))
-            transitions = len(self.marionette_state_.get_local("state_history"))
-
-            self.marionette_state_.set_local("state_history", [])
-            self.marionette_state_.set_local("current_state", 'start')
-            for i in range(transitions):
-                current_state = self.marionette_state_.get_local("current_state")
-                rng = self.marionette_state_.get_local("rng")
-                self.marionette_state_.get_local("state_history").append(current_state)
-                self.marionette_state_.set_local("current_state", self.states_[current_state].transition(rng))
-            self.marionette_state_.set_local("next_state", None)
-
-        src_state = self.marionette_state_.get_local("current_state")
-        if self.marionette_state_.get_local("rng"):
-            if not self.marionette_state_.get_local("next_state"):
-                self.marionette_state_.set_local("next_state", self.states_[src_state].transition(self.marionette_state_.get_local("rng")))
-            potential_transitions = [self.marionette_state_.get_local("next_state")]
+        if self.rng_:
+            if not self.next_state_:
+                self.next_state_ = self.states_[self.current_state_].transition(self.rng_)
+            potential_transitions = [self.next_state_]
         else:
-            potential_transitions = list(self.states_[src_state].transitions_.keys())
+            potential_transitions = list(self.states_[self.current_state_].transitions_.keys())
 
         for dst_state in potential_transitions:
-            actions_to_execute = self.marionette_state_.get_global('ate-' + src_state + '-' + dst_state)
+            actions_to_execute = self.determine_action_block(self.current_state_, dst_state)
 
             success = True
-            for action in actions_to_execute:
-                action_retval = self.eval_action(action, self.channel_)
+            for action_obj in actions_to_execute:
+                action_retval = self.eval_action(action_obj)
                 if not action_retval:
                     success = False
                     break
 
             if success:
-                self.marionette_state_.set_local("current_state", dst_state)
-                self.marionette_state_.get_local("state_history").append(src_state)
-                self.marionette_state_.set_local("next_state", None)
+                self.state_history_.append(self.current_state_)
+                self.current_state_ = dst_state
+                self.next_state_ = None
                 retval = True
                 break
 
         return retval
 
-    def spawn(self):
+    def transition(self):
+        self.check_channel_state()
+        self.check_rng_state()
+        success = self.advance_to_next_state()
+        return success
+
+    def check_for_incoming_connections(self):
         retval = None
 
-        if self.marionette_state_.get_local("party") == "server":
+        if self.party_ == "server":
             channel = self.acceptNewChannel()
             if channel:
                 retval = self.replicate()
-                retval.set_channel(channel)
+                retval.channel_ = channel
 
         return retval
 
-
     def replicate(self):
-        retval = PA(self.marionette_state_.get_local("party"),
+        retval = PA(self.party_,
                     self.first_sender_)
         retval.actions_ = self.actions_
         retval.states_ = self.states_
-        for key in self.marionette_state_.global_:
-            retval.marionette_state_.global_[key] = self.marionette_state_.global_[key]
-        retval.marionette_state_.set_local("model_uuid", self.marionette_state_.get_local("model_uuid"))
+        retval.marionette_state_.global_ = self.marionette_state_.global_
+        model_uuid = self.marionette_state_.get_local("model_uuid")
+        retval.marionette_state_.set_local("model_uuid", model_uuid)
         retval.port_ = self.port_
-        retval.build_cache()
         return retval
 
     def isRunning(self):
-        return (self.marionette_state_.get_local("current_state") != "dead")
+        return (self.current_state_ != "dead")
 
-    def eval_action(self, action, channel):
-        action_key = 'action_key-' + action
-        [methodToCall, args] = self.marionette_state_.get_global(action_key)
+    def eval_action(self, action_obj):
+        module = action_obj.get_module()
+        method = action_obj.get_method()
+        args = action_obj.get_args()
 
-        success = methodToCall(channel, self.marionette_state_, args)
+        i = importlib.import_module("marionette.plugins._" + module)
+        method_obj = getattr(i, method)
+
+        success = method_obj(self.channel_, self.marionette_state_, args)
 
         return success
 
     def add_state(self, name):
         if not name in list(self.states_.keys()):
             self.states_[name] = PAState(name)
-
-    def set_channel(self, channel):
-        self.channel_ = channel
-
-    def get_channel(self, ):
-        return self.channel_
 
     def set_multiplexer_outgoing(self, multiplexer):
         self.marionette_state_.set_global("multiplexer_outgoing", multiplexer)
@@ -246,10 +203,7 @@ class PA(threading.Thread):
 
     def stop(self):
         self.running_.clear()
-        self.marionette_state_.set_local("current_state", "dead")
-
-    def get_client_instance_id(self):
-        return self.marionette_state_.get_local("model_instance_id")
+        self.current_state_ = "dead"
 
     def set_port(self, port):
         self.port_ = port
@@ -270,7 +224,7 @@ class PAState(object):
 
     def transition(self, rng):
         assert (rng or len(self.transitions_) == 1)
-        if rng:
+        if rng and len(self.transitions_) > 1:
             coin = rng.random()
             sum = 0
             for state in self.transitions_:
@@ -305,3 +259,12 @@ class MarionetteSystemState(object):
     def get_local(self, key):
         with self.local_lock_:
             return self.local_.get(key)
+
+    def get_fte_obj(self, regex, msg_len):
+        fte_key = 'fte_obj-'+regex+str(msg_len)
+        if not self.get_global(fte_key):
+            dfa = regex2dfa.regex2dfa(regex)
+            fte_obj = fte.encoder.DfaEncoder(dfa, msg_len)
+            self.set_global(fte_key, fte_obj)
+
+        return self.get_global(fte_key)
