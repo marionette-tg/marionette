@@ -111,8 +111,6 @@ def str_to_settings(mar_str):
                                                         comp_action_cmd)
             settings.add_action(action)
 
-
-    settings.setTransport(connection_type)
     settings.setPort(connection_port)
 
     return settings
@@ -128,9 +126,8 @@ def load(party, format_name):
         first_sender = "server"
 
     executable = marionette.PA.PA(party, first_sender)
-    executable.set_transport(settings.getTransport())
     executable.set_port(settings.getPort())
-    executable.local_args_["model_uuid"] = get_model_uuid(mar_str)
+    executable.marionette_state_.set_local("model_uuid", get_model_uuid(mar_str))
     for transition in settings.getTransitions():
         executable.add_state(transition[0])
         executable.add_state(transition[1])
@@ -143,8 +140,6 @@ def load(party, format_name):
         executable.add_state("dead")
         executable.states_["end"].add_transition("dead", 'NULL', 1)
         executable.states_["dead"].add_transition("dead", 'NULL', 1)
-
-    executable.build_cache()
 
     return executable
 

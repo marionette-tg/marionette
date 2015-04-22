@@ -1,10 +1,13 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 import time
 import random
 
 import marionette
 import marionette.driver
 
-def sleep(channel, global_args, local_args, input_args, blocking=True):
+def sleep(channel, marionette_state, input_args, blocking=True):
     sleep_dist = input_args[0]
     sleep_dist = sleep_dist[1:-1]
     sleep_dist = sleep_dist.split(',')
@@ -27,23 +30,23 @@ def sleep(channel, global_args, local_args, input_args, blocking=True):
 
     return True
 
-def spawn(channel, global_args, local_args, input_args, blocking=True):
+def spawn(channel, marionette_state, input_args, blocking=True):
     format_name_ = input_args[0]
     num_models = int(input_args[1])
 
-    if local_args["party"] == 'server':
-        driver = marionette.driver.ServerDriver(local_args["party"])
-    elif local_args["party"] == 'client':
-        driver = marionette.driver.ClientDriver(local_args["party"])
+    if marionette_state.get_local("party") == 'server':
+        driver = marionette.driver.ServerDriver(marionette_state.get_local("party"))
+    elif marionette_state.get_local("party") == 'client':
+        driver = marionette.driver.ClientDriver(marionette_state.get_local("party"))
 
-    driver.set_multiplexer_incoming(global_args["multiplexer_incoming"])
-    driver.set_multiplexer_outgoing(global_args["multiplexer_outgoing"])
+    driver.set_multiplexer_incoming(marionette_state.get_global("multiplexer_incoming"))
+    driver.set_multiplexer_outgoing(marionette_state.get_global("multiplexer_outgoing"))
     driver.setFormat(format_name_)
 
-    if local_args["party"] == 'server':
+    if marionette_state.get_local("party") == 'server':
         while driver.num_executables_completed_ < num_models:
             driver.execute()
-    elif local_args["party"] == 'client':
+    elif marionette_state.get_local("party") == 'client':
         driver.reset(num_models)
         while driver.isRunning():
             driver.execute()

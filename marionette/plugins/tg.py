@@ -1,4 +1,5 @@
-
+#!/usr/bin/env python
+# coding: utf-8
 
 import math
 import socket
@@ -11,15 +12,15 @@ import fte.bit_ops
 import marionette.record_layer
 
 
-def send(channel, global_args, local_args, input_args):
+def send(channel, marionette_state, input_args):
     grammar = input_args[0]
 
     ctxt = generate_template(grammar)
 
     for handler_key in conf[grammar]["handler_order"]:
-        ctxt = execute_handler_sender(global_args, local_args, grammar,
+        ctxt = execute_handler_sender(marionette_state, grammar,
                                       handler_key, ctxt,
-                                      global_args["multiplexer_outgoing"])
+                                      marionette_state.get_global("multiplexer_outgoing"))
 
     ctxt_len = len(ctxt)
     while len(ctxt) > 0:
@@ -33,7 +34,7 @@ def send(channel, global_args, local_args, input_args):
     return retval
 
 
-def recv(channel, global_args, local_args, input_args):
+def recv(channel, marionette_state, input_args):
     retval = False
     grammar = input_args[0]
 
@@ -43,20 +44,20 @@ def recv(channel, global_args, local_args, input_args):
         if parser(grammar, ctxt):
             cell_str = ''
             for handler_key in conf[grammar]["handler_order"]:
-                tmp_str = execute_handler_receiver(global_args, local_args,
+                tmp_str = execute_handler_receiver(marionette_state,
                                                    grammar, handler_key, ctxt)
                 if tmp_str:
                     cell_str += tmp_str
 
             ##
             cell_obj = marionette.record_layer.unserialize(cell_str)
-            assert cell_obj.get_model_uuid() == local_args["model_uuid"]
+            assert cell_obj.get_model_uuid() == marionette_state.get_local("model_uuid")
 
-            local_args["model_instance_id"] = cell_obj.get_model_instance_id()
+            marionette_state.set_local("model_instance_id", cell_obj.get_model_instance_id())
             ##
 
-            if local_args.get("model_instance_id"):
-                global_args["multiplexer_incoming"].push(cell_str)
+            if marionette_state.get_local("model_instance_id"):
+                marionette_state.get_global("multiplexer_incoming").push(cell_str)
                 retval = True
     except socket.timeout as e:
         pass
@@ -95,15 +96,15 @@ def do_unembed(grammar, ctxt, handler_key):
     return parse_tree[handler_key]
 
 
-def execute_handler_sender(global_args, local_args, grammar, handler_key,
+def execute_handler_sender(marionette_state, grammar, handler_key,
                            template, multiplexer):
     to_execute = conf[grammar]["handlers"][handler_key]
 
     cell_len_in_bits = to_execute.capacity()
     to_embed = ''
     if cell_len_in_bits > 0:
-        cell = multiplexer.pop(local_args["model_uuid"],
-                               local_args["model_instance_id"],
+        cell = multiplexer.pop(marionette_state.get_local("model_uuid"),
+                               marionette_state.get_local("model_instance_id"),
                                cell_len_in_bits)
         to_embed = cell.to_string()
     value_to_embed = to_execute.encode(template, to_embed)
@@ -112,7 +113,7 @@ def execute_handler_sender(global_args, local_args, grammar, handler_key,
     return template
 
 
-def execute_handler_receiver(global_args, local_args, grammar, handler_key,
+def execute_handler_receiver(marionette_state, grammar, handler_key,
                              ctxt):
     ptxt = ''
 

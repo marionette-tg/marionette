@@ -106,6 +106,8 @@ def bytes_to_long(bytestring):
 #   model uuid - 4 bytes
 #   model instance id - 4 bytes
 #   stream ID - 4 bytes
+#   sequence ID - 4 bytes
+#   cell type - 1 byte
 #   payload (variable)
 #   padding (variable)
 

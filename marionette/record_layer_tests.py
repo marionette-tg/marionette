@@ -10,8 +10,6 @@ sys.path.append('.')
 import marionette.record_layer
 import marionette.multiplexer
 
-# TODO: OUTGOING BUFFER TESTS
-
 
 class Tests(unittest.TestCase):
     def test_serializeUnserialize_onBoundaries1(self):

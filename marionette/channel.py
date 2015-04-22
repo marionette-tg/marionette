@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 import os
 import select
 import socket
@@ -12,6 +15,9 @@ class Channel(object):
         self.buffer_ = ''
         self.last_buffer_ = ''
         self.model_ = None
+
+    def __del__(self):
+        self.close()
 
     def recv(self):
         self.buffer_ += self.do_recv()

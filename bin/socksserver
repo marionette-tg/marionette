@@ -5,6 +5,7 @@ import sys
 
 from twisted.internet import reactor
 from twisted.protocols import socks
+from twisted.python import log
 
 import marionette.conf
 

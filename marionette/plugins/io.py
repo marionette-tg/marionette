@@ -1,9 +1,10 @@
-
+#!/usr/bin/env python
+# coding: utf-8
 
 import socket
 
 
-def puts(channel, global_args, local_args, input_args, blocking=True):
+def puts(channel, marionette_state, input_args, blocking=True):
     if (not channel):
         return False
 
@@ -21,7 +22,7 @@ def puts(channel, global_args, local_args, input_args, blocking=True):
     return retval
 
 
-def gets(channel, global_args, local_args, input_args, blocking=True):
+def gets(channel, marionette_state, input_args, blocking=True):
     if (not channel):
         return False
 
