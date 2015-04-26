@@ -17,6 +17,7 @@ SERVER_TIMEOUT = 0.001
 
 
 class Channel(object):
+
     def __init__(self, conn):
         self.conn_ = conn
         self.closed_ = False
@@ -89,6 +90,7 @@ class Channel(object):
         self.is_alive_ = False
         return self.conn_.close()
 
+
 def open_new_channel(port):
     for i in range(10):
         try:
@@ -98,10 +100,13 @@ def open_new_channel(port):
         except Exception as e:
             channel = None
         finally:
-            if channel: break
-            else: time.sleep(i*0.1)
+            if channel:
+                break
+            else:
+                time.sleep(i * 0.1)
 
     return channel
+
 
 def accept_new_channel(listening_sockets, port):
     if not listening_sockets.get(port):

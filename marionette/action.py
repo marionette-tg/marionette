@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
 class MarionetteAction(object):
+
     def __init__(self, name, party, module, method, args):
         self.name_ = name
         self.party_ = party
@@ -43,7 +45,7 @@ class MarionetteAction(object):
         retval = None
 
         if self.party_ == party \
-            and (self.name_ == name):
+                and (self.name_ == name):
             retval = True
 
         return retval

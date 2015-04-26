@@ -9,10 +9,12 @@ PAYLOAD_HEADER_SIZE_IN_BYTES = PAYLOAD_HEADER_SIZE_IN_BITS / 8
 NORMAL = 0x1
 END_OF_STREAM = 0x2
 
+
 class Cell(object):
+
     def __init__(self, model_uuid, model_instance_id, stream_id, seq_id,
                  length=0, cell_type=NORMAL):
-        assert stream_id != None
+        assert stream_id is not None
 
         self.cell_type_ = cell_type
         self.payload_ = ''
@@ -24,11 +26,12 @@ class Cell(object):
         self.model_instance_id_ = model_instance_id
 
     def __eq__(self, other):
-        retval = (self.get_payload() == other.get_payload()) and \
-                 (self.get_stream_id() == other.get_stream_id()) and \
-                 (self.get_model_uuid() == other.get_model_uuid()) and \
-                 (self.get_model_instance_id() == other.get_model_instance_id()) and \
-                 (self.get_seq_id() == other.get_seq_id())
+        retval = (
+            self.get_payload() == other.get_payload()) and (
+            self.get_stream_id() == other.get_stream_id()) and (
+            self.get_model_uuid() == other.get_model_uuid()) and (
+                self.get_model_instance_id() == other.get_model_instance_id()) and (
+                    self.get_seq_id() == other.get_seq_id())
         return retval
 
     def get_cell_type(self):
@@ -59,12 +62,15 @@ class Cell(object):
     def to_string(self):
         return serialize(self, self.cell_length_)
 
+
 class EndOfStreamException(Exception):
+
     def set_stream_id(self, stream_id):
         self.stream_id_ = stream_id
 
     def get_stream_id(self):
         return self.stream_id_
+
 
 def pad_to_bytes(n, val):
     val = str(val)
@@ -144,7 +150,7 @@ def serialize(cell_obj, pad_to=0):
     retval += padding
 
     assert (PAYLOAD_HEADER_SIZE_IN_BYTES + len(payload) + len(padding)
-           ) == len(retval)
+            ) == len(retval)
 
     return retval
 
@@ -165,10 +171,17 @@ def unserialize(cell_str):
     payload = cell_str[PAYLOAD_HEADER_SIZE_IN_BYTES:
                        PAYLOAD_HEADER_SIZE_IN_BYTES + payload_len]
 
-    retval = Cell(model_uuid, model_instance_id, stream_id, seq_id, payload_len, cell_type)
+    retval = Cell(
+        model_uuid,
+        model_instance_id,
+        stream_id,
+        seq_id,
+        payload_len,
+        cell_type)
     retval.set_payload(payload)
 
     return retval
+
 
 class UnserializeException(Exception):
     pass

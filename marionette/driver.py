@@ -9,6 +9,7 @@ import marionette.PA
 
 
 class ClientDriver(object):
+
     def __init__(self, party):
         self.party_ = party
 
@@ -20,17 +21,17 @@ class ClientDriver(object):
         self.multiplexer_incoming_ = None
 
     def execute(self, reactor):
-        while len(self.to_start_)>0:
+        while len(self.to_start_) > 0:
             executable = self.to_start_.pop()
             self.running_.append(executable)
             reactor.callInThread(executable.execute, reactor)
 
-        self.running_ = [executable for executable \
-                                    in self.running_ \
-                                    if executable.isRunning()]
+        self.running_ = [executable for executable
+                         in self.running_
+                         if executable.isRunning()]
 
     def isRunning(self):
-        return len(self.running_+self.to_start_) > 0
+        return len(self.running_ + self.to_start_) > 0
 
     def setFormat(self, format_name):
         executable = marionette.dsl.load(self.party_, format_name)
@@ -52,6 +53,7 @@ class ClientDriver(object):
 
 
 class ServerDriver(object):
+
     def __init__(self, party):
         self.party_ = party
 
@@ -66,16 +68,16 @@ class ServerDriver(object):
     def execute(self, reactor):
         while True:
             new_executable = self.executable_.check_for_incoming_connections()
-            if new_executable is None: break
+            if new_executable is None:
+                break
             self.running_.append(new_executable)
             reactor.callInThread(new_executable.execute, reactor)
 
         running_count = len(self.running_)
-        self.running_ = [executable for executable \
-                                    in self.running_ \
-                                    if executable.isRunning()]
+        self.running_ = [executable for executable
+                         in self.running_
+                         if executable.isRunning()]
         self.num_executables_completed_ += (running_count - len(self.running_))
-
 
     def isRunning(self):
         return len(self.running_)

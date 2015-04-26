@@ -12,6 +12,7 @@ import marionette.multiplexer
 
 
 class Tests(unittest.TestCase):
+
     def test_serializeUnserialize_onBoundaries1(self):
         cell_expected = marionette.record_layer.Cell(1, 1, 1, 0)
         cell_expected.set_payload('XXX')
@@ -82,7 +83,7 @@ class Tests(unittest.TestCase):
         for i in range(100):
             stream_id = random.randint(0, 2 ** 32)
             cell_expected = marionette.record_layer.Cell(1, 1,
-                                                                stream_id, 0)
+                                                         stream_id, 0)
             cell_str = marionette.record_layer.serialize(cell_expected)
 
             buffer = marionette.multiplexer.BufferIncoming()

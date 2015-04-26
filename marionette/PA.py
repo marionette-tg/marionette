@@ -16,6 +16,7 @@ import marionette.channel
 
 
 class PA(object):
+
     def __init__(self, party, first_sender):
         super(PA, self).__init__()
 
@@ -34,9 +35,11 @@ class PA(object):
         self.states_ = {}
 
         if self.party_ == first_sender:
-            self.marionette_state_.set_local("model_instance_id", fte.bit_ops.bytes_to_long(os.urandom(4)))
+            self.marionette_state_.set_local(
+                "model_instance_id", fte.bit_ops.bytes_to_long(os.urandom(4)))
             self.rng_ = random.Random()
-            self.rng_.seed(self.marionette_state_.get_local("model_instance_id"))
+            self.rng_.seed(
+                self.marionette_state_.get_local("model_instance_id"))
 
     def execute(self, reactor):
         if self.isRunning():
@@ -55,14 +58,16 @@ class PA(object):
         if not self.rng_:
             if self.marionette_state_.get_local("model_instance_id"):
                 self.rng_ = random.Random()
-                self.rng_.seed(self.marionette_state_.get_local("model_instance_id"))
+                self.rng_.seed(
+                    self.marionette_state_.get_local("model_instance_id"))
                 transitions = len(self.state_history_)
 
                 self.state_history_ = []
                 self.current_state_ = 'start'
                 for i in range(transitions):
                     self.state_history_.append(self.current_state_)
-                    self.current_state_ = self.states_[self.current_state_].transition(self.rng_)
+                    self.current_state_ = self.states_[
+                        self.current_state_].transition(self.rng_)
                 self.next_state_ = None
 
     def determine_action_block(self, src_state, dst_state):
@@ -79,13 +84,16 @@ class PA(object):
 
         if self.rng_:
             if not self.next_state_:
-                self.next_state_ = self.states_[self.current_state_].transition(self.rng_)
+                self.next_state_ = self.states_[
+                    self.current_state_].transition(self.rng_)
             potential_transitions = [self.next_state_]
         else:
-            potential_transitions = list(self.states_[self.current_state_].transitions_.keys())
+            potential_transitions = list(
+                self.states_[self.current_state_].transitions_.keys())
 
         for dst_state in potential_transitions:
-            actions_to_execute = self.determine_action_block(self.current_state_, dst_state)
+            actions_to_execute = self.determine_action_block(
+                self.current_state_, dst_state)
 
             success = True
             for action_obj in actions_to_execute:
@@ -113,7 +121,8 @@ class PA(object):
         retval = None
 
         if self.party_ == "server":
-            channel = marionette.channel.accept_new_channel(self.listening_sockets_,self.get_port())
+            channel = marionette.channel.accept_new_channel(
+                self.listening_sockets_, self.get_port())
             if channel:
                 retval = self.replicate()
                 retval.channel_ = channel
@@ -167,6 +176,7 @@ class PA(object):
 
 
 class PAState(object):
+
     def __init__(self, name):
         self.name_ = name
         self.transitions_ = {}
@@ -191,6 +201,7 @@ class PAState(object):
 
 
 class MarionetteSystemState(object):
+
     def __init__(self):
         self.global_ = {}
         self.local_ = {}
@@ -208,7 +219,7 @@ class MarionetteSystemState(object):
         return self.local_.get(key)
 
     def get_fte_obj(self, regex, msg_len):
-        fte_key = 'fte_obj-'+regex+str(msg_len)
+        fte_key = 'fte_obj-' + regex + str(msg_len)
         if not self.get_global(fte_key):
             dfa = regex2dfa.regex2dfa(regex)
             fte_obj = fte.encoder.DfaEncoder(dfa, msg_len)

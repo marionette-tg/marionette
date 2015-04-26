@@ -11,6 +11,7 @@ class MarionetteException(Exception):
 
 
 class Client(object):
+
     def __init__(self, format_name):
         self.multiplexer_outgoing_ = marionette.multiplexer.BufferOutgoing()
         self.multiplexer_incoming_ = marionette.multiplexer.BufferIncoming()
@@ -39,10 +40,11 @@ class Client(object):
             self.streams_[stream_id].srv_queue.put(payload)
 
     def start_new_stream(self, srv_queue=None):
-        stream = marionette.multiplexer.MarionetteStream(self.multiplexer_incoming_,
-                                  self.multiplexer_outgoing_,
-                                  self.stream_counter_,
-                                  srv_queue)
+        stream = marionette.multiplexer.MarionetteStream(
+            self.multiplexer_incoming_,
+            self.multiplexer_outgoing_,
+            self.stream_counter_,
+            srv_queue)
         stream.host = self
         self.streams_[self.stream_counter_] = stream
         self.stream_counter_ += 1

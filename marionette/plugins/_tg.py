@@ -18,9 +18,12 @@ def send(channel, marionette_state, input_args):
     ctxt = generate_template(grammar)
 
     for handler_key in conf[grammar]["handler_order"]:
-        ctxt = execute_handler_sender(marionette_state, grammar,
-                                      handler_key, ctxt,
-                                      marionette_state.get_global("multiplexer_outgoing"))
+        ctxt = execute_handler_sender(
+            marionette_state,
+            grammar,
+            handler_key,
+            ctxt,
+            marionette_state.get_global("multiplexer_outgoing"))
 
     ctxt_len = len(ctxt)
     while len(ctxt) > 0:
@@ -51,13 +54,16 @@ def recv(channel, marionette_state, input_args):
 
             ##
             cell_obj = marionette.record_layer.unserialize(cell_str)
-            assert cell_obj.get_model_uuid() == marionette_state.get_local("model_uuid")
+            assert cell_obj.get_model_uuid() == marionette_state.get_local(
+                "model_uuid")
 
-            marionette_state.set_local("model_instance_id", cell_obj.get_model_instance_id())
+            marionette_state.set_local(
+                "model_instance_id", cell_obj.get_model_instance_id())
             ##
 
             if marionette_state.get_local("model_instance_id"):
-                marionette_state.get_global("multiplexer_incoming").push(cell_str)
+                marionette_state.get_global(
+                    "multiplexer_incoming").push(cell_str)
                 retval = True
     except socket.timeout as e:
         pass
@@ -72,10 +78,7 @@ def recv(channel, marionette_state, input_args):
     return retval
 
 
-
-
-
-######### handler + (un)embed functions
+# handler + (un)embed functions
 
 
 def do_embed(grammar, template, handler_key, value):
@@ -125,12 +128,14 @@ def execute_handler_receiver(marionette_state, grammar, handler_key,
 
     return ptxt
 
-########### handlers
+# handlers
 
 regex_cache_ = {}
 fte_cache_ = {}
 
+
 class RankerHandler(object):
+
     def __init__(self, regex, msg_len):
         self.regex_ = regex
 
@@ -163,6 +168,7 @@ class RankerHandler(object):
 
 
 class FteHandler(object):
+
     def __init__(self, regex, msg_len):
         self.regex_ = regex
 
@@ -177,9 +183,8 @@ class FteHandler(object):
         if self.regex_.endswith(".+"):
             retval = (2 ** 16) * 8
         else:
-            cell_len_in_bytes = int(math.floor(self.fte_encrypter_.getCapacity() / 8.0)) \
-                                   - fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTTEXT \
-                                   - fte.encrypter.Encrypter._CTXT_EXPANSION
+            cell_len_in_bytes = int(math.floor(self.fte_encrypter_.getCapacity(
+            ) / 8.0)) - fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTTEXT - fte.encrypter.Encrypter._CTXT_EXPANSION
             cell_len_in_bits = cell_len_in_bytes * 8
             retval = cell_len_in_bits
 
@@ -200,15 +205,16 @@ class FteHandler(object):
 
 
 class FteMsgLensHandler(FteHandler):
+
     def capacity(self):
-        cell_len_in_bytes = int(math.floor(self.fte_encrypter_.getCapacity() / 8.0)) \
-                               - fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTTEXT \
-                               - fte.encrypter.Encrypter._CTXT_EXPANSION
+        cell_len_in_bytes = int(math.floor(self.fte_encrypter_.getCapacity(
+        ) / 8.0)) - fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTTEXT - fte.encrypter.Encrypter._CTXT_EXPANSION
         cell_len_in_bits = cell_len_in_bytes * 8
         return cell_len_in_bits
 
 
 class HttpContentLengthHandler(object):
+
     def capacity(self):
         return 0
 
@@ -221,6 +227,7 @@ class HttpContentLengthHandler(object):
 
 
 class Pop3ContentLengthHandler(object):
+
     def capacity(self):
         return 0
 
@@ -233,6 +240,7 @@ class Pop3ContentLengthHandler(object):
 
 
 class AmazonMsgLensHandler(FteHandler):
+
     def capacity(self):
         amazon_msg_lens = {
             2049: 1,
@@ -365,7 +373,7 @@ class AmazonMsgLensHandler(FteHandler):
 
         return target_len_in_bits
 
-########### formats
+# formats
 
 conf = {}
 
@@ -377,7 +385,7 @@ conf["http_request_keep_alive"] = {
 
 conf["http_response_keep_alive"] = {
     "grammar": "http_response_keep_alive",
-    "handler_order": [  #"COOKIE",
+    "handler_order": [  # "COOKIE",
         "HTTP-RESPONSE-BODY", "CONTENT-LENGTH"
     ],
     "handlers": {
@@ -395,7 +403,7 @@ conf["http_request_close"] = {
 
 conf["http_response_close"] = {
     "grammar": "http_response_close",
-    "handler_order": [  #"COOKIE",
+    "handler_order": [  # "COOKIE",
         "HTTP-RESPONSE-BODY", "CONTENT-LENGTH"
     ],
     "handlers": {
@@ -450,11 +458,12 @@ conf["http_amazon_response"] = {
     }
 }
 
-############# grammars
+# grammars
 
 
 def parser(grammar, msg):
-    if grammar.startswith("http_response") or grammar == "http_amazon_response":
+    if grammar.startswith(
+            "http_response") or grammar == "http_amazon_response":
         return http_response_parser(msg)
     elif grammar.startswith("http_request") or grammar == "http_amazon_request":
         return http_request_parser(msg)
@@ -474,11 +483,15 @@ templates = {}
 server_listen_iface = marionette.conf.get("server.listen_iface")
 
 templates["http_request_keep_alive"] = [
-    "GET http://"+server_listen_iface+":8080/%%URL%% HTTP/1.1\r\nUser-Agent: marionette 0.1\r\nConnection: keep-alive\r\n\r\n",
+    "GET http://" +
+    server_listen_iface +
+    ":8080/%%URL%% HTTP/1.1\r\nUser-Agent: marionette 0.1\r\nConnection: keep-alive\r\n\r\n",
 ]
 
 templates["http_request_close"] = [
-    "GET http://"+server_listen_iface+":8080/%%URL%% HTTP/1.1\r\nUser-Agent: marionette 0.1\r\nConnection: close\r\n\r\n",
+    "GET http://" +
+    server_listen_iface +
+    ":8080/%%URL%% HTTP/1.1\r\nUser-Agent: marionette 0.1\r\nConnection: close\r\n\r\n",
 ]
 
 templates["http_response_keep_alive"] = [
@@ -497,8 +510,10 @@ templates["pop3_message_response"] = [
 
 templates["pop3_password"] = ["PASS %%PASSWORD%%\n", ]
 
-templates["http_request_keep_alive_with_msg_lens"] = templates["http_request_keep_alive"]
-templates["http_response_keep_alive_with_msg_lens"] = templates["http_response_keep_alive"]
+templates["http_request_keep_alive_with_msg_lens"] = templates[
+    "http_request_keep_alive"]
+templates["http_response_keep_alive_with_msg_lens"] = templates[
+    "http_response_keep_alive"]
 templates["http_amazon_request"] = templates["http_request_keep_alive"]
 templates["http_amazon_response"] = templates["http_response_keep_alive"]
 
@@ -517,7 +532,8 @@ def get_http_header(header_name, msg):
 
 
 def http_request_parser(msg):
-    if not msg.startswith("GET"): return None
+    if not msg.startswith("GET"):
+        return None
 
     retval = {}
 
@@ -533,7 +549,8 @@ def http_request_parser(msg):
 
 
 def http_response_parser(msg):
-    if not msg.startswith("HTTP"): return None
+    if not msg.startswith("HTTP"):
+        return None
 
     retval = {}
 

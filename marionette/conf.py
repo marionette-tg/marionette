@@ -3,6 +3,7 @@
 
 import ConfigParser
 
+
 def get(key):
     global conf_
 
@@ -15,7 +16,8 @@ def get(key):
         conf_ = {}
         conf_["general.debug"] = confparser.getboolean("general", "debug")
         conf_["client.listen_iface"] = confparser.get("client", "listen_iface")
-        conf_["client.listen_port"] = confparser.getint("client", "listen_port")
+        conf_["client.listen_port"] = confparser.getint(
+            "client", "listen_port")
         conf_["server.listen_iface"] = confparser.get("server", "listen_iface")
         conf_["server.proxy_iface"] = confparser.get("server", "proxy_iface")
         conf_["server.proxy_port"] = confparser.getint("server", "proxy_port")

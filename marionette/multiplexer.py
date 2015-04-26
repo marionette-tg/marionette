@@ -8,8 +8,15 @@ from twisted.internet import reactor
 
 import marionette.record_layer
 
+
 class MarionetteStream(object):
-    def __init__(self, multiplexer_incoming, multiplexer_outgoing, stream_id, srv_queue=None):
+
+    def __init__(
+            self,
+            multiplexer_incoming,
+            multiplexer_outgoing,
+            stream_id,
+            srv_queue=None):
         self.multiplexer_incoming_ = multiplexer_incoming
         self.multiplexer_outgoing_ = multiplexer_outgoing
         self.stream_id_ = stream_id
@@ -38,6 +45,7 @@ class MarionetteStream(object):
 
 
 class BufferOutgoing(object):
+
     def __init__(self):
         self.fifo_ = {}
         self.terminate_ = set()
@@ -77,9 +85,15 @@ class BufferOutgoing(object):
                 self.sequence_nums[stream_id] += 1
 
             # determine if we should terminate the stream
-            if self.fifo_.get(stream_id) == '' and stream_id in self.terminate_:
-                cell_obj = marionette.record_layer.Cell(model_uuid, model_instance_id, stream_id,
-                                    sequence_id, n, marionette.record_layer.END_OF_STREAM)
+            if self.fifo_.get(
+                    stream_id) == '' and stream_id in self.terminate_:
+                cell_obj = marionette.record_layer.Cell(
+                    model_uuid,
+                    model_instance_id,
+                    stream_id,
+                    sequence_id,
+                    n,
+                    marionette.record_layer.END_OF_STREAM)
 
                 self.terminate_.remove(stream_id)
                 del self.fifo_[stream_id]
@@ -87,22 +101,36 @@ class BufferOutgoing(object):
 
             if n > 0:
                 if self.has_data(stream_id):
-                    cell_obj = marionette.record_layer.Cell(model_uuid, model_instance_id, stream_id,
-                                    sequence_id, n)
-                    payload_length = (n - marionette.record_layer.PAYLOAD_HEADER_SIZE_IN_BITS) / 8
+                    cell_obj = marionette.record_layer.Cell(
+                        model_uuid,
+                        model_instance_id,
+                        stream_id,
+                        sequence_id,
+                        n)
+                    payload_length = (
+                        n - marionette.record_layer.PAYLOAD_HEADER_SIZE_IN_BITS) / 8
                     payload = self.fifo_[stream_id][:payload_length]
-                    self.fifo_[stream_id] = self.fifo_[stream_id][payload_length:]
+                    self.fifo_[stream_id] = self.fifo_[
+                        stream_id][payload_length:]
                     cell_obj.set_payload(payload)
                 else:
-                    cell_obj = marionette.record_layer.Cell(model_uuid, model_instance_id, 0,
-                                    sequence_id, n)
+                    cell_obj = marionette.record_layer.Cell(
+                        model_uuid,
+                        model_instance_id,
+                        0,
+                        sequence_id,
+                        n)
             else:
                 if self.has_data(stream_id):
-                    cell_obj = marionette.record_layer.Cell(model_uuid, model_instance_id, stream_id,
-                                    sequence_id)
+                    cell_obj = marionette.record_layer.Cell(
+                        model_uuid,
+                        model_instance_id,
+                        stream_id,
+                        sequence_id)
                     payload_length = len(self.fifo_[stream_id])
                     payload = self.fifo_[stream_id][:payload_length]
-                    self.fifo_[stream_id] = self.fifo_[stream_id][payload_length:]
+                    self.fifo_[stream_id] = self.fifo_[
+                        stream_id][payload_length:]
                     cell_obj.set_payload(payload)
 
             if self.fifo_.get(stream_id) == '':
@@ -127,7 +155,7 @@ class BufferOutgoing(object):
     def has_data_for_any_stream(self):
         retval = None
         with self.lock_:
-            if len(self.streams_with_data_)>0:
+            if len(self.streams_with_data_) > 0:
                 retval = random.choice(list(self.streams_with_data_))
         return retval
 
@@ -137,11 +165,12 @@ class BufferOutgoing(object):
 
 
 class BufferIncoming(object):
+
     def __init__(self):
         self.fifo_ = ''
         self.fifo_len_ = 0
         self.has_data_ = False
-        self.callback_  = None
+        self.callback_ = None
         self.lock_ = threading.RLock()
 
     def addCallback(self, callback):
@@ -165,8 +194,10 @@ class BufferIncoming(object):
             cell_obj = None
 
             if len(self.fifo_) >= 8:
-                cell_len = marionette.record_layer.bytes_to_long(str(self.fifo_[:4]))
-                cell_obj = marionette.record_layer.unserialize(self.fifo_[:cell_len])
+                cell_len = marionette.record_layer.bytes_to_long(
+                    str(self.fifo_[:4]))
+                cell_obj = marionette.record_layer.unserialize(
+                    self.fifo_[:cell_len])
                 self.fifo_ = self.fifo_[cell_len:]
                 self.fifo_len_ -= cell_len
                 self.fifo_len_ = max(self.fifo_len_, 0)
