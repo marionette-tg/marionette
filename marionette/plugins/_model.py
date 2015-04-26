@@ -12,6 +12,10 @@ import marionette.driver
 def sleep(channel, marionette_state, input_args, blocking=True):
     sleep_dist = input_args[0]
     sleep_dist = sleep_dist[1:-1]
+    while ' ' in sleep_dist : sleep_dist=sleep_dist.replace(' ','')
+    while '\n' in sleep_dist: sleep_dist=sleep_dist.replace('\n','')
+    while '\t' in sleep_dist: sleep_dist=sleep_dist.replace('\t','')
+    while '\r' in sleep_dist: sleep_dist=sleep_dist.replace('\r','')
     sleep_dist = sleep_dist.split(',')
 
     dist = {}

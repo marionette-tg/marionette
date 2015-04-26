@@ -1,0 +1,310 @@
+import sys
+import unittest
+
+sys.path.append('.')
+
+import marionette.dsl
+
+class Tests(unittest.TestCase):
+
+    def test1(self):
+        mar_format = """connection(tcp, 80):
+          start      downstream NULL     1.0
+          downstream upstream   http_get 1.0
+          upstream   end        http_ok  1.0
+
+        action http_get:
+          client fte.send("^regex\r\n\r\n$", 128)
+
+        action http_ok:
+          server fte.send("^regex\r\n\r\n\C*$", 128)"""
+
+        parsed_format = marionette.dsl.parse(mar_format)
+
+        self.assertEquals(parsed_format.get_transport(), "tcp")
+        self.assertEquals(parsed_format.get_port(), 80)
+
+        self.assertEquals(parsed_format.get_transitions()[0].get_src(), "start")
+        self.assertEquals(parsed_format.get_transitions()[0].get_dst(), "downstream")
+        self.assertEquals(parsed_format.get_transitions()[0].get_action_block(), None)
+        self.assertEquals(parsed_format.get_transitions()[0].get_probability(), float(1.0))
+
+        self.assertEquals(parsed_format.get_transitions()[1].get_src(), "downstream")
+        self.assertEquals(parsed_format.get_transitions()[1].get_dst(), "upstream")
+        self.assertEquals(parsed_format.get_transitions()[1].get_action_block(), "http_get")
+        self.assertEquals(parsed_format.get_transitions()[1].get_probability(), float(1.0))
+
+        self.assertEquals(parsed_format.get_transitions()[2].get_src(), "upstream")
+        self.assertEquals(parsed_format.get_transitions()[2].get_dst(), "end")
+        self.assertEquals(parsed_format.get_transitions()[2].get_action_block(), "http_ok")
+        self.assertEquals(parsed_format.get_transitions()[2].get_probability(), float(1.0))
+
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_name(), "http_get")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_party(), "client")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_module(), "fte")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_method(), "send")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_args(), ["^regex\r\n\r\n$", 128])
+
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_name(), "http_ok")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_party(), "server")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_module(), "fte")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_method(), "send")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_args(), ["^regex\r\n\r\n\C*$", 128])
+
+    def test2(self):
+        mar_format = """connection(tcp, 80):
+          start      downstream NULL     1.0
+          downstream upstream   http_get 1.0
+          upstream   end        http_ok  1.0
+
+        action http_get:
+          client fte.send("^regex\r\n\r\n$", 128)
+
+        action http_ok:
+          server fte.send("^regex\r\n\r\n\C*$", 128)
+
+        action http_put:
+          client fte.send("^regex\r\n\r\n$", 128)"""
+
+        parsed_format = marionette.dsl.parse(mar_format)
+
+        self.assertEquals(parsed_format.get_transport(), "tcp")
+        self.assertEquals(parsed_format.get_port(), 80)
+
+        self.assertEquals(parsed_format.get_transitions()[0].get_src(), "start")
+        self.assertEquals(parsed_format.get_transitions()[0].get_dst(), "downstream")
+        self.assertEquals(parsed_format.get_transitions()[0].get_action_block(), None)
+        self.assertEquals(parsed_format.get_transitions()[0].get_probability(), float(1.0))
+
+        self.assertEquals(parsed_format.get_transitions()[1].get_src(), "downstream")
+        self.assertEquals(parsed_format.get_transitions()[1].get_dst(), "upstream")
+        self.assertEquals(parsed_format.get_transitions()[1].get_action_block(), "http_get")
+        self.assertEquals(parsed_format.get_transitions()[1].get_probability(), float(1.0))
+
+        self.assertEquals(parsed_format.get_transitions()[2].get_src(), "upstream")
+        self.assertEquals(parsed_format.get_transitions()[2].get_dst(), "end")
+        self.assertEquals(parsed_format.get_transitions()[2].get_action_block(), "http_ok")
+        self.assertEquals(parsed_format.get_transitions()[2].get_probability(), float(1.0))
+
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_name(), "http_get")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_party(), "client")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_module(), "fte")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_method(), "send")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_args(), ["^regex\r\n\r\n$", 128])
+
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_name(), "http_ok")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_party(), "server")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_module(), "fte")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_method(), "send")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_args(), ["^regex\r\n\r\n\C*$", 128])
+
+        self.assertEquals(parsed_format.get_action_blocks()[2].get_name(), "http_put")
+        self.assertEquals(parsed_format.get_action_blocks()[2].get_party(), "client")
+        self.assertEquals(parsed_format.get_action_blocks()[2].get_module(), "fte")
+        self.assertEquals(parsed_format.get_action_blocks()[2].get_method(), "send")
+        self.assertEquals(parsed_format.get_action_blocks()[2].get_args(), ["^regex\r\n\r\n$", 128])
+
+    def test3(self):
+        mar_format = """connection(tcp, 80):
+          start      downstream NULL     1.0
+          downstream upstream   http_get 1.0
+          upstream   end        http_ok  1.0
+
+        action http_get:
+          client fte.send("^regex\r\n\r\n$", 128)
+
+        action http_ok:
+          server fte.send("^regex\r\n\r\n\C*$", 128)
+
+        action http_put:
+          client fte.send("^regex\r\n\r\n$", 128)
+
+        action http_notok:
+          server fte.send("^regex\r\n\r\n\C*$", 128)"""
+
+        parsed_format = marionette.dsl.parse(mar_format)
+
+        self.assertEquals(parsed_format.get_transport(), "tcp")
+        self.assertEquals(parsed_format.get_port(), 80)
+
+        self.assertEquals(parsed_format.get_transitions()[0].get_src(), "start")
+        self.assertEquals(parsed_format.get_transitions()[0].get_dst(), "downstream")
+        self.assertEquals(parsed_format.get_transitions()[0].get_action_block(), None)
+        self.assertEquals(parsed_format.get_transitions()[0].get_probability(), float(1.0))
+
+        self.assertEquals(parsed_format.get_transitions()[1].get_src(), "downstream")
+        self.assertEquals(parsed_format.get_transitions()[1].get_dst(), "upstream")
+        self.assertEquals(parsed_format.get_transitions()[1].get_action_block(), "http_get")
+        self.assertEquals(parsed_format.get_transitions()[1].get_probability(), float(1.0))
+
+        self.assertEquals(parsed_format.get_transitions()[2].get_src(), "upstream")
+        self.assertEquals(parsed_format.get_transitions()[2].get_dst(), "end")
+        self.assertEquals(parsed_format.get_transitions()[2].get_action_block(), "http_ok")
+        self.assertEquals(parsed_format.get_transitions()[2].get_probability(), float(1.0))
+
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_name(), "http_get")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_party(), "client")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_module(), "fte")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_method(), "send")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_args(), ["^regex\r\n\r\n$", 128])
+
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_name(), "http_ok")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_party(), "server")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_module(), "fte")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_method(), "send")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_args(), ["^regex\r\n\r\n\C*$", 128])
+
+        self.assertEquals(parsed_format.get_action_blocks()[2].get_name(), "http_put")
+        self.assertEquals(parsed_format.get_action_blocks()[2].get_party(), "client")
+        self.assertEquals(parsed_format.get_action_blocks()[2].get_module(), "fte")
+        self.assertEquals(parsed_format.get_action_blocks()[2].get_method(), "send")
+        self.assertEquals(parsed_format.get_action_blocks()[2].get_args(), ["^regex\r\n\r\n$", 128])
+
+        self.assertEquals(parsed_format.get_action_blocks()[3].get_name(), "http_notok")
+        self.assertEquals(parsed_format.get_action_blocks()[3].get_party(), "server")
+        self.assertEquals(parsed_format.get_action_blocks()[3].get_module(), "fte")
+        self.assertEquals(parsed_format.get_action_blocks()[3].get_method(), "send")
+        self.assertEquals(parsed_format.get_action_blocks()[3].get_args(), ["^regex\r\n\r\n\C*$", 128])
+
+    def test4(self):
+        mar_format = """connection(tcp, 8082):
+  start      handshake  NULL               1.0
+  handshake  upstream   upstream_handshake 1.0
+  upstream   downstream upstream_async     1.0
+  downstream upstream   downstream_async   1.0
+
+action upstream_handshake:
+  client fte.send("^.*$", 128)
+
+action upstream_async:
+  client fte.send_async("^.*$", 128)
+
+action downstream_async:
+  server fte.send_async("^.*$", 128)
+"""
+
+        parsed_format = marionette.dsl.parse(mar_format)
+
+        self.assertEquals(parsed_format.get_transport(), "tcp")
+        self.assertEquals(parsed_format.get_port(), 8082)
+
+        self.assertEquals(parsed_format.get_transitions()[0].get_src(), "start")
+        self.assertEquals(parsed_format.get_transitions()[0].get_dst(), "handshake")
+        self.assertEquals(parsed_format.get_transitions()[0].get_action_block(), None)
+        self.assertEquals(parsed_format.get_transitions()[0].get_probability(), float(1.0))
+
+        self.assertEquals(parsed_format.get_transitions()[1].get_src(), "handshake")
+        self.assertEquals(parsed_format.get_transitions()[1].get_dst(), "upstream")
+        self.assertEquals(parsed_format.get_transitions()[1].get_action_block(), "upstream_handshake")
+        self.assertEquals(parsed_format.get_transitions()[1].get_probability(), float(1.0))
+
+        self.assertEquals(parsed_format.get_transitions()[2].get_src(), "upstream")
+        self.assertEquals(parsed_format.get_transitions()[2].get_dst(), "downstream")
+        self.assertEquals(parsed_format.get_transitions()[2].get_action_block(), "upstream_async")
+        self.assertEquals(parsed_format.get_transitions()[2].get_probability(), float(1.0))
+
+        self.assertEquals(parsed_format.get_transitions()[3].get_src(), "downstream")
+        self.assertEquals(parsed_format.get_transitions()[3].get_dst(), "upstream")
+        self.assertEquals(parsed_format.get_transitions()[3].get_action_block(), "downstream_async")
+        self.assertEquals(parsed_format.get_transitions()[3].get_probability(), float(1.0))
+
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_name(), "upstream_handshake")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_party(), "client")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_module(), "fte")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_method(), "send")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_args(), ["^.*$", 128])
+
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_name(), "upstream_async")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_party(), "client")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_module(), "fte")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_method(), "send_async")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_args(), ["^.*$", 128])
+
+        self.assertEquals(parsed_format.get_action_blocks()[2].get_name(), "downstream_async")
+        self.assertEquals(parsed_format.get_action_blocks()[2].get_party(), "server")
+        self.assertEquals(parsed_format.get_action_blocks()[2].get_module(), "fte")
+        self.assertEquals(parsed_format.get_action_blocks()[2].get_method(), "send_async")
+        self.assertEquals(parsed_format.get_action_blocks()[2].get_args(), ["^.*$", 128])
+
+    def test5(self):
+        mar_format = """connection(tcp, 80):
+          start      downstream NULL     1.0
+          downstream upstream   http_get 1.0
+          upstream   end        http_ok  1.0
+
+        action http_get:
+          client fte.send("^regex\r\n\r\n$")
+
+        action http_ok:
+          server fte.send("^regex\r\n\r\n\C*$")"""
+
+        parsed_format = marionette.dsl.parse(mar_format)
+
+        self.assertEquals(parsed_format.get_transport(), "tcp")
+        self.assertEquals(parsed_format.get_port(), 80)
+
+        self.assertEquals(parsed_format.get_transitions()[0].get_src(), "start")
+        self.assertEquals(parsed_format.get_transitions()[0].get_dst(), "downstream")
+        self.assertEquals(parsed_format.get_transitions()[0].get_action_block(), None)
+        self.assertEquals(parsed_format.get_transitions()[0].get_probability(), float(1.0))
+
+        self.assertEquals(parsed_format.get_transitions()[1].get_src(), "downstream")
+        self.assertEquals(parsed_format.get_transitions()[1].get_dst(), "upstream")
+        self.assertEquals(parsed_format.get_transitions()[1].get_action_block(), "http_get")
+        self.assertEquals(parsed_format.get_transitions()[1].get_probability(), float(1.0))
+
+        self.assertEquals(parsed_format.get_transitions()[2].get_src(), "upstream")
+        self.assertEquals(parsed_format.get_transitions()[2].get_dst(), "end")
+        self.assertEquals(parsed_format.get_transitions()[2].get_action_block(), "http_ok")
+        self.assertEquals(parsed_format.get_transitions()[2].get_probability(), float(1.0))
+
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_name(), "http_get")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_party(), "client")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_module(), "fte")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_method(), "send")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_args(), ["^regex\r\n\r\n$"])
+
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_name(), "http_ok")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_party(), "server")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_module(), "fte")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_method(), "send")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_args(), ["^regex\r\n\r\n\C*$"])
+
+    def test6(self):
+        mar_format = """connection(tcp, 80):
+          start do_nothing NULL 1.0
+          do_nothing end NULL 1.0
+
+        action http_get:
+          client fte.send("^regex1\r\n\r\n$")
+          server fte.recv("^regex2\r\n\r\n$")"""
+
+        parsed_format = marionette.dsl.parse(mar_format)
+
+        self.assertEquals(parsed_format.get_transport(), "tcp")
+        self.assertEquals(parsed_format.get_port(), 80)
+
+        self.assertEquals(parsed_format.get_transitions()[0].get_src(), "start")
+        self.assertEquals(parsed_format.get_transitions()[0].get_dst(), "do_nothing")
+        self.assertEquals(parsed_format.get_transitions()[0].get_action_block(), None)
+        self.assertEquals(parsed_format.get_transitions()[0].get_probability(), float(1.0))
+
+        self.assertEquals(parsed_format.get_transitions()[1].get_src(), "do_nothing")
+        self.assertEquals(parsed_format.get_transitions()[1].get_dst(), "end")
+        self.assertEquals(parsed_format.get_transitions()[1].get_action_block(), None)
+        self.assertEquals(parsed_format.get_transitions()[1].get_probability(), float(1.0))
+
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_name(), "http_get")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_party(), "client")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_module(), "fte")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_method(), "send")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_args(), ["^regex1\r\n\r\n$"])
+
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_name(), "http_get")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_party(), "server")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_module(), "fte")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_method(), "recv")
+        self.assertEquals(parsed_format.get_action_blocks()[1].get_args(), ["^regex2\r\n\r\n$"])
+
+if __name__ == "__main__":
+    unittest.main()

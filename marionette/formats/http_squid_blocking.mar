@@ -1,9 +1,9 @@
 connection(tcp, 8083):
-  start        client       NULL                    1.0
-  client       server       http_request_keep_alive 0.5
-  client       server_close http_request_close      0.5
-  server       client       http_ok_keep_alive      1.0
-  server_close end          http_response_close     1.0
+  start        upstream     NULL                    1.0
+  upstream     downstream   http_request_keep_alive 0.5
+  downstream   close        http_request_close      0.5
+  downstream   upstream     http_ok_keep_alive      1.0
+  close        end          http_response_close     1.0
 
 
 action http_request_keep_alive:

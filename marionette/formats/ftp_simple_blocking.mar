@@ -13,7 +13,7 @@ connection(tcp, 2121):
     ftp_pasv_transfer_ok sign_off_quit do_sign_off_quit 1
     sign_off_quit sign_off_ok do_sign_off_ok 1
     sign_off_ok end NULL 1
-    
+
 action do_ready:
     server io.puts("220 My FTP Server.\n")
 
@@ -28,7 +28,7 @@ action do_password:
 
 action do_password_ok:
     server io.puts("230 User MyUsername logged in.\n")
-    
+
 action do_pasv_mode:
     client io.puts("PASV\n")
 
@@ -47,7 +47,7 @@ action do_ftp_pasv_transfer:
 
 action do_ftp_pasv_transfer_ok:
     server io.puts("226 Transfer Complete.\n")
-    
+
 action do_sign_off_quit:
     client io.puts("quit\n")
 

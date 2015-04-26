@@ -1,38 +1,49 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import string
-
 class MarionetteAction(object):
-    def __init__(self, action_name, party, to_do):
-        self.action_name_ = action_name
+    def __init__(self, name, party, module, method, args):
+        self.name_ = name
         self.party_ = party
-        self.to_do_ = to_do
+        self.module_ = module
+        self.method_ = method
+        self.args_ = args
 
-    def execute(self, party, action_name):
+    def set_name(self, name):
+        self.name_ = name
+
+    def get_name(self):
+        return self.name_
+
+    def set_party(self, party):
+        self.party_ = party
+
+    def get_party(self):
+        return self.party_
+
+    def set_module(self, module):
+        self.module_ = module
+
+    def get_module(self):
+        return self.module_
+
+    def set_method(self, method):
+        self.method_ = method
+
+    def get_method(self):
+        return self.method_
+
+    def set_args(self, args):
+        self.args_ = args
+
+    def get_args(self):
+        return self.args_
+
+    def execute(self, party, name):
         retval = None
 
         if self.party_ == party \
-            and (self.action_name_ == action_name):
-            retval = self.to_do_
+            and (self.name_ == name):
+            retval = True
 
         return retval
-
-    def get_module(self):
-        module = self.to_do_.partition(".")[0]
-        return module
-
-    def get_method(self):
-        method = self.to_do_.partition(".")[2].partition("(")[0]
-        return method
-
-    def get_args(self):
-        args_str = self.to_do_.partition(".")[2].partition("(")[2][:-1]
-        args_tmp = args_str.split(', ')
-        args = []
-        for arg in args_tmp:
-            if len(arg) > 0 and arg[0] == "\"" and arg[-1] == "\"":
-                args.append(arg[1:-1])
-            else:
-                args.append(arg)
-        return args

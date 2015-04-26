@@ -1,7 +1,7 @@
 connection(tcp, 8081):
-  start  client NULL     1.0
-  client server http_get 1.0
-  server end    http_ok  1.0
+  start      upstream   NULL     1.0
+  upstream   downstream http_get 1.0
+  downstream end        http_ok  1.0
 
 action http_get:
   client fte.send("^GET\ \/([a-zA-Z0-9\.\/]*) HTTP/1\.1\r\n\r\n$", 128)

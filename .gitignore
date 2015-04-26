@@ -1,0 +1,4 @@
+*.pyc
+marionette.egg-info
+parsetab.py
+parser.out

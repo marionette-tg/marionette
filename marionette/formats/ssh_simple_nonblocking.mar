@@ -1,14 +1,14 @@
-connection(tcp, 8022):
-  start     handshake NULL                 1.0
-  handshake client    client_send_blocking 1.0
-  client    server    client_send          1.0
-  server    client    server_send          1.0
+connection(tcp, 8082):
+  start      handshake   NULL          1.0
+  handshake  upstream    send_blocking 1.0
+  upstream   downstream  csend         1.0
+  downstream upstream    ssend         1.0
 
-action client_send_blocking:
+action send_blocking:
   client fte.send("^SSH\-2\.0\C*$", 128)
 
-action client_send:
+action csend:
   client fte.send_async("^SSH\-2\.0\C*$", 128)
 
-action server_send:
+action ssend:
   server fte.send_async("^SSH\-2\.0\C*$", 128)
