@@ -10,12 +10,18 @@ sys.path.append('.')
 
 import marionette.conf
 
+
 def execute(cmd):
     os.system(cmd)
 
+
 def exec_download():
     client_listen_iface = marionette.conf.get("client.listen_iface")
-    conn = httplib.HTTPConnection(client_listen_iface, 18079, False, timeout=10)
+    conn = httplib.HTTPConnection(
+        client_listen_iface,
+        18079,
+        False,
+        timeout=10)
     conn.request("GET", "/")
     response = conn.getresponse()
     actual_response = response.read()
@@ -23,9 +29,10 @@ def exec_download():
 
     expected_response = ''
     for x in range(2**16):
-        expected_response += '_'+str(x)
+        expected_response += '_' + str(x)
 
     assert actual_response == expected_response
+
 
 def startservers(format):
     client_listen_iface = marionette.conf.get("client.listen_iface")
@@ -33,29 +40,36 @@ def startservers(format):
 
     execute("./bin/httpserver 18081 %s &" % format)
     time.sleep(1)
-    execute("./bin/marionette_server %s 18081 %s &" % (server_proxy_iface, format))
+    execute(
+        "./bin/marionette_server %s 18081 %s &" %
+        (server_proxy_iface, format))
     time.sleep(1)
-    execute("./bin/marionette_client %s 18079 %s &" % (client_listen_iface, format))
+    execute(
+        "./bin/marionette_client %s 18079 %s &" %
+        (client_listen_iface, format))
     time.sleep(1)
+
 
 def stopservers():
     execute("pkill -9 -f marionette_client")
     execute("pkill -9 -f marionette_server")
     execute("pkill -9 -f httpserver")
 
+
 def dodownload_serial():
     total = 0
     trials = 100
-    for i in xrange(1,trials+1):
+    for i in xrange(1, trials + 1):
         start = time.time()
         exec_download()
         elapsed = time.time() - start
         total += elapsed
-        print [i, elapsed, total/i]
+        print [i, elapsed, total / i]
+
 
 def main():
     try:
-        format = sys.argv[1] if len(sys.argv)>1 else 'dummy'
+        format = sys.argv[1] if len(sys.argv) > 1 else 'dummy'
         startservers(format)
         dodownload_serial()
         print '\t', format, '...', 'SUCCESS'

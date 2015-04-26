@@ -12,12 +12,13 @@ sys.path.append(".")
 
 import marionette
 
-LOCAL_IP    = str(sys.argv[1])
-LOCAL_PORT  = int(sys.argv[2])
-if len(sys.argv)>=4:
-    FORMAT  = str(sys.argv[3])
+LOCAL_IP = str(sys.argv[1])
+LOCAL_PORT = int(sys.argv[2])
+if len(sys.argv) >= 4:
+    FORMAT = str(sys.argv[3])
 else:
     FORMAT = 'http_simple_blocking'
+
 
 class ProxyClient(protocol.Protocol):
 
@@ -28,7 +29,9 @@ class ProxyClient(protocol.Protocol):
         self.client_stream_ = client.start_new_stream(self.srv_queue)
 
     def clientDataReceived(self, chunk):
-        log.msg("ProxyClient: writing %d bytes to original client" % len(chunk))
+        log.msg(
+            "ProxyClient: writing %d bytes to original client" %
+            len(chunk))
         self.transport.write(chunk)
         self.transport.doWrite()
         self.srv_queue.get().addCallback(self.clientDataReceived)

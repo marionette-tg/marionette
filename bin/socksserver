@@ -15,5 +15,5 @@ if '__main__' == __name__:
     if marionette.conf.get("general.debug"):
         log.startLogging(sys.stdout)
 
-    reactor.listenTCP(SOCKS_PORT,socks.SOCKSv4Factory(None))
+    reactor.listenTCP(SOCKS_PORT, socks.SOCKSv4Factory(None))
     reactor.run()

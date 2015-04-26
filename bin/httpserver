@@ -11,7 +11,8 @@ sys.path.append('.')
 
 import marionette.conf
 
-LOCAL_PORT  = int(sys.argv[1])
+LOCAL_PORT = int(sys.argv[1])
+
 
 class GetResource(resource.Resource):
     isLeaf = True
@@ -19,7 +20,7 @@ class GetResource(resource.Resource):
     def render_GET(self, request):
         retval = ''
         for x in range(2**16):
-            retval += '_'+str(x)
+            retval += '_' + str(x)
         return retval
 
 if __name__ == "__main__":

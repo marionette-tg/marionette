@@ -13,14 +13,16 @@ sys.path.append(".")
 import marionette
 import marionette.conf
 
-REMOTE_IP   = str(sys.argv[1])
+REMOTE_IP = str(sys.argv[1])
 REMOTE_PORT = int(sys.argv[2])
-if len(sys.argv)>=4:
-    FORMAT  = str(sys.argv[3])
+if len(sys.argv) >= 4:
+    FORMAT = str(sys.argv[3])
 else:
     FORMAT = 'http_simple_blocking'
 
+
 class ProxyServerProtocol(protocol.Protocol):
+
     def connectionMade(self):
         log.msg("ProxyServerProtocol: connected to peer")
         self.cli_queue = self.factory.cli_queue
@@ -33,15 +35,21 @@ class ProxyServerProtocol(protocol.Protocol):
             self.factory.continueTrying = False
             self.transport.loseConnection()
         elif self.cli_queue:
-            log.msg("ProxyServerProtocol: writing %d bytes to peer" % len(chunk))
+            log.msg(
+                "ProxyServerProtocol: writing %d bytes to peer" %
+                len(chunk))
             self.transport.write(chunk)
             self.cli_queue.get().addCallback(self.serverDataReceived)
         else:
-            log.msg("ProxyServerProtocol: (2) writing %d bytes to peer" % len(chunk))
+            log.msg(
+                "ProxyServerProtocol: (2) writing %d bytes to peer" %
+                len(chunk))
             self.factory.cli_queue.put(chunk)
 
     def dataReceived(self, chunk):
-        log.msg("ProxyServerProtocol: %d bytes received from peer" % len(chunk))
+        log.msg(
+            "ProxyServerProtocol: %d bytes received from peer" %
+            len(chunk))
         self.factory.srv_queue.put(chunk)
 
     def connectionLost(self, why):
@@ -60,6 +68,7 @@ class ProxyServerFactory(protocol.ClientFactory):
 
 
 class ProxyServer(object):
+
     def __init__(self):
         self.connector = None
 
@@ -71,10 +80,15 @@ class ProxyServer(object):
         self.srv_queue.get().addCallback(self.clientDataReceived)
 
         self.factory = ProxyServerFactory(self.srv_queue, self.cli_queue)
-        self.connector = reactor.connectTCP(REMOTE_IP, REMOTE_PORT, self.factory)
+        self.connector = reactor.connectTCP(
+            REMOTE_IP,
+            REMOTE_PORT,
+            self.factory)
 
     def clientDataReceived(self, chunk):
-        log.msg("ProxyServer.clientDataReceived: writing %d bytes to original client" % len(chunk))
+        log.msg(
+            "ProxyServer.clientDataReceived: writing %d bytes to original client" %
+            len(chunk))
         self.marionette_stream.push(chunk)
         self.srv_queue.get().addCallback(self.clientDataReceived)
 
