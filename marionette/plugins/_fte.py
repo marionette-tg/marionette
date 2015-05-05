@@ -73,7 +73,7 @@ def recv(channel, marionette_state, input_args, blocking=True):
 
     try:
         ctxt = channel.recv()
-        if len(ctxt) >= msg_len:
+        if len(ctxt) > 0:
             [ptxt, remainder] = fteObj.decode(ctxt)
 
             cell_obj = marionette.record_layer.unserialize(ptxt)
@@ -90,7 +90,8 @@ def recv(channel, marionette_state, input_args, blocking=True):
     except fte.encrypter.RecoverableDecryptionError as e:
         retval = False
     except Exception as e:
-        retval = False
+        channel.rollback()
+        raise e
 
     if not retval:
         channel.rollback()

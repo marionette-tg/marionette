@@ -393,30 +393,6 @@ action downstream_async:
         self.assertEquals(
             parsed_format.get_transitions()[2].get_probability(), float(1.0))
 
-        self.assertEquals(
-            parsed_format.get_action_blocks()[0].get_name(), "http_get")
-        self.assertEquals(
-            parsed_format.get_action_blocks()[0].get_party(), "client")
-        self.assertEquals(
-            parsed_format.get_action_blocks()[0].get_module(), "fte")
-        self.assertEquals(
-            parsed_format.get_action_blocks()[0].get_method(), "send")
-        self.assertEquals(
-            parsed_format.get_action_blocks()[0].get_args(),
-            ["^regex\r\n\r\n$"])
-
-        self.assertEquals(
-            parsed_format.get_action_blocks()[1].get_name(), "http_ok")
-        self.assertEquals(
-            parsed_format.get_action_blocks()[1].get_party(), "server")
-        self.assertEquals(
-            parsed_format.get_action_blocks()[1].get_module(), "fte")
-        self.assertEquals(
-            parsed_format.get_action_blocks()[1].get_method(), "send")
-        self.assertEquals(
-            parsed_format.get_action_blocks()[1].get_args(),
-            ["^regex\r\n\r\n\C*$"])
-
     def test6(self):
         mar_format = """connection(tcp, 80):
           start do_nothing NULL 1.0
@@ -539,7 +515,7 @@ action downstream_async:
 
         action http_get:
           client fte.send("^regex1\r\n\r\n$")
-          server fte.recv("^regex2\r\n\r\n$") if regex_match_incoming("regex2.*")"""
+          server fte.recv("^regex2\r\n\r\n$") if regex_match_incoming("^regex2.*")"""
 
         parsed_format = marionette.dsl.parse(mar_format)
 
@@ -567,7 +543,7 @@ action downstream_async:
             parsed_format.get_action_blocks()[1].get_args(),
             ["^regex2\r\n\r\n$"])
         self.assertEquals(
-            parsed_format.get_action_blocks()[1].get_regex_match_incoming(),"regex2.*")
+            parsed_format.get_action_blocks()[1].get_regex_match_incoming(),"^regex2.*")
 
 
 if __name__ == "__main__":

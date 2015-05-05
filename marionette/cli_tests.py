@@ -82,6 +82,7 @@ class Tests(unittest.TestCase):
             'http_simple_blocking_with_msg_lens',
             'ssh_simple_nonblocking',
             'smb_simple_nonblocking',
+            'http_active_probing',
         ]:
             try:
                 self.startservers(format)

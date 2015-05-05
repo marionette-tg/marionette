@@ -2,7 +2,7 @@
 # coding: utf-8
 
 import socket
-
+import string
 
 def puts(channel, marionette_state, input_args, blocking=True):
     if (not channel):

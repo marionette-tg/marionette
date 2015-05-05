@@ -1,5 +1,6 @@
 import sys
 import copy
+import string
 import hashlib
 
 import ply.lex as lex
@@ -137,7 +138,7 @@ def t_carriagereturn(t):
     t.lexer.lineno += len(t.value)
 
 # A string containing ignored characters (spaces and tabs)
-t_ignore = ' \t\n'
+t_ignore = ' \t\n\r'
 
 # Error handling rule
 
@@ -234,7 +235,11 @@ def p_action_block(p):
     """
     p[0] = []
     for i in range(len(p[4])):
-        p[0] += [marionette.action.MarionetteAction(p[2], p[4][i][0], p[4][i][1], p[4][i][2], p[4][i][3], p[4][i][4])]
+        p[0] += [marionette.action.MarionetteAction(p[2], p[4][i][0],
+                                                          p[4][i][1],
+                                                          p[4][i][2],
+                                                          p[4][i][3],
+                                                          p[4][i][4])]
 
 
 def p_actions(p):
@@ -289,7 +294,9 @@ def p_string_arg(p):
     p_string_arg : STRING
     """
     p[0] = str(p[1][1:-1])
-
+    p[0] = string.replace(p[0], '\\t', '\t')
+    p[0] = string.replace(p[0], '\\r', '\r')
+    p[0] = string.replace(p[0], '\\n', '\n')
 
 def p_integer_arg(p):
     """
@@ -403,6 +410,9 @@ def load(party, format_name):
             transition.get_dst(),
             transition.get_action_block(),
             transition.get_probability())
+        if transition.is_error_transition():
+            executable.states_[
+                transition.get_src()].set_error_transition(transition.get_dst())
 
     actions = []
     for action in parsed_format.get_action_blocks():

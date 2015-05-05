@@ -88,19 +88,28 @@ class PA(object):
                     self.current_state_].transition(self.rng_)
             potential_transitions = [self.next_state_]
         else:
-            potential_transitions = list(
-                self.states_[self.current_state_].transitions_.keys())
+            potential_transitions = []
+            for transition in \
+                self.states_[self.current_state_].transitions_.keys():
+                if self.states_[self.current_state_].transitions_[transition][1]>0:
+                    potential_transitions += [transition]
 
+        fatal = 0
         for dst_state in potential_transitions:
             actions_to_execute = self.determine_action_block(
                 self.current_state_, dst_state)
 
-            success = True
-            for action_obj in actions_to_execute:
-                action_retval = self.eval_action(action_obj)
-                if not action_retval:
-                    success = False
-                    break
+            success = False
+            if len(actions_to_execute)==0:
+                success = True
+            elif len(actions_to_execute)==1:
+                action_obj = actions_to_execute[0]
+                try:
+                    success = self.eval_action(action_obj)
+                except Exception as e:
+                    fatal += 1
+            elif len(actions_to_execute)>1:
+                assert False
 
             if success:
                 self.state_history_.append(self.current_state_)
@@ -108,6 +117,28 @@ class PA(object):
                 self.next_state_ = None
                 retval = True
                 break
+
+        if fatal > 0 and fatal == len(potential_transitions):
+            src_state = self.current_state_
+            dst_state = self.states_[self.current_state_].get_error_transition()
+
+            if dst_state:
+                actions_to_execute = self.determine_action_block(
+                    src_state, dst_state)
+
+                if len(actions_to_execute)==0:
+                    success = True
+                elif len(actions_to_execute)==1:
+                    action_obj = actions_to_execute[0]
+                    success = self.eval_action(action_obj)
+                else:
+                    assert False
+
+                if success:
+                    self.state_history_.append(self.current_state_)
+                    self.current_state_ = dst_state
+                    self.next_state_ = None
+                    retval = True
 
         return retval
 
@@ -150,7 +181,7 @@ class PA(object):
 
         i = importlib.import_module("marionette.plugins._" + module)
         method_obj = getattr(i, method)
-
+        
         success = method_obj(self.channel_, self.marionette_state_, args)
 
         return success
@@ -182,9 +213,16 @@ class PAState(object):
         self.transitions_ = {}
         self.format_type_ = None
         self.format_value_ = None
+        self.error_state_ = None
 
     def add_transition(self, dst, action_name, probability):
         self.transitions_[dst] = [action_name, float(probability)]
+
+    def set_error_transition(self, error_state):
+        self.error_state_ = error_state
+
+    def get_error_transition(self):
+        return self.error_state_
 
     def transition(self, rng):
         assert (rng or len(self.transitions_) == 1)
@@ -192,6 +230,8 @@ class PAState(object):
             coin = rng.random()
             sum = 0
             for state in self.transitions_:
+                if self.transitions_[state][1] == 0:
+                    continue
                 sum += self.transitions_[state][1]
                 if sum >= coin:
                     break
