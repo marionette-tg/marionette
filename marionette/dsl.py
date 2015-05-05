@@ -29,6 +29,8 @@ tokens = (
     'SERVER_KWD',
     'START_KWD',
     'END_KWD',
+    'REGEX_MATCH_INCOMING_KWD',
+    'IF_KWD',
     'NULL_KWD',
     'MODULE_KWD',
     'ACTION_KWD',
@@ -87,6 +89,13 @@ def t_TRANSPORT_KWD(t):
     r'(tcp|udp)'
     return t
 
+def t_REGEX_MATCH_INCOMING_KWD(t):
+    r"regex_match_incoming"
+    return t
+
+def t_IF_KWD(t):
+    r"if"
+    return t
 
 def t_STRING(t):
     r'("[^"]*")|(\'[^\']*\')'
@@ -185,9 +194,18 @@ def p_transition(p):
     transition : START_KWD KEY KEY INTEGER
     transition : KEY KEY KEY INTEGER
     transition : KEY END_KWD KEY INTEGER
+    transition : START_KWD KEY NULL_KWD KEY
+    transition : KEY KEY NULL_KWD KEY
+    transition : KEY END_KWD NULL_KWD KEY
+    transition : START_KWD KEY KEY KEY
+    transition : KEY KEY KEY KEY
+    transition : KEY END_KWD KEY KEY
     """
     p[3] = None if p[3] == 'NULL' else p[3]
-    p[0] = MarionetteTransition(p[1], p[2], p[3], p[4])
+    if p[4] == 'error':
+        p[0] = MarionetteTransition(p[1], p[2], p[3], 0, True)
+    else:
+        p[0] = MarionetteTransition(p[1], p[2], p[3], p[4], False)
 
 
 def p_action_blocks(p):
@@ -216,8 +234,7 @@ def p_action_block(p):
     """
     p[0] = []
     for i in range(len(p[4])):
-        p[0] += [marionette.action.MarionetteAction(
-            p[2], p[4][i][0], p[4][i][1], p[4][i][2], p[4][i][3])]
+        p[0] += [marionette.action.MarionetteAction(p[2], p[4][i][0], p[4][i][1], p[4][i][2], p[4][i][3], p[4][i][4])]
 
 
 def p_actions(p):
@@ -238,8 +255,13 @@ def p_action(p):
     """
     action : CLIENT_KWD KEY DOT KEY LPAREN args RPAREN
     action : SERVER_KWD KEY DOT KEY LPAREN args RPAREN
+    action : CLIENT_KWD KEY DOT KEY LPAREN args RPAREN IF_KWD REGEX_MATCH_INCOMING_KWD LPAREN p_string_arg RPAREN
+    action : SERVER_KWD KEY DOT KEY LPAREN args RPAREN IF_KWD REGEX_MATCH_INCOMING_KWD LPAREN p_string_arg RPAREN
     """
-    p[0] = [p[1], p[2], p[4], p[6]]
+    if len(p)==8:
+        p[0] = [p[1], p[2], p[4], p[6], None]
+    elif len(p)==13:
+        p[0] = [p[1], p[2], p[4], p[6], p[11]]
 
 
 def p_args(p):
@@ -294,11 +316,12 @@ yacc.yacc()
 
 class MarionetteTransition(object):
 
-    def __init__(self, src, dst, action_block, probability):
+    def __init__(self, src, dst, action_block, probability, is_error_transition=False):
         self.src_ = src
         self.dst_ = dst
         self.action_block_ = action_block
         self.probability_ = probability
+        self.is_error_transition_ = is_error_transition
 
     def get_src(self):
         return self.src_
@@ -312,6 +335,8 @@ class MarionetteTransition(object):
     def get_probability(self):
         return self.probability_
 
+    def is_error_transition(self):
+        return self.is_error_transition_
 
 class MarionetteFormat(object):
 

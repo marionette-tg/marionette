@@ -472,5 +472,103 @@ action downstream_async:
             parsed_format.get_action_blocks()[1].get_args(),
             ["^regex2\r\n\r\n$"])
 
+
+    def test7(self):
+        mar_format = """connection(tcp, 80):
+          start do_nothing NULL 1.0
+          do_nothing end NULL 1.0
+          start do_err NULL error
+          do_err end NULL error
+
+        action http_get:
+          client fte.send("^regex1\r\n\r\n$")"""
+
+        parsed_format = marionette.dsl.parse(mar_format)
+
+        self.assertEquals(parsed_format.get_transport(), "tcp")
+        self.assertEquals(parsed_format.get_port(), 80)
+
+        self.assertEquals(
+            parsed_format.get_transitions()[0].get_src(), "start")
+        self.assertEquals(
+            parsed_format.get_transitions()[0].get_dst(), "do_nothing")
+        self.assertEquals(
+            parsed_format.get_transitions()[0].get_action_block(), None)
+        self.assertEquals(
+            parsed_format.get_transitions()[0].get_probability(), float(1.0))
+        self.assertEquals(
+            parsed_format.get_transitions()[0].is_error_transition(), False)
+
+        self.assertEquals(
+            parsed_format.get_transitions()[1].get_src(), "do_nothing")
+        self.assertEquals(parsed_format.get_transitions()[1].get_dst(), "end")
+        self.assertEquals(
+            parsed_format.get_transitions()[1].get_action_block(), None)
+        self.assertEquals(
+            parsed_format.get_transitions()[1].get_probability(), float(1.0))
+        self.assertEquals(
+            parsed_format.get_transitions()[1].is_error_transition(), False)
+
+        self.assertEquals(
+            parsed_format.get_transitions()[2].get_src(), "start")
+        self.assertEquals(
+            parsed_format.get_transitions()[2].get_dst(), "do_err")
+        self.assertEquals(
+            parsed_format.get_transitions()[2].get_action_block(), None)
+        self.assertEquals(
+            parsed_format.get_transitions()[2].get_probability(), float(0))
+        self.assertEquals(
+            parsed_format.get_transitions()[2].is_error_transition(), True)
+
+        self.assertEquals(
+            parsed_format.get_transitions()[3].get_src(), "do_err")
+        self.assertEquals(
+            parsed_format.get_transitions()[3].get_dst(), "end")
+        self.assertEquals(
+            parsed_format.get_transitions()[3].get_action_block(), None)
+        self.assertEquals(
+            parsed_format.get_transitions()[3].get_probability(), float(0))
+        self.assertEquals(
+            parsed_format.get_transitions()[3].is_error_transition(), True)
+
+
+    def test8(self):
+        mar_format = """connection(tcp, 80):
+          start do_nothing NULL 1.0
+          do_nothing end NULL 1.0
+
+        action http_get:
+          client fte.send("^regex1\r\n\r\n$")
+          server fte.recv("^regex2\r\n\r\n$") if regex_match_incoming("regex2.*")"""
+
+        parsed_format = marionette.dsl.parse(mar_format)
+
+        self.assertEquals(
+            parsed_format.get_action_blocks()[0].get_name(), "http_get")
+        self.assertEquals(
+            parsed_format.get_action_blocks()[0].get_party(), "client")
+        self.assertEquals(
+            parsed_format.get_action_blocks()[0].get_module(), "fte")
+        self.assertEquals(
+            parsed_format.get_action_blocks()[0].get_method(), "send")
+        self.assertEquals(
+            parsed_format.get_action_blocks()[0].get_args(),
+            ["^regex1\r\n\r\n$"])
+
+        self.assertEquals(
+            parsed_format.get_action_blocks()[1].get_name(), "http_get")
+        self.assertEquals(
+            parsed_format.get_action_blocks()[1].get_party(), "server")
+        self.assertEquals(
+            parsed_format.get_action_blocks()[1].get_module(), "fte")
+        self.assertEquals(
+            parsed_format.get_action_blocks()[1].get_method(), "recv")
+        self.assertEquals(
+            parsed_format.get_action_blocks()[1].get_args(),
+            ["^regex2\r\n\r\n$"])
+        self.assertEquals(
+            parsed_format.get_action_blocks()[1].get_regex_match_incoming(),"regex2.*")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -4,12 +4,13 @@
 
 class MarionetteAction(object):
 
-    def __init__(self, name, party, module, method, args):
+    def __init__(self, name, party, module, method, args, regex=None):
         self.name_ = name
         self.party_ = party
         self.module_ = module
         self.method_ = method
         self.args_ = args
+        self.regex_match_incoming_ = regex
 
     def set_name(self, name):
         self.name_ = name
@@ -40,6 +41,12 @@ class MarionetteAction(object):
 
     def get_args(self):
         return self.args_
+
+    def set_regex_match_incoming(self, regex):
+        self.regex_match_incoming_ = regex
+
+    def get_regex_match_incoming(self):
+        return self.regex_match_incoming_
 
     def execute(self, party, name):
         retval = None
