@@ -38,6 +38,10 @@ class Channel(object):
         self.buffer_ = ''
         return retval
 
+    def peek(self):
+        self.buffer_ += self.do_recv()
+        return self.buffer_
+
     def do_recv(self, bufsize=2 ** 16, select_timeout=0.001):
         retval = ''
 

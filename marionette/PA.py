@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import re
 import sys
 import random
 import importlib
@@ -79,66 +80,76 @@ class PA(object):
                 retval.append(action)
         return retval
 
-    def advance_to_next_state(self):
-        retval = False
+    def get_potential_transitions(self):
+        retval = []
 
         if self.rng_:
             if not self.next_state_:
                 self.next_state_ = self.states_[
                     self.current_state_].transition(self.rng_)
-            potential_transitions = [self.next_state_]
+            retval += [self.next_state_]
         else:
-            potential_transitions = []
             for transition in \
                 self.states_[self.current_state_].transitions_.keys():
                 if self.states_[self.current_state_].transitions_[transition][1]>0:
-                    potential_transitions += [transition]
+                    retval += [transition]
 
+        return retval
+
+    def advance_to_next_state(self):
+        retval = False
+
+        # get the list of possible transitions we could make
+        potential_transitions = self.get_potential_transitions()
+        assert len(potential_transitions) > 0
+
+        # attempt to do a normal transition
         fatal = 0
+        success = False
         for dst_state in potential_transitions:
-            actions_to_execute = self.determine_action_block(
-                self.current_state_, dst_state)
+            action_block = self.determine_action_block(self.current_state_, dst_state)
 
-            success = False
-            if len(actions_to_execute)==0:
-                success = True
-            elif len(actions_to_execute)==1:
-                action_obj = actions_to_execute[0]
-                try:
-                    success = self.eval_action(action_obj)
-                except Exception as e:
-                    fatal += 1
-            elif len(actions_to_execute)>1:
-                assert False
+            try:
+                success = self.eval_action_block(action_block)
+            except Exception as e:
+                fatal += 1
+            finally:
+                if success:
+                    break
 
-            if success:
-                self.state_history_.append(self.current_state_)
-                self.current_state_ = dst_state
-                self.next_state_ = None
-                retval = True
-                break
-
-        if fatal > 0 and fatal == len(potential_transitions):
+        # if all potential transitions are fatal, attempt the error transition
+        if not success and fatal == len(potential_transitions):
             src_state = self.current_state_
             dst_state = self.states_[self.current_state_].get_error_transition()
 
             if dst_state:
-                actions_to_execute = self.determine_action_block(
-                    src_state, dst_state)
+                action_block = self.determine_action_block(src_state, dst_state)
+                success = self.eval_action_block(action_block)
 
-                if len(actions_to_execute)==0:
-                    success = True
-                elif len(actions_to_execute)==1:
-                    action_obj = actions_to_execute[0]
-                    success = self.eval_action(action_obj)
+        # if we have a successful transition, update our state info.
+        if success:
+            self.state_history_.append(self.current_state_)
+            self.current_state_ = dst_state
+            self.next_state_ = None
+            retval = True
+
+        return retval
+
+    def eval_action_block(self, action_block):
+        retval = False
+
+        if len(action_block)==0:
+            retval = True
+        elif len(action_block)>=1:
+            for action_obj in action_block:
+                if action_obj.get_regex_match_incoming():
+                    incoming_buffer = self.channel_.peek()
+                    m = re.search(action_obj.get_regex_match_incoming(), incoming_buffer)
+                    if m:
+                        retval = self.eval_action(action_obj)
                 else:
-                    assert False
-
-                if success:
-                    self.state_history_.append(self.current_state_)
-                    self.current_state_ = dst_state
-                    self.next_state_ = None
-                    retval = True
+                    retval = self.eval_action(action_obj)
+                if retval: break
 
         return retval
 

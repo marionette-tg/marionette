@@ -29,24 +29,30 @@ class Tests(unittest.TestCase):
     def stopservers(self):
         execute("pkill -9 -f marionette_server")
 
-    def do_probe(self):
+    def do_probe(self, request_method, request_uri, expected_response):
         server_listen_iface = marionette.conf.get("server.listen_iface")
         conn = httplib.HTTPConnection(
             server_listen_iface, 8080, False, timeout=10)
-        conn.request("GET", "/")
+        conn.request(request_method, request_uri)
         response = conn.getresponse()
         actual_response = response.read()
         conn.close()
 
-        expected_response = 'Hello World!'
-
         self.assertEqual(actual_response, expected_response)
 
-    def test_active_probing(self):
+    def test_active_probing1(self):
             try:
-                format = "http_active_probing"
-                self.startservers(format)
-                self.do_probe()
+                self.startservers("http_active_probing")
+                self.do_probe("GET", "/", "Hello, World!")
+            finally:
+                self.stopservers()
+
+    def test_active_probing2(self):
+            try:
+                self.startservers("http_active_probing2")
+                self.do_probe("GET", "/",         "Hello, World!")
+                self.do_probe("GET", "/notfound", "File not found!")
+                self.do_probe("ABC", "DEF",       "Bad request!")
             finally:
                 self.stopservers()
 

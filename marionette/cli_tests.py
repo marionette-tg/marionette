@@ -83,6 +83,7 @@ class Tests(unittest.TestCase):
             'ssh_simple_nonblocking',
             'smb_simple_nonblocking',
             'http_active_probing',
+            'http_active_probing2',
         ]:
             try:
                 self.startservers(format)
