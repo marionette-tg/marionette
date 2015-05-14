@@ -12,6 +12,9 @@ sys.path.append(".")
 
 import marionette
 
+if len(sys.argv)<3:
+    print 'usage: marionette_client [listen_ip] [listen_port] [format]'
+    sys.exit(1)
 LOCAL_IP = str(sys.argv[1])
 LOCAL_PORT = int(sys.argv[2])
 if len(sys.argv) >= 4:

@@ -1,3 +1,4 @@
+import os
 import sys
 import copy
 import string
@@ -386,9 +387,28 @@ def parse(s):
 
     return retval
 
+def find_mar_file(format_name):
+    current_dir = os.path.dirname(os.path.join(__file__))
+    current_dir = os.path.join(current_dir, 'formats')
+    search_dirs = [sys.prefix,
+                   sys.exec_prefix,
+                   current_dir,
+                   '/etc/marionette/formats',
+                   'marionette/formats',]
+
+    for dir in search_dirs:
+        conf_path = os.path.join(dir, format_name + '.mar')
+        if os.path.exists(conf_path):
+            return conf_path
+
+    return None
 
 def load(party, format_name):
-    with open("marionette/formats/" + format_name + ".mar") as f:
+
+    marionette_file = find_mar_file(format_name)
+    if not marionette_file:
+        raise Exception("Can't find "+format_name)
+    with open(marionette_file) as f:
         mar_str = f.read()
 
     parsed_format = parse(mar_str)

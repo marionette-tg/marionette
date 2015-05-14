@@ -6,7 +6,6 @@ import sys
 import time
 import httplib
 import unittest
-import threading
 
 sys.path.append('.')
 

@@ -13,6 +13,10 @@ sys.path.append(".")
 import marionette
 import marionette.conf
 
+
+if len(sys.argv)<3:
+    print 'usage: marionette_server [proxy_ip] [proxy_port] [format]'
+    sys.exit(1)
 REMOTE_IP = str(sys.argv[1])
 REMOTE_PORT = int(sys.argv[2])
 if len(sys.argv) >= 4:

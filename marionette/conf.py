@@ -1,8 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
+import sys
+
 import ConfigParser
 
+def find_conf_file():
+    search_dirs = [sys.prefix,
+                   '/etc/marionette',
+                   '.',]
+    for dir in search_dirs:
+        conf_path = os.path.join(dir, 'marionette.conf')
+        if os.path.exists(conf_path):
+            return conf_path
+
+    return None
 
 def get(key):
     global conf_
@@ -11,7 +24,10 @@ def get(key):
         retval = conf_[key]
     except:
         confparser = ConfigParser.RawConfigParser()
-        confparser.read('marionette.conf')
+        conf_file_path = find_conf_file()
+        if not conf_file_path:
+            raise Exception('can\'t find marionette.conf')
+        confparser.read(conf_file_path)
 
         conf_ = {}
         conf_["general.debug"] = confparser.getboolean("general", "debug")
