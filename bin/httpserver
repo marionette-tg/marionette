@@ -9,7 +9,7 @@ from twisted.python import log
 
 sys.path.append('.')
 
-import marionette.conf
+import marionette_tg_tg.conf
 
 LOCAL_PORT = int(sys.argv[1])
 
@@ -24,7 +24,7 @@ class GetResource(resource.Resource):
         return retval
 
 if __name__ == "__main__":
-    if marionette.conf.get("general.debug"):
+    if marionette_tg.conf.get("general.debug"):
         log.startLogging(sys.stdout)
 
     reactor.listenTCP(LOCAL_PORT, server.Site(GetResource()))

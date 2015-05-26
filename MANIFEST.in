@@ -1,2 +1,3 @@
-include marionette.conf
-recursive-include marionette *.mar
+include LICENSE
+include marionette_tg/marionette.conf
+recursive-include marionette_tg *.mar

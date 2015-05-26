@@ -13,7 +13,7 @@ import regex2dfa
 import fte.encoder
 import fte.bit_ops
 
-import marionette.channel
+import marionette_tg.channel
 
 
 class PA(object):
@@ -52,7 +52,7 @@ class PA(object):
     def check_channel_state(self):
         if self.party_ == "client":
             if not self.channel_:
-                channel = marionette.channel.open_new_channel(self.get_port())
+                channel = marionette_tg.channel.open_new_channel(self.get_port())
                 self.channel_ = channel
 
     def check_rng_state(self):
@@ -163,7 +163,7 @@ class PA(object):
         retval = None
 
         if self.party_ == "server":
-            channel = marionette.channel.accept_new_channel(
+            channel = marionette_tg.channel.accept_new_channel(
                 self.listening_sockets_, self.get_port())
             if channel:
                 retval = self.replicate()
@@ -190,7 +190,7 @@ class PA(object):
         method = action_obj.get_method()
         args = action_obj.get_args()
 
-        i = importlib.import_module("marionette.plugins._" + module)
+        i = importlib.import_module("marionette_tg.plugins._" + module)
         method_obj = getattr(i, method)
         
         success = method_obj(self.channel_, self.marionette_state_, args)

@@ -3,11 +3,11 @@
 
 from setuptools import setup
 
-setup(name='marionette',
+setup(name='marionette-tg',
       scripts=['bin/marionette_client','bin/marionette_server'],
-      test_suite='marionette',
-      packages=['marionette','marionette.plugins'],
-      package_data={'marionette': ['formats/*.mar']},
+      test_suite='marionette_tg',
+      packages=['marionette_tg','marionette_tg.plugins'],
+      package_data={'marionette_tg': ['marionette.conf','formats/*.mar']},
       include_package_data=True,
       version='0.0.1',
       description='Marionette',

@@ -10,7 +10,7 @@ from twisted.python import log
 
 sys.path.append(".")
 
-import marionette
+import marionette_tg
 
 if len(sys.argv)<3:
     print 'usage: marionette_client [listen_ip] [listen_port] [format]'
@@ -49,10 +49,10 @@ class ProxyClient(protocol.Protocol):
 
 
 if __name__ == "__main__":
-    if marionette.conf.get("general.debug"):
+    if marionette_tg.conf.get("general.debug"):
         log.startLogging(sys.stdout)
 
-    client = marionette.Client(FORMAT)
+    client = marionette_tg.Client(FORMAT)
 
     factory = protocol.Factory()
     factory.protocol = ProxyClient

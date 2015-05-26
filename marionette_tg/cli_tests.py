@@ -10,7 +10,7 @@ import threading
 
 sys.path.append('.')
 
-import marionette.conf
+import marionette_tg.conf
 
 
 def execute(cmd):
@@ -18,7 +18,7 @@ def execute(cmd):
 
 
 def exec_download():
-    client_listen_iface = marionette.conf.get("client.listen_iface")
+    client_listen_iface = marionette_tg.conf.get("client.listen_iface")
     conn = httplib.HTTPConnection(
         client_listen_iface, 18079, False, timeout=10)
     conn.request("GET", "/")
@@ -38,8 +38,8 @@ def exec_download():
 class Tests(unittest.TestCase):
 
     def startservers(self, format):
-        client_listen_iface = marionette.conf.get("client.listen_iface")
-        server_proxy_iface = marionette.conf.get("server.proxy_iface")
+        client_listen_iface = marionette_tg.conf.get("client.listen_iface")
+        server_proxy_iface = marionette_tg.conf.get("server.proxy_iface")
 
         execute("./bin/httpserver 18081 %s &" % format)
         time.sleep(1)

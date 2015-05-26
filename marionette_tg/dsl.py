@@ -11,7 +11,7 @@ import fte.bit_ops
 
 sys.path.append('.')
 
-import marionette.PA
+import marionette_tg.PA
 
 # TODO: fix it s.t. "server" in var name doesn't cause problem
 
@@ -236,7 +236,7 @@ def p_action_block(p):
     """
     p[0] = []
     for i in range(len(p[4])):
-        p[0] += [marionette.action.MarionetteAction(p[2], p[4][i][0],
+        p[0] += [marionette_tg.action.MarionetteAction(p[2], p[4][i][0],
                                                           p[4][i][1],
                                                           p[4][i][2],
                                                           p[4][i][3],
@@ -417,7 +417,7 @@ def load(party, format_name):
     if format_name in ["ftp_pasv_transfer"]:
         first_sender = "server"
 
-    executable = marionette.PA.PA(party, first_sender)
+    executable = marionette_tg.PA.PA(party, first_sender)
     executable.set_port(parsed_format.get_port())
     executable.marionette_state_.set_local(
         "model_uuid", get_model_uuid(mar_str))

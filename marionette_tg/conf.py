@@ -3,15 +3,20 @@
 
 import os
 import sys
+import site
 
 import ConfigParser
 
 def find_conf_file():
     search_dirs = [sys.prefix,
-                   '/etc/marionette',
-                   '.',]
+                   '/etc',
+                   '.',
+                  ] + site.getsitepackages()
     for dir in search_dirs:
         conf_path = os.path.join(dir, 'marionette.conf')
+        if os.path.exists(conf_path):
+            return conf_path
+        conf_path = os.path.join(dir, 'marionette_tg', 'marionette.conf')
         if os.path.exists(conf_path):
             return conf_path
 
@@ -26,7 +31,7 @@ def get(key):
         confparser = ConfigParser.RawConfigParser()
         conf_file_path = find_conf_file()
         if not conf_file_path:
-            raise Exception('can\'t find marionette.conf')
+            raise Exception('can\'t find marionette_tg.conf')
         confparser.read(conf_file_path)
 
         conf_ = {}

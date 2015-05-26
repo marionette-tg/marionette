@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import marionette.driver
-import marionette.multiplexer
-import marionette.record_layer
+import marionette_tg.driver
+import marionette_tg.multiplexer
+import marionette_tg.record_layer
 
 
 class MarionetteException(Exception):
@@ -13,14 +13,14 @@ class MarionetteException(Exception):
 class Client(object):
 
     def __init__(self, format_name):
-        self.multiplexer_outgoing_ = marionette.multiplexer.BufferOutgoing()
-        self.multiplexer_incoming_ = marionette.multiplexer.BufferIncoming()
+        self.multiplexer_outgoing_ = marionette_tg.multiplexer.BufferOutgoing()
+        self.multiplexer_incoming_ = marionette_tg.multiplexer.BufferIncoming()
         self.multiplexer_incoming_.addCallback(self.process_cell)
         self.format_name_ = format_name
         self.streams_ = {}
         self.stream_counter_ = 1
 
-        self.driver_ = marionette.driver.ClientDriver("client")
+        self.driver_ = marionette_tg.driver.ClientDriver("client")
         self.driver_.set_multiplexer_incoming(self.multiplexer_incoming_)
         self.driver_.set_multiplexer_outgoing(self.multiplexer_outgoing_)
         self.driver_.setFormat(self.format_name_)
@@ -40,7 +40,7 @@ class Client(object):
             self.streams_[stream_id].srv_queue.put(payload)
 
     def start_new_stream(self, srv_queue=None):
-        stream = marionette.multiplexer.MarionetteStream(
+        stream = marionette_tg.multiplexer.MarionetteStream(
             self.multiplexer_incoming_,
             self.multiplexer_outgoing_,
             self.stream_counter_,
@@ -58,12 +58,12 @@ class Server(object):
     factory = None
 
     def __init__(self, format_name):
-        self.multiplexer_outgoing_ = marionette.multiplexer.BufferOutgoing()
-        self.multiplexer_incoming_ = marionette.multiplexer.BufferIncoming()
+        self.multiplexer_outgoing_ = marionette_tg.multiplexer.BufferOutgoing()
+        self.multiplexer_incoming_ = marionette_tg.multiplexer.BufferIncoming()
         self.multiplexer_incoming_.addCallback(self.process_cell)
         self.format_name_ = format_name
 
-        self.driver_ = marionette.driver.ServerDriver("server")
+        self.driver_ = marionette_tg.driver.ServerDriver("server")
         self.driver_.set_multiplexer_incoming(self.multiplexer_incoming_)
         self.driver_.set_multiplexer_outgoing(self.multiplexer_outgoing_)
         self.driver_.setFormat(self.format_name_)
@@ -78,12 +78,12 @@ class Server(object):
         cell_type = cell_obj.get_cell_type()
         stream_id = cell_obj.get_stream_id()
 
-        if cell_type == marionette.record_layer.END_OF_STREAM:
+        if cell_type == marionette_tg.record_layer.END_OF_STREAM:
             self.factory_instances[stream_id].connectionLost()
             del self.factory_instances[stream_id]
-        elif cell_type == marionette.record_layer.NORMAL:
+        elif cell_type == marionette_tg.record_layer.NORMAL:
             if not self.factory_instances.get(stream_id):
-                stream = marionette.multiplexer.MarionetteStream(
+                stream = marionette_tg.multiplexer.MarionetteStream(
                     self.multiplexer_incoming_, self.multiplexer_outgoing_,
                     stream_id)
                 self.factory_instances[stream_id] = self.factory()

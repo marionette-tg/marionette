@@ -10,8 +10,8 @@ from twisted.python import log
 
 sys.path.append(".")
 
-import marionette
-import marionette.conf
+import marionette_tg
+import marionette_tg_tg.conf
 
 
 if len(sys.argv)<3:
@@ -107,10 +107,10 @@ class ProxyServer(object):
 
 
 if __name__ == "__main__":
-    if marionette.conf.get("general.debug"):
+    if marionette_tg.conf.get("general.debug"):
         log.startLogging(sys.stdout)
 
-    server = marionette.Server(FORMAT)
+    server = marionette_tg.Server(FORMAT)
     server.factory = ProxyServer
 
     reactor.callInThread(server.execute, reactor)

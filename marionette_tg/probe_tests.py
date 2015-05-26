@@ -9,7 +9,7 @@ import unittest
 
 sys.path.append('.')
 
-import marionette.conf
+import marionette_tg.conf
 
 
 def execute(cmd):
@@ -19,17 +19,17 @@ def execute(cmd):
 class Tests(unittest.TestCase):
 
     def startservers(self, format):
-        server_proxy_iface = marionette.conf.get("server.proxy_iface")
+        server_proxy_iface = marionette_tg.conf.get("server.proxy_iface")
 
         execute("./bin/marionette_server %s 18081 %s &" %
                 (server_proxy_iface, format))
-        time.sleep(0.25)
+        time.sleep(1)
 
     def stopservers(self):
         execute("pkill -9 -f marionette_server")
 
     def do_probe(self, request_method, request_uri, expected_response):
-        server_listen_iface = marionette.conf.get("server.listen_iface")
+        server_listen_iface = marionette_tg.conf.get("server.listen_iface")
         conn = httplib.HTTPConnection(
             server_listen_iface, 8080, False, timeout=10)
         conn.request(request_method, request_uri)

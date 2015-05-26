@@ -10,9 +10,9 @@ import socket
 
 sys.path.append('.')
 
-import marionette.conf
+import marionette_tg.conf
 
-SERVER_IFACE = marionette.conf.get("server.listen_iface")
+SERVER_IFACE = marionette_tg.conf.get("server.listen_iface")
 SERVER_TIMEOUT = 0.001
 
 
@@ -100,7 +100,7 @@ def open_new_channel(port):
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((SERVER_IFACE, int(port)))
-            channel = marionette.channel.new(s)
+            channel = marionette_tg.channel.new(s)
         except Exception as e:
             channel = None
         finally:
@@ -125,7 +125,7 @@ def accept_new_channel(listening_sockets, port):
 
     try:
         conn, addr = listening_sockets[port].accept()
-        channel = marionette.channel.new(conn)
+        channel = marionette_tg.channel.new(conn)
     except socket.timeout:
         channel = None
 

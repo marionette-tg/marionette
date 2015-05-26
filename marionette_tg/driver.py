@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import marionette.action
-import marionette.channel
-import marionette.conf
-import marionette.dsl
-import marionette.PA
+import marionette_tg.action
+import marionette_tg.channel
+import marionette_tg.conf
+import marionette_tg.dsl
+import marionette_tg.PA
 
 
 class ClientDriver(object):
@@ -34,7 +34,7 @@ class ClientDriver(object):
         return len(self.running_ + self.to_start_) > 0
 
     def setFormat(self, format_name):
-        executable = marionette.dsl.load(self.party_, format_name)
+        executable = marionette_tg.dsl.load(self.party_, format_name)
         executable.set_multiplexer_outgoing(self.multiplexer_outgoing_)
         executable.set_multiplexer_incoming(self.multiplexer_incoming_)
         self.executeable_ = executable
@@ -83,7 +83,7 @@ class ServerDriver(object):
         return len(self.running_)
 
     def setFormat(self, format_name):
-        executable = marionette.dsl.load(self.party_, format_name)
+        executable = marionette_tg.dsl.load(self.party_, format_name)
         executable.set_multiplexer_outgoing(self.multiplexer_outgoing_)
         executable.set_multiplexer_incoming(self.multiplexer_incoming_)
         self.executable_ = executable

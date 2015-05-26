@@ -7,12 +7,12 @@ from twisted.internet import reactor
 from twisted.protocols import socks
 from twisted.python import log
 
-import marionette.conf
+import marionette_tg_tg.conf
 
 SOCKS_PORT = int(sys.argv[1])
 
 if '__main__' == __name__:
-    if marionette.conf.get("general.debug"):
+    if marionette_tg.conf.get("general.debug"):
         log.startLogging(sys.stdout)
 
     reactor.listenTCP(SOCKS_PORT, socks.SOCKSv4Factory(None))
