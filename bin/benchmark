@@ -8,7 +8,7 @@ import httplib
 
 sys.path.append('.')
 
-import marionette_tg_tg.conf
+import marionette_tg.conf
 
 
 def execute(cmd):

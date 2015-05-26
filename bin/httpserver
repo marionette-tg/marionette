@@ -9,7 +9,7 @@ from twisted.python import log
 
 sys.path.append('.')
 
-import marionette_tg_tg.conf
+import marionette_tg.conf
 
 LOCAL_PORT = int(sys.argv[1])
 
