@@ -6,8 +6,7 @@ import random
 
 from twisted.internet import reactor
 
-import marionette
-import marionette.driver
+import marionette_tg.driver
 
 
 def sleep(channel, marionette_state, input_args, blocking=True):
@@ -47,10 +46,10 @@ def spawn(channel, marionette_state, input_args, blocking=True):
     num_models = int(input_args[1])
 
     if marionette_state.get_local("party") == 'server':
-        driver = marionette.driver.ServerDriver(
+        driver = marionette_tg.driver.ServerDriver(
             marionette_state.get_local("party"))
     elif marionette_state.get_local("party") == 'client':
-        driver = marionette.driver.ClientDriver(
+        driver = marionette_tg.driver.ClientDriver(
             marionette_state.get_local("party"))
 
     driver.set_multiplexer_incoming(

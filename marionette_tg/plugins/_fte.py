@@ -5,7 +5,7 @@ import socket
 import math
 
 import fte.encoder
-import marionette.record_layer
+import marionette_tg.record_layer
 
 MAX_CELL_LENGTH_IN_BITS = (2 ** 16) * 8
 
@@ -38,7 +38,7 @@ def send(channel, marionette_state, input_args, blocking=True):
             - fte.encrypter.Encrypter._CTXT_EXPANSION
         min_cell_len_in_bits = min_cell_len_in_bytes * 8
 
-        cell_headers_in_bits = marionette.record_layer.PAYLOAD_HEADER_SIZE_IN_BITS
+        cell_headers_in_bits = marionette_tg.record_layer.PAYLOAD_HEADER_SIZE_IN_BITS
         cell_len_in_bits = max(min_cell_len_in_bits, bits_in_buffer)
         cell_len_in_bits = min(cell_len_in_bits + cell_headers_in_bits,
                                MAX_CELL_LENGTH_IN_BITS)
@@ -76,7 +76,7 @@ def recv(channel, marionette_state, input_args, blocking=True):
         if len(ctxt) > 0:
             [ptxt, remainder] = fteObj.decode(ctxt)
 
-            cell_obj = marionette.record_layer.unserialize(ptxt)
+            cell_obj = marionette_tg.record_layer.unserialize(ptxt)
             assert cell_obj.get_model_uuid() == marionette_state.get_local(
                 "model_uuid")
 
