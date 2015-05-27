@@ -3,7 +3,6 @@
 
 import os
 import sys
-import site
 
 import ConfigParser
 
@@ -11,7 +10,8 @@ def find_conf_file():
     search_dirs = [sys.prefix,
                    '/etc',
                    '.',
-                  ] + site.getsitepackages()
+                   os.path.dirname(__file__),
+                  ]
     for dir in search_dirs:
         conf_path = os.path.join(dir, 'marionette.conf')
         if os.path.exists(conf_path):
