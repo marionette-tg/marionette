@@ -84,6 +84,9 @@ class Tests(unittest.TestCase):
             'smb_simple_nonblocking',
             'http_active_probing',
             'http_active_probing2',
+            'active_probing/http_apache_247',
+            'active_probing/ssh_openssh_661',
+            'active_probing/ftp_pureftpd_10',
         ]:
             try:
                 self.startservers(format)
