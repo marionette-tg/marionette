@@ -20,7 +20,7 @@ def execute(cmd):
 def exec_download():
     client_listen_iface = marionette_tg.conf.get("client.listen_iface")
     conn = httplib.HTTPConnection(
-        client_listen_iface, 18079, False, timeout=10)
+        client_listen_iface, 18079, False, timeout=60)
     conn.request("GET", "/")
     response = conn.getresponse()
     actual_response = response.read()
