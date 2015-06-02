@@ -1,7 +1,7 @@
 connection(tcp, 8083):
   start        upstream     NULL                    1.0
   upstream     downstream   http_request_keep_alive 0.5
-  downstream   close        http_request_close      0.5
+  upstream     close        http_request_close      0.5
   downstream   upstream     http_ok_keep_alive      1.0
   close        end          http_response_close     1.0
 
