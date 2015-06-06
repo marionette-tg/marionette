@@ -23,6 +23,7 @@ class PA(object):
 
         self.actions_ = []
         self.channel_ = None
+        self.channel_requested_ = False
         self.current_state_ = 'start'
         self.first_sender_ = first_sender
         self.next_state_ = None
@@ -52,8 +53,13 @@ class PA(object):
     def check_channel_state(self):
         if self.party_ == "client":
             if not self.channel_:
-                channel = marionette_tg.channel.open_new_channel(self.get_port())
-                self.channel_ = channel
+                if not self.channel_requested_:
+                    marionette_tg.channel.open_new_channel(self.get_port(), self.set_channel)
+                    self.channel_requested_ = True
+        return (self.channel_ != None)
+
+    def set_channel(self, channel):
+        self.channel_ = channel
 
     def check_rng_state(self):
         if not self.rng_:
@@ -154,9 +160,10 @@ class PA(object):
         return retval
 
     def transition(self):
-        self.check_channel_state()
-        self.check_rng_state()
-        success = self.advance_to_next_state()
+        success = False
+        if self.check_channel_state():
+            self.check_rng_state()
+            success = self.advance_to_next_state()
         return success
 
     def check_for_incoming_connections(self):

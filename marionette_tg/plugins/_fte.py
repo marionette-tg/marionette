@@ -50,6 +50,7 @@ def send(channel, marionette_state, input_args, blocking=True):
         ptxt = cell.to_string()
 
         ctxt = fteObj.encode(ptxt)
+        print ['fte.send', ctxt[:32], ctxt[-32:]]
         ctxt_len = len(ctxt)
         while len(ctxt) > 0:
             try:
@@ -59,6 +60,8 @@ def send(channel, marionette_state, input_args, blocking=True):
                 continue
             except socket.error:
                 continue
+            except Exception as e:
+                print e
         retval = (ctxt_len == bytes_sent)
 
     return retval
@@ -73,6 +76,7 @@ def recv(channel, marionette_state, input_args, blocking=True):
 
     try:
         ctxt = channel.recv()
+        if ctxt: print ['fte.recv', ctxt[:32], ctxt[-32:]]
         if len(ctxt) > 0:
             [ptxt, remainder] = fteObj.decode(ctxt)
 
@@ -82,21 +86,25 @@ def recv(channel, marionette_state, input_args, blocking=True):
 
             marionette_state.set_local(
                 "model_instance_id", cell_obj.get_model_instance_id())
+
             if marionette_state.get_local("model_instance_id"):
                 if cell_obj.get_stream_id() > 0:
                     marionette_state.get_global(
                         "multiplexer_incoming").push(ptxt)
                 retval = True
     except fte.encrypter.RecoverableDecryptionError as e:
+        print e
         retval = False
     except Exception as e:
         channel.rollback()
+        print e
         raise e
 
     if not retval:
         channel.rollback()
     else:
         if len(remainder) > 0:
+            print ['remainder', remainder[:32]]
             channel.rollback(len(remainder))
 
     return retval
