@@ -8,8 +8,6 @@ from twisted.internet import protocol
 from twisted.internet import reactor
 from twisted.python import log
 
-#import yappi
-
 sys.path.append(".")
 
 import marionette_tg
@@ -32,13 +30,13 @@ class ProxyClient(protocol.Protocol):
         self.srv_queue = defer.DeferredQueue()
         self.srv_queue.get().addCallback(self.clientDataReceived)
         self.client_stream_ = client.start_new_stream(self.srv_queue)
+        self.transport.setTcpNoDelay(True)
 
     def clientDataReceived(self, chunk):
         log.msg(
             "ProxyClient: writing %d bytes to original client" %
             len(chunk))
-        self.transport.write(chunk)
-        self.transport.doWrite()
+        self.transport.getHandle().sendall(chunk)
         self.srv_queue.get().addCallback(self.clientDataReceived)
 
     def dataReceived(self, chunk):
@@ -54,8 +52,6 @@ if __name__ == "__main__":
     if marionette_tg.conf.get("general.debug"):
         log.startLogging(sys.stdout)
 
-    #yappi.start()
-
     client = marionette_tg.Client(FORMAT)
 
     factory = protocol.Factory()
@@ -64,5 +60,3 @@ if __name__ == "__main__":
     reactor.callInThread(client.execute, reactor)
 
     reactor.run()
-
-    #yappi.get_func_stats().print_all()

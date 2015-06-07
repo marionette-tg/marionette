@@ -31,6 +31,7 @@ class ProxyServerProtocol(protocol.Protocol):
         log.msg("ProxyServerProtocol: connected to peer")
         self.cli_queue = self.factory.cli_queue
         self.cli_queue.get().addCallback(self.serverDataReceived)
+        self.transport.setTcpNoDelay(True)
 
     def serverDataReceived(self, chunk):
         if chunk is False:
@@ -42,7 +43,7 @@ class ProxyServerProtocol(protocol.Protocol):
             log.msg(
                 "ProxyServerProtocol: writing %d bytes to peer" %
                 len(chunk))
-            self.transport.write(chunk)
+            self.transport.getHandle().sendall(chunk)
             self.cli_queue.get().addCallback(self.serverDataReceived)
         else:
             log.msg(

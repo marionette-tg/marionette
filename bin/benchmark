@@ -11,11 +11,10 @@ sys.path.append('.')
 import marionette_tg.conf
 
 expected_response = ''
-for x in range(2**16):
+for x in range(2**15):
     expected_response += '_' + str(x)
 
 def execute(cmd):
-    print [cmd]
     os.system(cmd)
 
 
@@ -38,16 +37,16 @@ def startservers(format):
     client_listen_iface = marionette_tg.conf.get("client.listen_iface")
     server_proxy_iface = marionette_tg.conf.get("server.proxy_iface")
 
-    execute("./bin/httpserver 18081 %s &" % format)
-    time.sleep(1)
+    execute("./bin/httpserver 18081 &")
+    time.sleep(3)
     execute(
         "./bin/marionette_server %s 18081 %s &" %
         (server_proxy_iface, format))
-    time.sleep(1)
+    time.sleep(3)
     execute(
         "./bin/marionette_client %s 18079 %s &" %
         (client_listen_iface, format))
-    time.sleep(1)
+    time.sleep(3)
 
 
 def stopservers():
@@ -75,6 +74,7 @@ def main():
         dodownload_serial()
         print '\t', format, '...', 'SUCCESS'
     except Exception as e:
+        print e
         print '\t', format, '...', 'FAILED'
     finally:
         stopservers()

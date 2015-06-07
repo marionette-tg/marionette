@@ -27,7 +27,7 @@ def exec_download():
     conn.close()
 
     expected_response = ''
-    for x in range(2**16):
+    for x in range(2**15):
         expected_response += '_' + str(x)
 
     assert actual_response == expected_response
@@ -42,13 +42,13 @@ class Tests(unittest.TestCase):
         server_proxy_iface = marionette_tg.conf.get("server.proxy_iface")
 
         execute("./bin/httpserver 18081 %s &" % format)
-        time.sleep(1)
+        time.sleep(3)
         execute("./bin/marionette_server %s 18081 %s &" %
                 (server_proxy_iface, format))
-        time.sleep(1)
+        time.sleep(3)
         execute("./bin/marionette_client %s 18079 %s &" %
                 (client_listen_iface, format))
-        time.sleep(1)
+        time.sleep(3)
 
     def stopservers(self):
         execute("pkill -9 -f marionette_client")
@@ -90,6 +90,7 @@ class Tests(unittest.TestCase):
                 self.dodownload_serial()
                 self.dodownload_parallel()
                 print '\t', format, '...', 'SUCCESS'
+                time.sleep(5)
             except Exception as e:
                 print '\t', format, '...', 'FAILED'
                 self.assertFalse(True, e)
