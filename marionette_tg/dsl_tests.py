@@ -547,12 +547,8 @@ action downstream_async:
 
 
     def test_hex_input_strings(self):
-        # Escaping input to match a format read in from a file
-        mar_format = """connection(tcp, 80):
-          start do_nothing NULL 1.0
-          do_nothing end NULL 1.0
-        action null_puts:
-          client io.puts('\\x41\\x42\\\\backslash')"""
+        with open(marionette_tg.dsl.find_mar_file("test_hex_input_strings")) as f:
+            mar_format = f.read()
 
         parsed_format = marionette_tg.dsl.parse(mar_format)
 
