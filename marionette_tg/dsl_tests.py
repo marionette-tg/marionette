@@ -546,5 +546,22 @@ action downstream_async:
             parsed_format.get_action_blocks()[1].get_regex_match_incoming(),"^regex2.*")
 
 
+    def test_hex_input_strings(self):
+        # Escaping input to match a format read in from a file
+        mar_format = """connection(tcp, 80):
+          start do_nothing NULL 1.0
+          do_nothing end NULL 1.0
+        action null_puts:
+          client io.puts('\\x41\\x42\\\\backslash')"""
+
+        parsed_format = marionette_tg.dsl.parse(mar_format)
+
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_name(), "null_puts")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_party(), "client")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_module(), "io")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_method(), "puts")
+        self.assertEquals(parsed_format.get_action_blocks()[0].get_args()[0], "\x41\x42\\backslash")
+
+
 if __name__ == "__main__":
     unittest.main()

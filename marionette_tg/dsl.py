@@ -295,9 +295,7 @@ def p_string_arg(p):
     p_string_arg : STRING
     """
     p[0] = str(p[1][1:-1])
-    p[0] = string.replace(p[0], '\\t', '\t')
-    p[0] = string.replace(p[0], '\\r', '\r')
-    p[0] = string.replace(p[0], '\\n', '\n')
+    p[0] = p[0].decode("string_escape")
 
 def p_integer_arg(p):
     """
