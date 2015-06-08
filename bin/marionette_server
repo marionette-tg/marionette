@@ -114,6 +114,6 @@ if __name__ == "__main__":
     server = marionette_tg.Server(FORMAT)
     server.factory = ProxyServer
 
-    reactor.callInThread(server.execute, reactor)
+    reactor.callFromThread(server.execute, reactor)
 
     reactor.run()

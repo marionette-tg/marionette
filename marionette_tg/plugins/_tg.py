@@ -181,7 +181,7 @@ class FteHandler(object):
 
     def capacity(self):
         if self.regex_.endswith(".+"):
-            retval = (2 ** 16) * 8
+            retval = (2 ** 18) * 8
         else:
             cell_len_in_bytes = int(math.floor(self.fte_encrypter_.getCapacity(
             ) / 8.0)) - fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTTEXT - fte.encrypter.Encrypter._CTXT_EXPANSION

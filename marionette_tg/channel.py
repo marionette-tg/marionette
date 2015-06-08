@@ -25,39 +25,36 @@ class Channel(object):
         self.closed_ = False
         self.is_alive_ = True
         self.channel_id_ = os.urandom(4)
+        self.buffer_lock_ = threading.RLock()
         self.buffer_ = ''
         self.last_buffer_ = ''
         self.model_ = None
 
-    def update_buffer(self):
-        with self.protocol_.buffer_lock_:
-            tmpbuf = self.protocol_.buffer_
-            self.protocol_.buffer_ = ''
-            self.buffer_ += tmpbuf
+    def appendToBuffer(self, chunk):
+        with self.buffer_lock_:
+            self.buffer_ += chunk
 
     def recv(self):
-        self.update_buffer()
-
-        retval = self.buffer_
-        self.last_buffer_ = self.buffer_
-        self.buffer_ = ''
-
+        with self.buffer_lock_:
+            retval = self.buffer_
+            self.last_buffer_ = self.buffer_
+            self.buffer_ = ''
         return retval
 
     def peek(self):
-        self.update_buffer()
-
-        return self.buffer_
+        with self.buffer_lock_:
+            return self.buffer_
 
     def send(self, data):
         self.protocol_.transport.getHandle().sendall(data)
         return len(data)
 
     def rollback(self, n=0):
-        if n > 0:
-            self.buffer_ = self.last_buffer_[-n:] + self.buffer_
-        else:
-            self.buffer_ = self.last_buffer_ + self.buffer_
+        with self.buffer_lock_:
+            if n > 0:
+                self.buffer_ = self.last_buffer_[-n:] + self.buffer_
+            else:
+                self.buffer_ = self.last_buffer_ + self.buffer_
 
     def is_alive(self):
         return self.is_alive_
@@ -79,15 +76,11 @@ class Channel(object):
 class MyClient(protocol.Protocol):
     def connectionMade(self):
         log.msg("channel.Client.connectionMade")
-        self.buffer_lock_ = threading.RLock()
-        with self.buffer_lock_:
-            self.buffer_ = ''
         self.transport.setTcpNoDelay(True)
 
     def dataReceived(self, chunk):
         log.msg("channel.Client: %d bytes received" % len(chunk))
-        with self.buffer_lock_:
-            self.buffer_ += chunk
+        self.channel.appendToBuffer(chunk)
 
 
 class MyClientFactory(protocol.ClientFactory):
@@ -98,6 +91,7 @@ class MyClientFactory(protocol.ClientFactory):
     def buildProtocol(self, address):
         proto = protocol.ClientFactory.buildProtocol(self, address)
         channel = Channel(proto, address)
+        proto.channel = channel
         self.callback_(channel)
         return proto
 
@@ -110,7 +104,7 @@ def open_new_channel(port, callback):
 def start_connection(port, callback):
     factory = MyClientFactory(callback)
     factory.protocol = MyClient
-    connector = reactor.connectTCP(SERVER_IFACE, int(port), factory)
+    reactor.connectTCP(SERVER_IFACE, int(port), factory)
 
     return True
 
@@ -125,15 +119,19 @@ class MyServer(protocol.Protocol):
         if not incoming.get(port):
             incoming[port] = []
         incoming[port].append(self)
-        self.buffer_lock_ = threading.RLock()
-        with self.buffer_lock_:
-            self.buffer_ = ''
         self.transport.setTcpNoDelay(True)
+        self.channel = None
+        self.channel_to_append_ = ''
 
     def dataReceived(self, chunk):
         log.msg("channel.Server: %d bytes received" % len(chunk))
-        with self.buffer_lock_:
-            self.buffer_ += chunk
+        if self.channel:
+            if self.channel_to_append_:
+                self.channel.appendToBuffer(self.channel_to_append_)
+                self.channel_to_append_ = ''
+            self.channel.appendToBuffer(chunk)
+        else:
+            self.channel_to_append_ += chunk
 
 
 def accept_new_channel(listening_sockets, port):
@@ -143,6 +141,7 @@ def accept_new_channel(listening_sockets, port):
     if incoming.get(port) and len(incoming.get(port))>0:
         myprotocol = incoming[port].pop(0)
         channel = Channel(myprotocol, port)
+        myprotocol.channel = channel
 
     return channel
 

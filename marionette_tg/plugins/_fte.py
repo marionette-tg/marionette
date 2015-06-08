@@ -7,7 +7,7 @@ import math
 import fte.encoder
 import marionette_tg.record_layer
 
-MAX_CELL_LENGTH_IN_BITS = (2 ** 16) * 8
+MAX_CELL_LENGTH_IN_BITS = (2 ** 18) * 8
 
 
 def send_async(channel, marionette_state, input_args):

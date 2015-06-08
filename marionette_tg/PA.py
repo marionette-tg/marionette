@@ -4,6 +4,7 @@
 import os
 import re
 import sys
+import time
 import random
 import importlib
 
@@ -15,6 +16,7 @@ import fte.bit_ops
 
 import marionette_tg.channel
 
+EVENT_LOOP_FREQUENCY_S = 0.001
 
 class PA(object):
 
@@ -44,11 +46,13 @@ class PA(object):
                 self.marionette_state_.get_local("model_instance_id"))
 
     def execute(self, reactor):
-        if self.isRunning():
-            self.transition()
-            reactor.callInThread(self.execute, reactor)
-        else:
-            self.channel_.close()
+        while True:
+            if self.isRunning():
+                self.transition()
+                time.sleep(EVENT_LOOP_FREQUENCY_S)
+            else:
+                self.channel_.close()
+                break
 
     def check_channel_state(self):
         if self.party_ == "client":
