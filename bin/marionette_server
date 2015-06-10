@@ -2,11 +2,13 @@
 # coding: utf-8
 
 import sys
+import time
 
 from twisted.internet import defer
 from twisted.internet import protocol
 from twisted.internet import reactor
 from twisted.python import log
+import socket
 
 sys.path.append(".")
 
@@ -24,6 +26,7 @@ if len(sys.argv) >= 4:
 else:
     FORMAT = 'http_simple_blocking'
 
+MAX_TO_SEND = 2**18
 
 class ProxyServerProtocol(protocol.Protocol):
 
@@ -31,7 +34,6 @@ class ProxyServerProtocol(protocol.Protocol):
         log.msg("ProxyServerProtocol: connected to peer")
         self.cli_queue = self.factory.cli_queue
         self.cli_queue.get().addCallback(self.serverDataReceived)
-        self.transport.setTcpNoDelay(True)
 
     def serverDataReceived(self, chunk):
         if chunk is False:
@@ -43,7 +45,20 @@ class ProxyServerProtocol(protocol.Protocol):
             log.msg(
                 "ProxyServerProtocol: writing %d bytes to peer" %
                 len(chunk))
-            self.transport.getHandle().sendall(chunk)
+
+            to_send = chunk
+            handle = self.transport.getHandle()
+            while len(to_send)>0:
+                try:
+                    bytes_sent = handle.send(to_send)
+                    to_send = to_send[bytes_sent:]
+                except socket.error as e:
+                    if str(e) == '[Errno 35] Resource temporarily unavailable':
+                        time.sleep(0) # yield to allow Python to process outgoing messages
+                        continue
+                    else:
+                        break
+
             self.cli_queue.get().addCallback(self.serverDataReceived)
         else:
             log.msg(

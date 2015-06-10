@@ -3,6 +3,8 @@
 
 import os
 import sys
+import time
+import socket
 import threading
 
 import twisted.internet.error
@@ -15,7 +17,7 @@ sys.path.append('.')
 import marionette_tg.conf
 
 SERVER_IFACE = marionette_tg.conf.get("server.listen_iface")
-
+MAX_TO_SEND = 2**18
 
 class Channel(object):
 
@@ -26,6 +28,7 @@ class Channel(object):
         self.is_alive_ = True
         self.channel_id_ = os.urandom(4)
         self.buffer_lock_ = threading.RLock()
+        self.socket_lock_ = threading.RLock()
         self.buffer_ = ''
         self.last_buffer_ = ''
         self.model_ = None
@@ -46,8 +49,24 @@ class Channel(object):
             return self.buffer_
 
     def send(self, data):
-        self.protocol_.transport.getHandle().sendall(data)
-        return len(data)
+        with self.socket_lock_:
+            to_send = data
+            handle = self.protocol_.transport.getHandle()
+            while len(to_send)>0:
+                try:
+                    bytes_sent = handle.send(to_send)
+                    to_send = to_send[bytes_sent:]
+                except socket.error as e:
+                    if str(e) == '[Errno 35] Resource temporarily unavailable':
+                        time.sleep(0) # yield to allow Python to process outgoing messages
+                        continue
+                    else:
+                        break
+
+        return bytes_sent
+
+    def sendall(self, data):
+        return self.send(data)
 
     def rollback(self, n=0):
         with self.buffer_lock_:
@@ -76,7 +95,6 @@ class Channel(object):
 class MyClient(protocol.Protocol):
     def connectionMade(self):
         log.msg("channel.Client.connectionMade")
-        self.transport.setTcpNoDelay(True)
 
     def dataReceived(self, chunk):
         log.msg("channel.Client: %d bytes received" % len(chunk))
@@ -119,7 +137,6 @@ class MyServer(protocol.Protocol):
         if not incoming.get(port):
             incoming[port] = []
         incoming[port].append(self)
-        self.transport.setTcpNoDelay(True)
         self.channel = None
         self.channel_to_append_ = ''
 

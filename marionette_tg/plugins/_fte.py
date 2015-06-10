@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import socket
 import math
 
 import fte.encoder
@@ -51,16 +50,10 @@ def send(channel, marionette_state, input_args, blocking=True):
 
         ctxt = fteObj.encode(ptxt)
         ctxt_len = len(ctxt)
-        while len(ctxt) > 0:
-            try:
-                bytes_sent = channel.send(ctxt)
-                ctxt = ctxt[bytes_sent:]
-            except socket.timeout:
-                continue
-            except socket.error:
-                continue
-            except Exception as e:
-                print e
+        try:
+            bytes_sent = channel.sendall(ctxt)
+        except Exception as e:
+            raise e
         retval = (ctxt_len == bytes_sent)
 
     return retval
@@ -93,13 +86,15 @@ def recv(channel, marionette_state, input_args, blocking=True):
     except fte.encrypter.RecoverableDecryptionError as e:
         retval = False
     except Exception as e:
-        channel.rollback()
+        if len(ctxt)>0:
+            channel.rollback()
         raise e
 
-    if not retval:
-        channel.rollback()
-    else:
+    if retval:
         if len(remainder) > 0:
             channel.rollback(len(remainder))
+    else:
+        if len(ctxt)>0:
+            channel.rollback()
 
     return retval

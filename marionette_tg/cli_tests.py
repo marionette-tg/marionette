@@ -27,7 +27,7 @@ def exec_download():
     conn.close()
 
     expected_response = ''
-    for x in range(2**15):
+    for x in range(2**20):
         expected_response += '_' + str(x)
 
     assert actual_response == expected_response

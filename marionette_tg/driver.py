@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import time
+
 import marionette_tg.action
 import marionette_tg.channel
 import marionette_tg.conf

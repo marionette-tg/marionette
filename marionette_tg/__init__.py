@@ -35,7 +35,6 @@ class Client(object):
         else:
             self.driver_.reset()
 
-        #reactor.callLater(EVENT_LOOP_FREQUENCY_S, self.execute, reactor)
         time.sleep(EVENT_LOOP_FREQUENCY_S)
         reactor.callFromThread(self.execute, reactor)
 
@@ -79,9 +78,8 @@ class Server(object):
     def execute(self, reactor):
         self.driver_.execute(reactor)
 
-        reactor.callLater(EVENT_LOOP_FREQUENCY_S, self.execute, reactor)
-        #time.sleep(EVENT_LOOP_FREQUENCY_S)
-        #reactor.callFromThread(self.execute, reactor)
+        time.sleep(EVENT_LOOP_FREQUENCY_S)
+        reactor.callFromThread(self.execute, reactor)
 
     def process_cell(self, cell_obj):
         cell_type = cell_obj.get_cell_type()
