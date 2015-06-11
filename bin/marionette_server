@@ -46,19 +46,7 @@ class ProxyServerProtocol(protocol.Protocol):
                 "ProxyServerProtocol: writing %d bytes to peer" %
                 len(chunk))
 
-            to_send = chunk
-            handle = self.transport.getHandle()
-            while len(to_send)>0:
-                try:
-                    bytes_sent = handle.send(to_send)
-                    to_send = to_send[bytes_sent:]
-                except socket.error as e:
-                    if str(e) == '[Errno 35] Resource temporarily unavailable':
-                        time.sleep(0) # yield to allow Python to process outgoing messages
-                        continue
-                    else:
-                        break
-
+            self.transport.write(chunk)
             self.cli_queue.get().addCallback(self.serverDataReceived)
         else:
             log.msg(

@@ -3,8 +3,6 @@
 
 import os
 import sys
-import time
-import socket
 import threading
 
 import twisted.internet.error
@@ -49,23 +47,10 @@ class Channel(object):
             return self.buffer_
 
     def send(self, data):
-        total_bytes_sent = 0
         with self.socket_lock_:
-            to_send = data
-            handle = self.protocol_.transport.getHandle()
-            while len(to_send)>0:
-                try:
-                    bytes_sent = handle.send(to_send)
-                    total_bytes_sent += bytes_sent
-                    to_send = to_send[bytes_sent:]
-                except socket.error as e:
-                    if str(e) == '[Errno 35] Resource temporarily unavailable':
-                        time.sleep(0) # yield to allow Python to process outgoing messages
-                        continue
-                    else:
-                        break
+            self.protocol_.transport.write(data)
 
-        return total_bytes_sent
+        return len(data)
 
     def sendall(self, data):
         return self.send(data)
