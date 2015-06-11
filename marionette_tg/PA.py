@@ -53,8 +53,8 @@ class PA(object):
                 self.marionette_state_.get_fte_obj(regex, msg_len)
 
     def execute(self, reactor):
-        time.sleep(0.5)
-        print [self, self.isRunning(), self.first_sender_, self.current_state_]
+        #time.sleep(0.001)
+        #print [self, self.party_, self.isRunning(), self.first_sender_, self.current_state_]
         if self.isRunning():
             self.transition()
             reactor.callFromThread(self.execute, reactor)
@@ -71,6 +71,7 @@ class PA(object):
         return (self.channel_ != None)
 
     def set_channel(self, channel):
+        #print 'got our channel!'
         self.channel_ = channel
 
     def check_rng_state(self):

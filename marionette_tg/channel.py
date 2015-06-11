@@ -87,11 +87,6 @@ class Channel(object):
         return self.channel_id_
 
     def close(self):
-        #if self.port_ is not None:
-        #    if connectors.get(self.port_):
-        #        connectors[self.port_].stopListening()
-        #        del connectors[self.port_]
-        #        del incoming[self.port_]
         self.closed_ = True
         self.is_alive_ = False
         self.protocol_.transport.loseConnection()
@@ -136,7 +131,6 @@ def start_connection(port, callback):
 
 ####
 incoming = {}
-connectors = {}
 incoming_lock = threading.RLock()
 
 class MyServer(protocol.Protocol):
@@ -147,29 +141,21 @@ class MyServer(protocol.Protocol):
             if not incoming.get(port):
                 incoming[port] = []
             incoming[port].append(self)
-        self.channel = None
-        self.channel_to_append_ = ''
+        self.channel = Channel(self, self.transport.getHost().port)
 
     def dataReceived(self, chunk):
-        log.msg("channel.Server: %d bytes received" % len(chunk))
-        if self.channel:
-            if self.channel_to_append_:
-                self.channel.appendToBuffer(self.channel_to_append_)
-                self.channel_to_append_ = ''
-            self.channel.appendToBuffer(chunk)
-        else:
-            self.channel_to_append_ += chunk
+        self.channel.appendToBuffer(chunk)
+
+        log.msg("channel.Server[%s]: %d bytes received" % (self.channel, len(chunk)))
 
 
 def accept_new_channel(listening_sockets, port):
-    reactor.callFromThread(start_listener, listening_sockets, port)
-
     channel = None
     with incoming_lock:
+        start_listener(listening_sockets, port)
         if incoming.get(port) and len(incoming.get(port))>0:
             myprotocol = incoming[port].pop(0)
-            channel = Channel(myprotocol, port)
-            myprotocol.channel = channel
+            channel = myprotocol.channel
 
     return channel
 
@@ -180,8 +166,7 @@ def start_listener(listening_sockets, port):
         try:
             factory = protocol.Factory()
             factory.protocol = MyServer
-            connector = reactor.listenTCP(int(port), factory, interface=SERVER_IFACE)
-            connectors[port] = connector
+            reactor.listenTCP(int(port), factory, interface=SERVER_IFACE)
             listening_sockets[port] = True
         except twisted.internet.error.CannotListenError as e:
             retval = False

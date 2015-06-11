@@ -23,7 +23,6 @@ def sleep(channel, marionette_state, input_args, blocking=True):
     while '\r' in sleep_dist:
         sleep_dist = sleep_dist.replace('\r', '')
     sleep_dist = sleep_dist.split(',')
-
     dist = {}
     for item in sleep_dist:
         val = float(item.split(':')[0][1:-1])

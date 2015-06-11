@@ -73,7 +73,7 @@ class Tests(unittest.TestCase):
         print ''
         for format in [
             'dummy',
-            #'http_timings',
+            'http_timings',
             'ftp_simple_blocking',
             'http_simple_blocking',
             'http_squid_blocking',
@@ -91,9 +91,9 @@ class Tests(unittest.TestCase):
                 self.dodownload_parallel()
                 print '\t', format, '...', 'SUCCESS'
                 time.sleep(5)
-            #except Exception as e:
-            #    print '\t', format, '...', 'FAILED'
-            #    self.assertFalse(True, e)
+            except Exception as e:
+                print '\t', format, '...', 'FAILED'
+                self.assertFalse(True, e)
             finally:
                 self.stopservers()
 

@@ -24,7 +24,7 @@ def exec_download():
         client_listen_iface,
         18079,
         False,
-        timeout=10)
+        timeout=60)
 
     conn.request("GET", "/")
     response = conn.getresponse()
@@ -75,7 +75,6 @@ def main():
         dodownload_serial()
         print '\t', format, '...', 'SUCCESS'
     except Exception as e:
-        print e
         print '\t', format, '...', 'FAILED'
     finally:
         stopservers()

@@ -51,12 +51,11 @@ def send(channel, marionette_state, input_args, blocking=True):
 
         #if cell.get_payload(): print ['fte.send', channel, cell.get_payload()[:32], cell.get_payload()[-32:]]
         ctxt = fteObj.encode(ptxt)
-        if ctxt: print ['fte.send', channel, ctxt[:32], ctxt[-32:]]
+        #if ctxt: print ['fte.send', channel, ctxt[:32], ctxt[-32:]]
         ctxt_len = len(ctxt)
         try:
             bytes_sent = channel.sendall(ctxt)
         except Exception as e:
-            print e
             raise e
         retval = (ctxt_len == bytes_sent)
 
@@ -73,8 +72,9 @@ def recv(channel, marionette_state, input_args, blocking=True):
     fteObj = marionette_state.get_fte_obj(regex, msg_len)
 
     try:
+        #print ['fte.re', channel]
         ctxt = channel.recv()
-        if ctxt: print ['fte.recv', ctxt[:32], ctxt[-32:]]
+        #if ctxt: print ['fte.recv', channel, ctxt[:32], ctxt[-32:]]
         if len(ctxt) > 0:
             [ptxt, remainder] = fteObj.decode(ctxt)
 
@@ -95,7 +95,6 @@ def recv(channel, marionette_state, input_args, blocking=True):
     except fte.encrypter.RecoverableDecryptionError as e:
         retval = False
     except Exception as e:
-        print e
         if len(ctxt)>0:
             channel.rollback()
         raise e
