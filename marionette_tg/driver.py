@@ -8,7 +8,9 @@ import marionette_tg.channel
 import marionette_tg.conf
 import marionette_tg.dsl
 import marionette_tg.PA
+import threading
 
+EVENT_LOOP_FREQUENCY_S = 0.01
 
 class ClientDriver(object):
 
@@ -26,7 +28,7 @@ class ClientDriver(object):
         while len(self.to_start_) > 0:
             executable = self.to_start_.pop()
             self.running_.append(executable)
-            reactor.callInThread(executable.execute, reactor)
+            reactor.callFromThread(executable.execute, reactor)
 
         self.running_ = [executable for executable
                          in self.running_
@@ -73,7 +75,7 @@ class ServerDriver(object):
             if new_executable is None:
                 break
             self.running_.append(new_executable)
-            reactor.callInThread(new_executable.execute, reactor)
+            reactor.callFromThread(new_executable.execute, reactor)
 
         running_count = len(self.running_)
         self.running_ = [executable for executable

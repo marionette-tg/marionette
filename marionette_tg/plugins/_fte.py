@@ -28,6 +28,7 @@ def send(channel, marionette_state, input_args, blocking=True):
     stream_id = marionette_state.get_global(
         "multiplexer_outgoing").has_data_for_any_stream()
     if stream_id or blocking:
+
         fteObj = marionette_state.get_fte_obj(regex, msg_len)
 
         bits_in_buffer = len(
@@ -48,13 +49,18 @@ def send(channel, marionette_state, input_args, blocking=True):
             cell_len_in_bits)
         ptxt = cell.to_string()
 
+        #if cell.get_payload(): print ['fte.send', channel, cell.get_payload()[:32], cell.get_payload()[-32:]]
         ctxt = fteObj.encode(ptxt)
+        if ctxt: print ['fte.send', channel, ctxt[:32], ctxt[-32:]]
         ctxt_len = len(ctxt)
         try:
             bytes_sent = channel.sendall(ctxt)
         except Exception as e:
+            print e
             raise e
         retval = (ctxt_len == bytes_sent)
+
+    #print ['fte.send.retval', retval]
 
     return retval
 
@@ -68,12 +74,15 @@ def recv(channel, marionette_state, input_args, blocking=True):
 
     try:
         ctxt = channel.recv()
+        if ctxt: print ['fte.recv', ctxt[:32], ctxt[-32:]]
         if len(ctxt) > 0:
             [ptxt, remainder] = fteObj.decode(ctxt)
 
             cell_obj = marionette_tg.record_layer.unserialize(ptxt)
             assert cell_obj.get_model_uuid() == marionette_state.get_local(
                 "model_uuid")
+            #if cell_obj.get_payload():
+            #    print ['fte.recv', cell_obj.get_payload()[:32], cell_obj.get_payload()[-32:]]
 
             marionette_state.set_local(
                 "model_instance_id", cell_obj.get_model_instance_id())
@@ -86,6 +95,7 @@ def recv(channel, marionette_state, input_args, blocking=True):
     except fte.encrypter.RecoverableDecryptionError as e:
         retval = False
     except Exception as e:
+        print e
         if len(ctxt)>0:
             channel.rollback()
         raise e

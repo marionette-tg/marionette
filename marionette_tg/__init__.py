@@ -7,7 +7,7 @@ import marionette_tg.driver
 import marionette_tg.multiplexer
 import marionette_tg.record_layer
 
-EVENT_LOOP_FREQUENCY_S = 0.001
+EVENT_LOOP_FREQUENCY_S = 0.01
 
 
 class MarionetteException(Exception):
@@ -35,8 +35,7 @@ class Client(object):
         else:
             self.driver_.reset()
 
-        time.sleep(EVENT_LOOP_FREQUENCY_S)
-        reactor.callFromThread(self.execute, reactor)
+        reactor.callLater(EVENT_LOOP_FREQUENCY_S, self.execute, reactor)
 
     def process_cell(self, cell_obj):
         payload = cell_obj.get_payload()
@@ -78,8 +77,7 @@ class Server(object):
     def execute(self, reactor):
         self.driver_.execute(reactor)
 
-        time.sleep(EVENT_LOOP_FREQUENCY_S)
-        reactor.callFromThread(self.execute, reactor)
+        reactor.callLater(EVENT_LOOP_FREQUENCY_S, self.execute, reactor)
 
     def process_cell(self, cell_obj):
         cell_type = cell_obj.get_cell_type()

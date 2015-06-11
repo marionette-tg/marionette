@@ -11,7 +11,7 @@ sys.path.append('.')
 import marionette_tg.conf
 
 expected_response = ''
-for x in range(2**20):
+for x in range(2**16):
     expected_response += '_' + str(x)
 
 def execute(cmd):
@@ -74,9 +74,9 @@ def main():
         startservers(format)
         dodownload_serial()
         print '\t', format, '...', 'SUCCESS'
-    #except Exception as e:
-    #    print e
-    #    print '\t', format, '...', 'FAILED'
+    except Exception as e:
+        print e
+        print '\t', format, '...', 'FAILED'
     finally:
         stopservers()
 

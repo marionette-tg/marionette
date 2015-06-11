@@ -4,9 +4,10 @@
 import os
 import re
 import sys
-import time
 import random
 import importlib
+import time
+import threading
 
 sys.path.append('.')
 
@@ -45,14 +46,21 @@ class PA(object):
             self.rng_.seed(
                 self.marionette_state_.get_local("model_instance_id"))
 
+    def do_precomputations(self):
+        for action in self.actions_:
+            if action.get_module() == 'fte' and action.get_method().startswith('send'):
+                [regex, msg_len] = action.get_args()
+                self.marionette_state_.get_fte_obj(regex, msg_len)
+
     def execute(self, reactor):
-        while True:
-            if self.isRunning():
-                self.transition()
-                time.sleep(EVENT_LOOP_FREQUENCY_S)
-            else:
-                self.channel_.close()
-                break
+        time.sleep(0.5)
+        print [self, self.isRunning(), self.first_sender_, self.current_state_]
+        if self.isRunning():
+            self.transition()
+            reactor.callFromThread(self.execute, reactor)
+        else:
+            self.channel_.close()
+
 
     def check_channel_state(self):
         if self.party_ == "client":
@@ -203,7 +211,7 @@ class PA(object):
 
         i = importlib.import_module("marionette_tg.plugins._" + module)
         method_obj = getattr(i, method)
-        
+
         success = method_obj(self.channel_, self.marionette_state_, args)
 
         return success

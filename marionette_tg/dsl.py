@@ -462,6 +462,7 @@ def load(party, format_name):
             actions.append(complementary_action)
 
     executable.actions_ = actions
+    executable.do_precomputations()
 
     if executable.states_.get("end"):
         executable.add_state("dead")
