@@ -11,7 +11,7 @@ sys.path.append('.')
 import marionette_tg.conf
 
 expected_response = ''
-for x in range(2**16):
+for x in range(2**18):
     expected_response += '_' + str(x)
 
 def execute(cmd):

@@ -6,8 +6,6 @@ import re
 import sys
 import random
 import importlib
-import time
-import threading
 
 sys.path.append('.')
 
@@ -53,11 +51,9 @@ class PA(object):
                 self.marionette_state_.get_fte_obj(regex, msg_len)
 
     def execute(self, reactor):
-        #time.sleep(0.001)
-        #print [self, self.party_, self.isRunning(), self.first_sender_, self.current_state_]
         if self.isRunning():
             self.transition()
-            reactor.callFromThread(self.execute, reactor)
+            reactor.callLater(EVENT_LOOP_FREQUENCY_S, self.execute, reactor)
         else:
             self.channel_.close()
 
@@ -71,7 +67,6 @@ class PA(object):
         return (self.channel_ != None)
 
     def set_channel(self, channel):
-        #print 'got our channel!'
         self.channel_ = channel
 
     def check_rng_state(self):

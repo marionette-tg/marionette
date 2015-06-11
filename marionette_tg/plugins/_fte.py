@@ -49,9 +49,7 @@ def send(channel, marionette_state, input_args, blocking=True):
             cell_len_in_bits)
         ptxt = cell.to_string()
 
-        #if cell.get_payload(): print ['fte.send', channel, cell.get_payload()[:32], cell.get_payload()[-32:]]
         ctxt = fteObj.encode(ptxt)
-        #if ctxt: print ['fte.send', channel, ctxt[:32], ctxt[-32:]]
         ctxt_len = len(ctxt)
         try:
             bytes_sent = channel.sendall(ctxt)

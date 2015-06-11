@@ -27,7 +27,7 @@ def exec_download():
     conn.close()
 
     expected_response = ''
-    for x in range(2**16):
+    for x in range(2**18):
         expected_response += '_' + str(x)
 
     assert actual_response == expected_response
@@ -42,13 +42,12 @@ class Tests(unittest.TestCase):
         server_proxy_iface = marionette_tg.conf.get("server.proxy_iface")
 
         execute("./bin/httpserver 18081 %s &" % format)
-        time.sleep(3)
         execute("./bin/marionette_server %s 18081 %s &" %
                 (server_proxy_iface, format))
-        time.sleep(3)
+        time.sleep(1)
         execute("./bin/marionette_client %s 18079 %s &" %
                 (client_listen_iface, format))
-        time.sleep(3)
+        time.sleep(1)
 
     def stopservers(self):
         execute("pkill -9 -f marionette_client")
@@ -59,7 +58,7 @@ class Tests(unittest.TestCase):
         exec_download()
 
     def dodownload_parallel(self):
-        simultaneous = 10
+        simultaneous = 2
         threads = []
         for j in range(simultaneous):
             t = threading.Thread(target=exec_download)
@@ -70,7 +69,6 @@ class Tests(unittest.TestCase):
             t.join()
 
     def test_cli_curl(self):
-        print ''
         for format in [
             'dummy',
             'http_timings',
@@ -79,7 +77,7 @@ class Tests(unittest.TestCase):
             'http_squid_blocking',
             'http_simple_nonblocking',
             'http_probabilistic_blocking',
-            'http_simple_blocking_with_msg_lens',
+            #'http_simple_blocking_with_msg_lens', # this one takes way too long
             'ssh_simple_nonblocking',
             'smb_simple_nonblocking',
             'http_active_probing',
@@ -89,10 +87,9 @@ class Tests(unittest.TestCase):
                 self.startservers(format)
                 self.dodownload_serial()
                 self.dodownload_parallel()
-                print '\t', format, '...', 'SUCCESS'
-                time.sleep(5)
+                sys.stdout.write(format+' ')
+                sys.stdout.flush()
             except Exception as e:
-                print '\t', format, '...', 'FAILED'
                 self.assertFalse(True, e)
             finally:
                 self.stopservers()
