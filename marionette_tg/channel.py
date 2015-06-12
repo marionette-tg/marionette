@@ -15,7 +15,6 @@ sys.path.append('.')
 import marionette_tg.conf
 
 SERVER_IFACE = marionette_tg.conf.get("server.listen_iface")
-MAX_TO_SEND = 2**18
 
 class Channel(object):
 
