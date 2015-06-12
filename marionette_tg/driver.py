@@ -1,16 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import time
-
 import marionette_tg.action
 import marionette_tg.channel
 import marionette_tg.conf
 import marionette_tg.dsl
 import marionette_tg.PA
-import threading
 
-EVENT_LOOP_FREQUENCY_S = 0.01
 
 class ClientDriver(object):
 
