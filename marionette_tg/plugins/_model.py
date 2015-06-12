@@ -7,9 +7,7 @@ import random
 from twisted.internet import reactor
 
 import marionette_tg.driver
-import threading
 
-EVENT_LOOP_FREQUENCY_S = 0.01
 
 def sleep(channel, marionette_state, input_args, blocking=True):
     sleep_dist = input_args[0]

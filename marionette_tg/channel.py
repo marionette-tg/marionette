@@ -25,7 +25,6 @@ class Channel(object):
         self.is_alive_ = True
         self.channel_id_ = os.urandom(4)
         self.buffer_lock_ = threading.RLock()
-        self.socket_lock_ = threading.RLock()
         self.buffer_ = ''
         self.last_buffer_ = ''
         self.model_ = None
@@ -46,9 +45,7 @@ class Channel(object):
             return self.buffer_
 
     def send(self, data):
-        with self.socket_lock_:
-            self.protocol_.transport.write(data)
-
+        self.protocol_.transport.write(data)
         return len(data)
 
     def sendall(self, data):
@@ -76,7 +73,7 @@ class Channel(object):
         self.protocol_.transport.loseConnection()
 
 
-###
+### Client async. classes
 
 class MyClient(protocol.Protocol):
     def connectionMade(self):
@@ -113,7 +110,8 @@ def start_connection(port, callback):
     return True
 
 
-####
+#### Server async. classes
+
 incoming = {}
 incoming_lock = threading.RLock()
 
