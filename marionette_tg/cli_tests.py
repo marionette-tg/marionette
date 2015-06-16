@@ -44,10 +44,10 @@ class Tests(unittest.TestCase):
         execute("./bin/httpserver 18081 %s &" % format)
         execute("./bin/marionette_server %s 18081 %s &" %
                 (server_proxy_iface, format))
-        time.sleep(2)
+        time.sleep(5)
         execute("./bin/marionette_client %s 18079 %s &" %
                 (client_listen_iface, format))
-        time.sleep(2)
+        time.sleep(5)
 
     def stopservers(self):
         execute("pkill -9 -f marionette_client")
