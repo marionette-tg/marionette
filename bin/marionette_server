@@ -24,7 +24,6 @@ if len(sys.argv) >= 4:
 else:
     FORMAT = 'http_simple_blocking'
 
-
 class ProxyServerProtocol(protocol.Protocol):
 
     def connectionMade(self):
@@ -42,6 +41,7 @@ class ProxyServerProtocol(protocol.Protocol):
             log.msg(
                 "ProxyServerProtocol: writing %d bytes to peer" %
                 len(chunk))
+
             self.transport.write(chunk)
             self.cli_queue.get().addCallback(self.serverDataReceived)
         else:
@@ -113,6 +113,6 @@ if __name__ == "__main__":
     server = marionette_tg.Server(FORMAT)
     server.factory = ProxyServer
 
-    reactor.callInThread(server.execute, reactor)
+    reactor.callFromThread(server.execute, reactor)
 
     reactor.run()

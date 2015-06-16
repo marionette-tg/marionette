@@ -183,9 +183,13 @@ class BufferIncoming(object):
             self.fifo_len_ += len(s)
 
         if self.callback_:
-            cell_obj = self.pop()
-            if cell_obj:
-                reactor.callFromThread(self.callback_, cell_obj)
+            while True:
+                cell_obj = self.pop()
+                if cell_obj:
+                    reactor.callFromThread(self.callback_, cell_obj)
+                    continue
+                else:
+                    break
 
         return True
 

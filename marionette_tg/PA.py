@@ -15,6 +15,7 @@ import fte.bit_ops
 
 import marionette_tg.channel
 
+EVENT_LOOP_FREQUENCY_S = 0.001
 
 class PA(object):
 
@@ -23,6 +24,7 @@ class PA(object):
 
         self.actions_ = []
         self.channel_ = None
+        self.channel_requested_ = False
         self.current_state_ = 'start'
         self.first_sender_ = first_sender
         self.next_state_ = None
@@ -42,18 +44,30 @@ class PA(object):
             self.rng_.seed(
                 self.marionette_state_.get_local("model_instance_id"))
 
+    def do_precomputations(self):
+        for action in self.actions_:
+            if action.get_module() == 'fte' and action.get_method().startswith('send'):
+                [regex, msg_len] = action.get_args()
+                self.marionette_state_.get_fte_obj(regex, msg_len)
+
     def execute(self, reactor):
         if self.isRunning():
             self.transition()
-            reactor.callInThread(self.execute, reactor)
+            reactor.callLater(EVENT_LOOP_FREQUENCY_S, self.execute, reactor)
         else:
             self.channel_.close()
+
 
     def check_channel_state(self):
         if self.party_ == "client":
             if not self.channel_:
-                channel = marionette_tg.channel.open_new_channel(self.get_port())
-                self.channel_ = channel
+                if not self.channel_requested_:
+                    marionette_tg.channel.open_new_channel(self.get_port(), self.set_channel)
+                    self.channel_requested_ = True
+        return (self.channel_ != None)
+
+    def set_channel(self, channel):
+        self.channel_ = channel
 
     def check_rng_state(self):
         if not self.rng_:
@@ -154,9 +168,10 @@ class PA(object):
         return retval
 
     def transition(self):
-        self.check_channel_state()
-        self.check_rng_state()
-        success = self.advance_to_next_state()
+        success = False
+        if self.check_channel_state():
+            self.check_rng_state()
+            success = self.advance_to_next_state()
         return success
 
     def check_for_incoming_connections(self):
@@ -192,7 +207,7 @@ class PA(object):
 
         i = importlib.import_module("marionette_tg.plugins._" + module)
         method_obj = getattr(i, method)
-        
+
         success = method_obj(self.channel_, self.marionette_state_, args)
 
         return success

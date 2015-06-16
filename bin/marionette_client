@@ -35,8 +35,8 @@ class ProxyClient(protocol.Protocol):
         log.msg(
             "ProxyClient: writing %d bytes to original client" %
             len(chunk))
+
         self.transport.write(chunk)
-        self.transport.doWrite()
         self.srv_queue.get().addCallback(self.clientDataReceived)
 
     def dataReceived(self, chunk):
@@ -57,6 +57,6 @@ if __name__ == "__main__":
     factory = protocol.Factory()
     factory.protocol = ProxyClient
     reactor.listenTCP(LOCAL_PORT, factory, interface=LOCAL_IP)
-    reactor.callInThread(client.execute, reactor)
+    reactor.callFromThread(client.execute, reactor)
 
     reactor.run()

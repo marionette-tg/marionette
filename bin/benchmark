@@ -10,6 +10,9 @@ sys.path.append('.')
 
 import marionette_tg.conf
 
+expected_response = ''
+for x in range(2**18):
+    expected_response += '_' + str(x)
 
 def execute(cmd):
     os.system(cmd)
@@ -21,15 +24,12 @@ def exec_download():
         client_listen_iface,
         18079,
         False,
-        timeout=10)
+        timeout=60)
+
     conn.request("GET", "/")
     response = conn.getresponse()
     actual_response = response.read()
     conn.close()
-
-    expected_response = ''
-    for x in range(2**16):
-        expected_response += '_' + str(x)
 
     assert actual_response == expected_response
 
@@ -38,16 +38,16 @@ def startservers(format):
     client_listen_iface = marionette_tg.conf.get("client.listen_iface")
     server_proxy_iface = marionette_tg.conf.get("server.proxy_iface")
 
-    execute("./bin/httpserver 18081 %s &" % format)
-    time.sleep(1)
+    execute("./bin/httpserver 18081 &")
+    time.sleep(3)
     execute(
         "./bin/marionette_server %s 18081 %s &" %
         (server_proxy_iface, format))
-    time.sleep(1)
+    time.sleep(3)
     execute(
         "./bin/marionette_client %s 18079 %s &" %
         (client_listen_iface, format))
-    time.sleep(1)
+    time.sleep(3)
 
 
 def stopservers():
@@ -64,7 +64,8 @@ def dodownload_serial():
         exec_download()
         elapsed = time.time() - start
         total += elapsed
-        print [i, elapsed, total / i]
+        mbps = ((len(expected_response)*i / total) / 2**20) * 8
+        print [i, elapsed, total / i, mbps]
 
 
 def main():
