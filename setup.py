@@ -9,7 +9,7 @@ if os.name == 'nt':
     import py2exe
 
 setup(name='marionette-tg',
-      console=['bin/marionette_client','bin/marionette_server', 'bin/httpserver', 'bin/socksserver'],
+      console=['bin/marionette_client','bin/marionette_server'],
       scripts=['bin/marionette_client','bin/marionette_server'],
       test_suite='marionette_tg',
       packages=['marionette_tg','marionette_tg.plugins'],
