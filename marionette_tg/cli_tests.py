@@ -20,7 +20,7 @@ def execute(cmd):
 def exec_download():
     client_listen_iface = marionette_tg.conf.get("client.listen_iface")
     conn = httplib.HTTPConnection(
-        client_listen_iface, 18079, False, timeout=60)
+        client_listen_iface, 18079, False, timeout=30)
     conn.request("GET", "/")
     response = conn.getresponse()
     actual_response = response.read()
@@ -44,10 +44,10 @@ class Tests(unittest.TestCase):
         execute("./bin/httpserver 18081 %s &" % format)
         execute("./bin/marionette_server %s 18081 %s &" %
                 (server_proxy_iface, format))
-        time.sleep(5)
+        time.sleep(2)
         execute("./bin/marionette_client %s 18079 %s &" %
                 (client_listen_iface, format))
-        time.sleep(5)
+        time.sleep(2)
 
     def stopservers(self):
         execute("pkill -9 -f marionette_client")

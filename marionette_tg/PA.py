@@ -125,8 +125,8 @@ class PA(object):
 
             try:
                 success = self.eval_action_block(action_block)
-            #except Exception as e:
-            #    fatal += 1
+            except Exception as e:
+                fatal += 1
             finally:
                 if success:
                     break
