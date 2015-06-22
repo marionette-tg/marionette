@@ -32,7 +32,6 @@ class PA(object):
         self.marionette_state_.set_local("party", party)
         self.party_ = party
         self.port_ = None
-        self.listening_sockets_ = {}
         self.rng_ = None
         self.state_history_ = []
         self.states_ = {}
@@ -55,7 +54,8 @@ class PA(object):
             self.transition()
             reactor.callLater(EVENT_LOOP_FREQUENCY_S, self.execute, reactor)
         else:
-            self.channel_.close()
+            if self.party_ == 'client':
+                self.channel_.close()
 
 
     def check_channel_state(self):
@@ -125,8 +125,8 @@ class PA(object):
 
             try:
                 success = self.eval_action_block(action_block)
-            except Exception as e:
-                fatal += 1
+            #except Exception as e:
+            #    fatal += 1
             finally:
                 if success:
                     break
@@ -178,8 +178,7 @@ class PA(object):
         retval = None
 
         if self.party_ == "server":
-            channel = marionette_tg.channel.accept_new_channel(
-                self.listening_sockets_, self.get_port())
+            channel = marionette_tg.channel.accept_new_channel(self.get_port())
             if channel:
                 retval = self.replicate()
                 retval.channel_ = channel
@@ -201,14 +200,27 @@ class PA(object):
         return (self.current_state_ != "dead")
 
     def eval_action(self, action_obj):
+        success = False
+
         module = action_obj.get_module()
         method = action_obj.get_method()
         args = action_obj.get_args()
 
-        i = importlib.import_module("marionette_tg.plugins._" + module)
-        method_obj = getattr(i, method)
+        if module == 'channel':
+            if method == 'bind':
+                local_var = args[0]
+                if self.marionette_state_.get_local(local_var):
+                    port = self.marionette_state_.get_local(local_var)
+                else:
+                    port = marionette_tg.channel.bind()
+                    if port:
+                        self.marionette_state_.set_local(local_var, port)
+                success = (port>0)
+        else:
+            i = importlib.import_module("marionette_tg.plugins._" + module)
+            method_obj = getattr(i, method)
 
-        success = method_obj(self.channel_, self.marionette_state_, args)
+            success = method_obj(self.channel_, self.marionette_state_, args)
 
         return success
 
@@ -224,12 +236,21 @@ class PA(object):
 
     def stop(self):
         self.current_state_ = "dead"
+        if self.party_ == 'server':
+            marionette_tg.channel.stop_accepting_new_channels(self.get_port())
 
     def set_port(self, port):
         self.port_ = port
 
     def get_port(self):
-        return self.port_
+        retval = None
+
+        try:
+            retval = int(self.port_)
+        except ValueError:
+            retval = self.marionette_state_.get_local(self.port_)
+
+        return retval
 
 
 class PAState(object):

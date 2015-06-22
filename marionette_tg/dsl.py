@@ -164,9 +164,15 @@ def p_model(p):
 
 
 def p_connection_banner(p):
-    """connection_banner : CONNECTION_KWD LPAREN TRANSPORT_KWD COMMA INTEGER RPAREN COLON"""
+    """connection_banner : CONNECTION_KWD LPAREN TRANSPORT_KWD COMMA port RPAREN COLON"""
     p[0] = [p[3], p[5]]
 
+def p_port(p):
+    """
+    port : KEY
+    port : p_integer_arg
+    """
+    p[0] = p[1]
 
 def p_transition_list(p):
     """
