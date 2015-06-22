@@ -54,8 +54,7 @@ class PA(object):
             self.transition()
             reactor.callLater(EVENT_LOOP_FREQUENCY_S, self.execute, reactor)
         else:
-            if self.party_ == 'client':
-                self.channel_.close()
+            self.channel_.close()
 
 
     def check_channel_state(self):

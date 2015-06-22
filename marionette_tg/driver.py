@@ -28,7 +28,7 @@ class ClientDriver(object):
 
             if self.state_:
                 for key in self.state_.local_:
-                    if key == 'ftp_pasv_port':
+                    if not self.executable_.marionette_state_.get_local(key):
                         executable.marionette_state_.set_local(key, self.state_.local_[key])
 
             reactor.callFromThread(executable.execute, reactor)
@@ -113,7 +113,7 @@ class ServerDriver(object):
 
         if self.state_:
             for key in self.state_.local_:
-                if key == 'ftp_pasv_port':
+                if not self.executable_.marionette_state_.get_local(key):
                     self.executable_.marionette_state_.set_local(key, self.state_.local_[key])
 
     def stop(self):
