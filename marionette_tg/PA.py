@@ -17,6 +17,10 @@ import marionette_tg.channel
 
 EVENT_LOOP_FREQUENCY_S = 0.001
 
+# the following varibles are reserved and shouldn't be passed down
+#   to spawned models.
+RESERVED_LOCAL_VARS = ['party','model_instance_id','model_uuid']
+
 class PA(object):
 
     def __init__(self, party, first_sender):
@@ -32,7 +36,6 @@ class PA(object):
         self.marionette_state_.set_local("party", party)
         self.party_ = party
         self.port_ = None
-        self.listening_sockets_ = {}
         self.rng_ = None
         self.state_history_ = []
         self.states_ = {}
@@ -178,8 +181,7 @@ class PA(object):
         retval = None
 
         if self.party_ == "server":
-            channel = marionette_tg.channel.accept_new_channel(
-                self.listening_sockets_, self.get_port())
+            channel = marionette_tg.channel.accept_new_channel(self.get_port())
             if channel:
                 retval = self.replicate()
                 retval.channel_ = channel
@@ -201,6 +203,8 @@ class PA(object):
         return (self.current_state_ != "dead")
 
     def eval_action(self, action_obj):
+        success = False
+
         module = action_obj.get_module()
         method = action_obj.get_method()
         args = action_obj.get_args()
@@ -224,12 +228,21 @@ class PA(object):
 
     def stop(self):
         self.current_state_ = "dead"
+        if self.party_ == 'server':
+            marionette_tg.channel.stop_accepting_new_channels(self.get_port())
 
     def set_port(self, port):
         self.port_ = port
 
     def get_port(self):
-        return self.port_
+        retval = None
+
+        try:
+            retval = int(self.port_)
+        except ValueError:
+            retval = self.marionette_state_.get_local(self.port_)
+
+        return retval
 
 
 class PAState(object):

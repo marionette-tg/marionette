@@ -164,9 +164,15 @@ def p_model(p):
 
 
 def p_connection_banner(p):
-    """connection_banner : CONNECTION_KWD LPAREN TRANSPORT_KWD COMMA INTEGER RPAREN COLON"""
+    """connection_banner : CONNECTION_KWD LPAREN TRANSPORT_KWD COMMA port RPAREN COLON"""
     p[0] = [p[3], p[5]]
 
+def p_port(p):
+    """
+    port : KEY
+    port : p_integer_arg
+    """
+    p[0] = p[1]
 
 def p_transition_list(p):
     """
@@ -395,7 +401,7 @@ def find_mar_file(format_name):
                    'marionette_tg/formats',]
 
     for dir in search_dirs:
-        conf_path = os.path.join(dir, format_name + '.mar')
+        conf_path = os.path.join(os.getcwd(), dir, format_name + '.mar')
         if os.path.exists(conf_path):
             return conf_path
 

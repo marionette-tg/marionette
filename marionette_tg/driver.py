@@ -7,7 +7,6 @@ import marionette_tg.conf
 import marionette_tg.dsl
 import marionette_tg.PA
 
-
 class ClientDriver(object):
 
     def __init__(self, party):
@@ -19,11 +18,18 @@ class ClientDriver(object):
         self.executeable_ = None
         self.multiplexer_outgoing_ = None
         self.multiplexer_incoming_ = None
+        self.state_ = None
 
     def execute(self, reactor):
         while len(self.to_start_) > 0:
             executable = self.to_start_.pop()
             self.running_.append(executable)
+
+            if self.state_:
+                for key in self.state_.local_:
+                    if key not in marionette_tg.PA.RESERVED_LOCAL_VARS:
+                        executable.marionette_state_.set_local(key, self.state_.local_[key])
+
             reactor.callFromThread(executable.execute, reactor)
 
         self.running_ = [executable for executable
@@ -51,6 +57,11 @@ class ClientDriver(object):
         for i in range(n):
             self.to_start_ += [self.executeable_.replicate()]
 
+    def set_state(self, state):
+        self.state_ = state
+
+    def stop(self):
+        pass
 
 class ServerDriver(object):
 
@@ -64,12 +75,14 @@ class ServerDriver(object):
         self.executable_ = None
         self.multiplexer_outgoing_ = None
         self.multiplexer_incoming_ = None
+        self.state_ = None
 
     def execute(self, reactor):
         while True:
             new_executable = self.executable_.check_for_incoming_connections()
             if new_executable is None:
                 break
+
             self.running_.append(new_executable)
             reactor.callFromThread(new_executable.execute, reactor)
 
@@ -93,3 +106,14 @@ class ServerDriver(object):
 
     def set_multiplexer_incoming(self, multiplexer):
         self.multiplexer_incoming_ = multiplexer
+
+    def set_state(self, state):
+        self.state_ = state
+
+        if self.state_:
+            for key in self.state_.local_:
+                if key not in marionette_tg.PA.RESERVED_LOCAL_VARS:
+                    self.executable_.marionette_state_.set_local(key, self.state_.local_[key])
+
+    def stop(self):
+        self.executable_.stop()

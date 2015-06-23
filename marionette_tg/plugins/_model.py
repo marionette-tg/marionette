@@ -62,12 +62,14 @@ def spawn(channel, marionette_state, input_args, blocking=True):
             driver.set_multiplexer_outgoing(
                 marionette_state.get_global("multiplexer_outgoing"))
             driver.setFormat(format_name_)
+            driver.set_state(marionette_state)
 
             server_driver_ = driver
 
         if server_driver_.num_executables_completed_ < num_models:
             server_driver_.execute(reactor)
         else:
+            server_driver_.stop()
             server_driver_ = None
             success = True
 
@@ -81,6 +83,7 @@ def spawn(channel, marionette_state, input_args, blocking=True):
             driver.set_multiplexer_outgoing(
                 marionette_state.get_global("multiplexer_outgoing"))
             driver.setFormat(format_name_)
+            driver.set_state(marionette_state)
 
             driver.reset(num_models)
             client_driver_ = driver
@@ -88,6 +91,7 @@ def spawn(channel, marionette_state, input_args, blocking=True):
         if client_driver_.isRunning():
             client_driver_.execute(reactor)
         else:
+            client_driver_.stop()
             client_driver_ = None
             success = True
 

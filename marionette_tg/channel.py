@@ -114,6 +114,7 @@ def start_connection(port, callback):
 
 incoming = {}
 incoming_lock = threading.RLock()
+listening_sockets_ = {}
 
 class MyServer(protocol.Protocol):
     def connectionMade(self):
@@ -130,27 +131,45 @@ class MyServer(protocol.Protocol):
 
         log.msg("channel.Server[%s]: %d bytes received" % (self.channel, len(chunk)))
 
+def bind(port=0):
+    with incoming_lock:
+        retval = start_listener(port)
 
-def accept_new_channel(listening_sockets, port):
+    return retval
+
+def accept_new_channel(port):
     channel = None
     with incoming_lock:
-        start_listener(listening_sockets, port)
+        start_listener(port)
         if incoming.get(port) and len(incoming.get(port))>0:
             myprotocol = incoming[port].pop(0)
             channel = myprotocol.channel
 
     return channel
 
-def start_listener(listening_sockets, port):
-    retval = True
+def start_listener(port):
+    retval = port
 
-    if not listening_sockets.get(port):
+    if not port or not listening_sockets_.get(port):
         try:
             factory = protocol.Factory()
             factory.protocol = MyServer
-            reactor.listenTCP(int(port), factory, interface=SERVER_IFACE)
-            listening_sockets[port] = True
+            connector = reactor.listenTCP(int(port), factory, interface=SERVER_IFACE)
+            port = connector.getHost().port
+            listening_sockets_[port] = connector
+            retval = port
         except twisted.internet.error.CannotListenError as e:
             retval = False
 
     return retval
+
+
+def stop_accepting_new_channels(port):
+    with incoming_lock:
+        if listening_sockets_.get(port):
+            listening_sockets_[port].stopListening()
+            del listening_sockets_[port]
+        if incoming.get(port):
+            for channel in incoming[port]:
+                channel.close()
+            del incoming[port]

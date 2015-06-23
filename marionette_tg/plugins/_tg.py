@@ -52,19 +52,22 @@ def recv(channel, marionette_state, input_args):
                 if tmp_str:
                     cell_str += tmp_str
 
-            ##
-            cell_obj = marionette_tg.record_layer.unserialize(cell_str)
-            assert cell_obj.get_model_uuid() == marionette_state.get_local(
-                "model_uuid")
-
-            marionette_state.set_local(
-                "model_instance_id", cell_obj.get_model_instance_id())
-            ##
-
-            if marionette_state.get_local("model_instance_id"):
-                marionette_state.get_global(
-                    "multiplexer_incoming").push(cell_str)
+            if not cell_str:
                 retval = True
+            else:
+                ##
+                cell_obj = marionette_tg.record_layer.unserialize(cell_str)
+                assert cell_obj.get_model_uuid() == marionette_state.get_local(
+                    "model_uuid")
+
+                marionette_state.set_local(
+                    "model_instance_id", cell_obj.get_model_instance_id())
+                ##
+
+                if marionette_state.get_local("model_instance_id"):
+                    marionette_state.get_global(
+                        "multiplexer_incoming").push(cell_str)
+                    retval = True
     except socket.timeout as e:
         pass
     except socket.error as e:
@@ -110,7 +113,7 @@ def execute_handler_sender(marionette_state, grammar, handler_key,
                                marionette_state.get_local("model_instance_id"),
                                cell_len_in_bits)
         to_embed = cell.to_string()
-    value_to_embed = to_execute.encode(template, to_embed)
+    value_to_embed = to_execute.encode(marionette_state, template, to_embed)
     template = do_embed(grammar, template, handler_key, value_to_embed)
 
     return template
@@ -123,8 +126,7 @@ def execute_handler_receiver(marionette_state, grammar, handler_key,
     to_execute = conf[grammar]["handlers"][handler_key]
 
     handler_key_value = do_unembed(grammar, ctxt, handler_key)
-    if handler_key_value:
-        ptxt = to_execute.decode(handler_key_value)
+    ptxt = to_execute.decode(marionette_state, handler_key_value)
 
     return ptxt
 
@@ -152,12 +154,12 @@ class RankerHandler(object):
         cell_len_in_bits = cell_len_in_bytes * 8
         return cell_len_in_bits
 
-    def encode(self, template, to_embed):
+    def encode(self, marionette_state, template, to_embed):
         to_embed_as_int = fte.bit_ops.bytes_to_long(to_embed)
         ctxt = self.encoder_.unrank(to_embed_as_int)
         return ctxt
 
-    def decode(self, ctxt):
+    def decode(self, marionette_state, ctxt):
         try:
             ptxt = self.encoder_.rank(ctxt)
             ptxt = fte.bit_ops.long_to_bytes(ptxt, self.capacity() / 8)
@@ -190,11 +192,11 @@ class FteHandler(object):
 
         return retval
 
-    def encode(self, template, to_embed):
+    def encode(self, marionette_state, template, to_embed):
         ctxt = self.fte_encrypter_.encode(to_embed)
         return ctxt
 
-    def decode(self, ctxt):
+    def decode(self, marionette_state, ctxt):
         try:
             retval = self.fte_encrypter_.decode(ctxt)
             ptxt = retval[0]
@@ -218,11 +220,11 @@ class HttpContentLengthHandler(object):
     def capacity(self):
         return 0
 
-    def encode(self, template, to_embed):
+    def encode(self, marionette_state, template, to_embed):
         http_body_length = str(len(template.split("\r\n\r\n")[1]))
         return http_body_length
 
-    def decode(self, ctxt):
+    def decode(self, marionette_state, ctxt):
         return None
 
 
@@ -231,11 +233,44 @@ class Pop3ContentLengthHandler(object):
     def capacity(self):
         return 0
 
-    def encode(self, template, to_embed):
+    def encode(self, marionette_state, template, to_embed):
         pop3_body_length = str(len('\n'.join(template.split("\n")[1:])))
         return pop3_body_length
 
-    def decode(self, ctxt):
+    def decode(self, marionette_state, ctxt):
+        return None
+
+
+class SetFTPPasvX(object):
+
+    def capacity(self):
+        return 0
+
+    def encode(self, marionette_state, template, to_embed):
+        ftp_pasv_port = marionette_state.get_local("ftp_pasv_port")
+        ftp_pasv_port_x = int(math.floor(ftp_pasv_port / 256.0))
+        return str(ftp_pasv_port_x)
+
+    def decode(self, marionette_state, ctxt):
+        marionette_state.set_local("ftp_pasv_port_x", int(ctxt))
+        return None
+
+
+class SetFTPPasvY(object):
+
+    def capacity(self):
+        return 0
+
+    def encode(self, marionette_state, template, to_embed):
+        ftp_pasv_port = marionette_state.get_local("ftp_pasv_port")
+        ftp_pasv_port_y = ftp_pasv_port % 256
+        return str(ftp_pasv_port_y)
+
+    def decode(self, marionette_state, ctxt):
+        ftp_pasv_port_x = marionette_state.get_local("ftp_pasv_port_x")
+        ftp_pasv_port_y = int(ctxt)
+        ftp_pasv_port = ftp_pasv_port_x * 256 + ftp_pasv_port_y
+        marionette_state.set_local("ftp_pasv_port", ftp_pasv_port)
         return None
 
 
@@ -458,6 +493,15 @@ conf["http_amazon_response"] = {
     }
 }
 
+conf["ftp_entering_passive"] = {
+    "grammar": "ftp_entering_passive",
+    "handler_order": ["FTP_PASV_PORT_X", "FTP_PASV_PORT_Y"],
+    "handlers": {
+        "FTP_PASV_PORT_X": SetFTPPasvX(),
+        "FTP_PASV_PORT_Y": SetFTPPasvY(),
+    }
+}
+
 # grammars
 
 
@@ -471,6 +515,8 @@ def parser(grammar, msg):
         return pop3_parser(msg)
     elif grammar.startswith("pop3_password"):
         return pop3_password_parser(msg)
+    elif grammar.startswith("ftp_entering_passive"):
+        return ftp_entering_passive_parser(msg)
 
 
 def generate_template(grammar):
@@ -516,6 +562,10 @@ templates["http_response_keep_alive_with_msg_lens"] = templates[
     "http_response_keep_alive"]
 templates["http_amazon_request"] = templates["http_request_keep_alive"]
 templates["http_amazon_response"] = templates["http_response_keep_alive"]
+
+templates["ftp_entering_passive"] = [
+    "227 Entering Passive Mode (127,0,0,1,%%FTP_PASV_PORT_X%%,%%FTP_PASV_PORT_Y%%).\n",
+]
 
 
 def get_http_header(header_name, msg):
@@ -588,6 +638,20 @@ def pop3_password_parser(msg):
     try:
         assert msg.endswith('\n')
         retval["PASSWORD"] = msg[5:-1]
+    except Exception as e:
+        retval = {}
+
+    return retval
+
+def ftp_entering_passive_parser(msg):
+    retval = {}
+
+    try:
+        assert msg.startswith("227 Entering Passive Mode (")
+        assert msg.endswith(").\n")
+        bits = msg.split(',')
+        retval['FTP_PASV_PORT_X'] = int(bits[4])
+        retval['FTP_PASV_PORT_Y'] = int(bits[5][:-3])
     except Exception as e:
         retval = {}
 

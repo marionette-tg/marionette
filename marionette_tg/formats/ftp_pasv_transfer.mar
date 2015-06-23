@@ -1,4 +1,4 @@
-connection(tcp, 50006):
+connection(tcp, ftp_pasv_port):
     start ftp_pasv_transfer do_ftp_pasv_transfer 1
     ftp_pasv_transfer end NULL 1
 

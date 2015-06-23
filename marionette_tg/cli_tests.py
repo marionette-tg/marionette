@@ -20,7 +20,7 @@ def execute(cmd):
 def exec_download():
     client_listen_iface = marionette_tg.conf.get("client.listen_iface")
     conn = httplib.HTTPConnection(
-        client_listen_iface, 18079, False, timeout=60)
+        client_listen_iface, 18079, False, timeout=30)
     conn.request("GET", "/")
     response = conn.getresponse()
     actual_response = response.read()
@@ -35,7 +35,28 @@ def exec_download():
     return actual_response
 
 
-class Tests(unittest.TestCase):
+class ParametrizedTestCase(unittest.TestCase):
+    """ TestCase classes that want to be parametrized should
+        inherit from this class.
+    """
+    def __init__(self, methodName='runTest', param=None):
+        super(ParametrizedTestCase, self).__init__(methodName)
+        self.param = param
+
+    @staticmethod
+    def parametrize(testcase_klass, param=None):
+        """ Create a suite containing all tests taken from the given
+            subclass, passing them the parameter 'param'.
+        """
+        testloader = unittest.TestLoader()
+        testnames = testloader.getTestCaseNames(testcase_klass)
+        suite = unittest.TestSuite()
+        for name in testnames:
+            suite.addTest(testcase_klass(name, param=param))
+        return suite
+
+
+class CliTest(ParametrizedTestCase):
 
     def startservers(self, format):
         client_listen_iface = marionette_tg.conf.get("client.listen_iface")
@@ -69,21 +90,9 @@ class Tests(unittest.TestCase):
             t.join()
 
     def test_cli_curl(self):
-        for format in [
-            'dummy',
-            'http_timings',
-            'ftp_simple_blocking',
-            'http_simple_blocking',
-            'http_squid_blocking',
-            'http_simple_nonblocking',
-            'http_probabilistic_blocking',
-            #'http_simple_blocking_with_msg_lens', # this one takes way too long
-            'ssh_simple_nonblocking',
-            'smb_simple_nonblocking',
-            'http_active_probing',
-            'http_active_probing2',
-        ]:
+        if self.param:
             try:
+                format = self.param
                 self.startservers(format)
                 self.dodownload_serial()
                 self.dodownload_parallel()
@@ -94,5 +103,18 @@ class Tests(unittest.TestCase):
             finally:
                 self.stopservers()
 
-if __name__ == '__main__':
-    unittest.main()
+suite = unittest.TestSuite()
+for param in [
+        'dummy',
+        'http_timings',
+        'ftp_simple_blocking',
+        'http_simple_blocking',
+        'http_squid_blocking',
+        'http_simple_nonblocking',
+        'http_probabilistic_blocking',
+        'ssh_simple_nonblocking',
+        'smb_simple_nonblocking',
+        'http_active_probing',
+        'http_active_probing2']:
+        suite.addTest(ParametrizedTestCase.parametrize(CliTest, param=param))
+unittest.TextTestRunner(verbosity=2).run(suite)
