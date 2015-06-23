@@ -23,7 +23,7 @@ class Tests(unittest.TestCase):
 
         execute("./bin/marionette_server %s 18081 %s &" %
                 (server_proxy_iface, format))
-        time.sleep(1)
+        time.sleep(5)
 
     def stopservers(self):
         execute("pkill -9 -f marionette_server")
