@@ -209,21 +209,10 @@ class PA(object):
         method = action_obj.get_method()
         args = action_obj.get_args()
 
-        if module == 'channel':
-            if method == 'bind':
-                local_var = args[0]
-                if self.marionette_state_.get_local(local_var):
-                    port = self.marionette_state_.get_local(local_var)
-                else:
-                    port = marionette_tg.channel.bind()
-                    if port:
-                        self.marionette_state_.set_local(local_var, port)
-                success = (port>0)
-        else:
-            i = importlib.import_module("marionette_tg.plugins._" + module)
-            method_obj = getattr(i, method)
+        i = importlib.import_module("marionette_tg.plugins._" + module)
+        method_obj = getattr(i, method)
 
-            success = method_obj(self.channel_, self.marionette_state_, args)
+        success = method_obj(self.channel_, self.marionette_state_, args)
 
         return success
 
