@@ -397,11 +397,11 @@ def find_mar_file(format_name):
     search_dirs = [sys.prefix,
                    sys.exec_prefix,
                    current_dir,
-                   '/etc/marionette/formats',
-                   'marionette/formats',]
+                   '/etc/marionette_tg/formats',
+                   'marionette_tg/formats',]
 
     for dir in search_dirs:
-        conf_path = os.path.join(dir, format_name + '.mar')
+        conf_path = os.path.join(os.getcwd(), dir, format_name + '.mar')
         if os.path.exists(conf_path):
             return conf_path
 

@@ -31,7 +31,7 @@ class Tests(unittest.TestCase):
     def do_probe(self, request_method, request_uri, expected_response):
         server_listen_iface = marionette_tg.conf.get("server.listen_iface")
         conn = httplib.HTTPConnection(
-            server_listen_iface, 8080, False, timeout=10)
+            server_listen_iface, 8080, False, timeout=30)
         conn.request(request_method, request_uri)
         response = conn.getresponse()
         actual_response = response.read()

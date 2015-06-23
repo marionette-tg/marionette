@@ -17,6 +17,10 @@ import marionette_tg.channel
 
 EVENT_LOOP_FREQUENCY_S = 0.001
 
+# the following varibles are reserved and shouldn't be passed down
+#   to spawned models.
+RESERVED_LOCAL_VARS = ['party','model_instance_id','model_uuid']
+
 class PA(object):
 
     def __init__(self, party, first_sender):

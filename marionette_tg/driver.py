@@ -7,7 +7,6 @@ import marionette_tg.conf
 import marionette_tg.dsl
 import marionette_tg.PA
 
-
 class ClientDriver(object):
 
     def __init__(self, party):
@@ -28,7 +27,7 @@ class ClientDriver(object):
 
             if self.state_:
                 for key in self.state_.local_:
-                    if not self.executable_.marionette_state_.get_local(key):
+                    if key not in marionette_tg.PA.RESERVED_LOCAL_VARS:
                         executable.marionette_state_.set_local(key, self.state_.local_[key])
 
             reactor.callFromThread(executable.execute, reactor)
@@ -113,7 +112,7 @@ class ServerDriver(object):
 
         if self.state_:
             for key in self.state_.local_:
-                if not self.executable_.marionette_state_.get_local(key):
+                if key not in marionette_tg.PA.RESERVED_LOCAL_VARS:
                     self.executable_.marionette_state_.set_local(key, self.state_.local_[key])
 
     def stop(self):
