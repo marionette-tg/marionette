@@ -36,6 +36,7 @@ class PA(object):
         self.marionette_state_.set_local("party", party)
         self.party_ = party
         self.port_ = None
+        self.transport_protocol_ = None
         self.rng_ = None
         self.state_history_ = []
         self.states_ = {}
@@ -65,7 +66,7 @@ class PA(object):
         if self.party_ == "client":
             if not self.channel_:
                 if not self.channel_requested_:
-                    marionette_tg.channel.open_new_channel(self.get_port(), self.set_channel)
+                    marionette_tg.channel.open_new_channel(self.get_transport_protocol(), self.get_port(), self.set_channel)
                     self.channel_requested_ = True
         return (self.channel_ != None)
 
@@ -181,7 +182,8 @@ class PA(object):
         retval = None
 
         if self.party_ == "server":
-            channel = marionette_tg.channel.accept_new_channel(self.get_port())
+            channel = marionette_tg.channel.accept_new_channel(
+                self.get_transport_protocol(), self.get_port())
             if channel:
                 retval = self.replicate()
                 retval.channel_ = channel
@@ -197,6 +199,7 @@ class PA(object):
         model_uuid = self.marionette_state_.get_local("model_uuid")
         retval.marionette_state_.set_local("model_uuid", model_uuid)
         retval.port_ = self.port_
+        retval.transport_protocol_ = self.transport_protocol_
         return retval
 
     def isRunning(self):
@@ -229,7 +232,7 @@ class PA(object):
     def stop(self):
         self.current_state_ = "dead"
         if self.party_ == 'server':
-            marionette_tg.channel.stop_accepting_new_channels(self.get_port())
+            marionette_tg.channel.stop_accepting_new_channels(self.get_transport_protocol(), self.get_port())
 
     def set_port(self, port):
         self.port_ = port
@@ -243,6 +246,11 @@ class PA(object):
             retval = self.marionette_state_.get_local(self.port_)
 
         return retval
+    def set_transport_protocol(self, transport_protocol):
+        self.transport_protocol_ = transport_protocol
+
+    def get_transport_protocol(self):
+        return self.transport_protocol_
 
 
 class PAState(object):

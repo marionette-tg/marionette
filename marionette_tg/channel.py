@@ -18,8 +18,9 @@ SERVER_IFACE = marionette_tg.conf.get("server.listen_iface")
 
 class Channel(object):
 
-    def __init__(self, protocol, port):
+    def __init__(self, protocol, transport_protocol, port):
         self.port_ = port
+        self.transport_protocol_ = transport_protocol
         self.protocol_ = protocol
         self.closed_ = False
         self.is_alive_ = True
@@ -45,7 +46,11 @@ class Channel(object):
             return self.buffer_
 
     def send(self, data):
-        self.protocol_.transport.write(data)
+        if self.transport_protocol_ == 'tcp':
+            self.protocol_.transport.write(data)
+        else: #udp
+            #TODO: Handle UDP Here
+            print "channel.send data =", repr(data)[:60]
         return len(data)
 
     def sendall(self, data):
@@ -91,21 +96,25 @@ class MyClientFactory(protocol.ClientFactory):
 
     def buildProtocol(self, address):
         proto = protocol.ClientFactory.buildProtocol(self, address)
-        channel = Channel(proto, None)
+        channel = Channel(proto, "tcp", None)
         proto.channel = channel
         self.callback_(channel)
         return proto
 
 
-def open_new_channel(port, callback):
-    reactor.callFromThread(start_connection, port, callback)
+def open_new_channel(transport_protocol, port, callback):
+    reactor.callFromThread(start_connection, transport_protocol, port, callback)
 
     return True
 
-def start_connection(port, callback):
-    factory = MyClientFactory(callback)
-    factory.protocol = MyClient
-    reactor.connectTCP(SERVER_IFACE, int(port), factory)
+def start_connection(transport_protocol, port, callback):
+    if transport_protocol == 'tcp':
+        factory = MyClientFactory(callback)
+        factory.protocol = MyClient
+        reactor.connectTCP(SERVER_IFACE, int(port), factory)
+    else: #udp
+        #TODO: Handle UDP here
+        print "UDP"
 
     return True
 
@@ -124,7 +133,7 @@ class MyServer(protocol.Protocol):
             if not incoming.get(port):
                 incoming[port] = []
             incoming[port].append(self)
-        self.channel = Channel(self, self.transport.getHost().port)
+        self.channel = Channel(self, "tcp", self.transport.getHost().port)
 
     def dataReceived(self, chunk):
         self.channel.appendToBuffer(chunk)
@@ -137,34 +146,39 @@ def bind(port=0):
 
     return retval
 
-def accept_new_channel(port):
+def accept_new_channel(transport_protocol, port):
     channel = None
     with incoming_lock:
-        start_listener(port)
+        start_listener(transport_protocol, port)
         if incoming.get(port) and len(incoming.get(port))>0:
             myprotocol = incoming[port].pop(0)
             channel = myprotocol.channel
 
     return channel
 
-def start_listener(port):
+def start_listener(transport_protocol, port):
     retval = port
 
     if not port or not listening_sockets_.get(port):
         try:
-            factory = protocol.Factory()
-            factory.protocol = MyServer
-            connector = reactor.listenTCP(int(port), factory, interface=SERVER_IFACE)
-            port = connector.getHost().port
-            listening_sockets_[port] = connector
-            retval = port
+            if transport_protocol == 'tcp':
+                factory = protocol.Factory()
+                factory.protocol = MyServer
+                connector = reactor.listenTCP(int(port), factory, interface=SERVER_IFACE)
+                port = connector.getHost().port
+                listening_sockets_[port] = connector
+                retval = port
+            else: #udp
+                #TODO: Handle UDP
+                print "UDP"
         except twisted.internet.error.CannotListenError as e:
             retval = False
 
     return retval
 
 
-def stop_accepting_new_channels(port):
+def stop_accepting_new_channels(transport_protocol, port):
+    #TODO: Handle TCP/UDP differences
     with incoming_lock:
         if listening_sockets_.get(port):
             listening_sockets_[port].stopListening()
