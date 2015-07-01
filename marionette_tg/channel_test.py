@@ -12,44 +12,45 @@ import marionette_tg.channel as channel
 class ServerThread(threading.Thread):
     def run(self):
         print 'server started'
-        self.channel = None
+        self.channel_ = None
         while True:
             time.sleep(0.1)
             ch = channel.accept_new_channel(
-                'tcp', 8080)
+                'udp', 8080)
             if ch:
-                self.channel = ch
+                self.channel_ = ch
                 break
         print 'server done'
 
     def recv(self):
-        return self.channel.recv()
+        return self.channel_.recv()
 
 
 class ClientThread(threading.Thread):
+    channel_ = None
+
     def run(self):
-        self.channel = None
         time.sleep(1)
         print 'client started'
-        self.channel = None
+        self.channel_ = None
         channel.open_new_channel(
-            'tcp', 8080, self.set_channel)
+            'udp', 8080, self.set_channel)
         print 'client done'
 
     def send(self, data):
-        return self.channel.send(data)
+        return self.channel_.send(data)
 
     def set_channel(self, ch):
-        self.channel = ch
+        self.channel_ = ch
 
 
 already_sent = False
-def test_tcp_send():
+def test_udp_send():
     global already_sent
 
     expected_msg = 'X'*100
 
-    if client.channel and server.channel:
+    if client.channel_ and server.channel_:
         if not already_sent:
             client.send(expected_msg)
             already_sent = True
@@ -59,9 +60,9 @@ def test_tcp_send():
             print 'success'
             reactor.stop()
         else:
-            reactor.callFromThread(test_tcp_send)
+            reactor.callFromThread(test_udp_send)
     else:
-        reactor.callFromThread(test_tcp_send)
+        reactor.callFromThread(test_udp_send)
 
 
 if __name__ == '__main__':
@@ -69,5 +70,5 @@ if __name__ == '__main__':
     client = ClientThread()
     reactor.callFromThread(server.start)
     reactor.callFromThread(client.start)
-    reactor.callFromThread(test_tcp_send)
+    reactor.callFromThread(test_udp_send)
     reactor.run()
