@@ -1,0 +1,12 @@
+connection(udp, 8081):
+  start      upstream   NULL     1.0
+  upstream   downstream http_get 1.0
+  downstream downstrea2 http_ok  1.0
+  downstrea2 downstrea3 http_get 1.0
+  downstrea3 end        http_ok  1.0
+
+action http_get:
+  client fte.send("^TESTING FROM CLIENT.*$", 128)
+
+action http_ok:
+  server fte.send("^TESTING FROM SERVER.*$", 128)
