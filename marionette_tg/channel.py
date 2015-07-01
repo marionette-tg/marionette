@@ -51,6 +51,7 @@ class Channel(object):
             self.protocol_.transport.write(data)
         else: #udp
             #TODO: Handle UDP Here
+            #print "channel.send data =", repr(data)[:60]
             self.protocol_.transport.write(data, (self.remote_host, self.remote_port))
         return len(data)
 
@@ -76,7 +77,12 @@ class Channel(object):
     def close(self):
         self.closed_ = True
         self.is_alive_ = False
-        self.protocol_.transport.loseConnection()
+        if self.transport_protocol_ == 'tcp':
+            self.protocol_.transport.loseConnection()
+        else:
+            #TODO: Should this only be done for the server?
+            #TODO: This is a hack
+            self.protocol_.connectionMade()
 
 
 ### Client async. classes
@@ -87,6 +93,9 @@ class MyUdpClient(protocol.DatagramProtocol):
         self.port = port
         self.callback_ = callback
 
+    def connectionMade(self):
+        log.msg("channel.Client.connectionMade")
+
     def startProtocol(self):
         self.channel = Channel(self, "udp")
         self.channel.remote_host = self.host
@@ -94,6 +103,8 @@ class MyUdpClient(protocol.DatagramProtocol):
         self.callback_(self.channel)
         #TODO: Do we want connected UDP?
         self.transport.connect(self.host, self.port)
+        log.msg("channel.Client: UDP Connection established %s:%d" 
+                % (self.host, self.port))
 
     def datagramReceived(self, chunk, (host, port)):
         log.msg("channel.Client: %d bytes received" % len(chunk))
