@@ -11,7 +11,7 @@ import fte.bit_ops
 
 sys.path.append('.')
 
-import marionette_tg.PA
+import marionette_tg.executables.pioa
 
 # TODO: fix it s.t. "server" in var name doesn't cause problem
 
@@ -398,7 +398,8 @@ def find_mar_file(format_name):
                    sys.exec_prefix,
                    current_dir,
                    '/etc/marionette_tg/formats',
-                   'marionette_tg/formats',]
+                   'marionette_tg/formats',
+                   'marionette_tg/formats/20150701',]
 
     for dir in search_dirs:
         conf_path = os.path.join(os.getcwd(), dir, format_name + '.mar')
@@ -421,7 +422,7 @@ def load(party, format_name):
     if format_name in ["ftp_pasv_transfer"]:
         first_sender = "server"
 
-    executable = marionette_tg.PA.PA(party, first_sender)
+    executable = marionette_tg.executables.pioa.PIOA(party, first_sender)
     executable.set_port(parsed_format.get_port())
     executable.marionette_state_.set_local(
         "model_uuid", get_model_uuid(mar_str))

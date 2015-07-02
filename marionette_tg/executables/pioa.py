@@ -21,10 +21,10 @@ EVENT_LOOP_FREQUENCY_S = 0.001
 #   to spawned models.
 RESERVED_LOCAL_VARS = ['party','model_instance_id','model_uuid']
 
-class PA(object):
+class PIOA(object):
 
     def __init__(self, party, first_sender):
-        super(PA, self).__init__()
+        super(PIOA, self).__init__()
 
         self.actions_ = []
         self.channel_ = None
@@ -177,19 +177,8 @@ class PA(object):
             success = self.advance_to_next_state()
         return success
 
-    def check_for_incoming_connections(self):
-        retval = None
-
-        if self.party_ == "server":
-            channel = marionette_tg.channel.accept_new_channel(self.get_port())
-            if channel:
-                retval = self.replicate()
-                retval.channel_ = channel
-
-        return retval
-
     def replicate(self):
-        retval = PA(self.party_,
+        retval = PIOA(self.party_,
                     self.first_sender_)
         retval.actions_ = self.actions_
         retval.states_ = self.states_
@@ -203,8 +192,6 @@ class PA(object):
         return (self.current_state_ != "dead")
 
     def eval_action(self, action_obj):
-        success = False
-
         module = action_obj.get_module()
         method = action_obj.get_method()
         args = action_obj.get_args()
@@ -244,6 +231,11 @@ class PA(object):
 
         return retval
 
+    def set_local(self, key, value):
+        self.marionette_state_.set_local(key, value)
+
+    def set_global(self, key, value):
+        self.marionette_state_.set_global(key, value)
 
 class PAState(object):
 

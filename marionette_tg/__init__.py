@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import time
-
 import marionette_tg.driver
 import marionette_tg.multiplexer
 import marionette_tg.record_layer
