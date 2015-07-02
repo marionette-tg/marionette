@@ -1,7 +1,7 @@
 import os
 import sys
 import copy
-import string
+import glob
 import hashlib
 
 import ply.lex as lex
@@ -391,29 +391,62 @@ def parse(s):
 
     return retval
 
-def find_mar_file(format_name):
+
+def find_mar_files(format_name, version=None):
+    retval = []
+
     current_dir = os.path.dirname(os.path.join(__file__))
     current_dir = os.path.join(current_dir, 'formats')
-    search_dirs = [sys.prefix,
-                   sys.exec_prefix,
-                   current_dir,
-                   '/etc/marionette_tg/formats',
-                   'marionette_tg/formats',
-                   'marionette_tg/formats/20150701',]
+    current_dir = os.path.abspath(current_dir)
+    search_dirs = [current_dir,
+                   sys.prefix,
+                   sys.exec_prefix]
 
+    FORMAT_BANNER = '### marionette formats dir ###'
     for dir in search_dirs:
-        conf_path = os.path.join(os.getcwd(), dir, format_name + '.mar')
-        if os.path.exists(conf_path):
-            return conf_path
+        cur_dir = os.path.join(os.getcwd(), dir)
+        init_path = os.path.join(cur_dir, '__init__.py')
 
-    return None
+        # check if __init__ marks our marionette formats dir
+        if os.path.exists(init_path):
+            with open(init_path) as fh:
+                contents = fh.read()
+                contents = contents.strip()
+                if contents != FORMAT_BANNER:
+                    continue
 
-def load(party, format_name):
+        # check all subdirs unless a version is specified
+        if version:
+            subdirs = glob.glob(os.path.join(cur_dir, version))
+        else:
+            subdirs = glob.glob(os.path.join(cur_dir, '*'))
 
-    marionette_file = find_mar_file(format_name)
-    if not marionette_file:
+        # for each subdir, load our format_name
+        for path in subdirs:
+            if os.path.isdir(path):
+                conf_path = os.path.join(path, format_name + '.mar')
+                if os.path.exists(conf_path):
+                    retval.append(conf_path)
+
+    return retval
+
+
+def load_all(party, format_name):
+    retval = []
+
+    mar_files = find_mar_files(format_name)
+    if not mar_files:
         raise Exception("Can't find "+format_name)
-    with open(marionette_file) as f:
+
+    for mar_path in mar_files:
+        retval.append(load(party, format_name, mar_path))
+
+    return retval
+
+
+def load(party, format_name, mar_path):
+
+    with open(mar_path) as f:
         mar_str = f.read()
 
     parsed_format = parse(mar_str)

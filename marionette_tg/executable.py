@@ -18,9 +18,7 @@ class Executable(object):
         self.executables_ = self.load(party, format)
 
     def load(self, party, format):
-        executables = [
-            marionette_tg.dsl.load(party, format)
-        ]
+        executables = marionette_tg.dsl.load_all(party, format)
 
         for executable in executables:
             executable.set_multiplexer_outgoing(self.multiplexer_outgoing_)
