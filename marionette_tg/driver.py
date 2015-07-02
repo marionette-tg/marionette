@@ -38,8 +38,9 @@ class ClientDriver(object):
     def isRunning(self):
         return len(self.running_ + self.to_start_) > 0
 
-    def setFormat(self, format_name):
+    def setFormat(self, format_name, format_version=None):
         self.executeable_ = marionette_tg.executable.Executable(self.party_, format_name,
+                                                         format_version,
                                                          self.multiplexer_outgoing_,
                                                          self.multiplexer_incoming_)
         self.reset()
@@ -93,8 +94,9 @@ class ServerDriver(object):
     def isRunning(self):
         return len(self.running_)
 
-    def setFormat(self, format_name):
+    def setFormat(self, format_name, format_version=None):
         self.executable_ = marionette_tg.executable.Executable(self.party_, format_name,
+                                                         format_version,
                                                          self.multiplexer_outgoing_,
                                                          self.multiplexer_incoming_)
 

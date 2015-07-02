@@ -45,7 +45,7 @@ def startservers(format):
         (server_proxy_iface, format))
     time.sleep(3)
     execute(
-        "./bin/marionette_client %s 18079 %s &" %
+        "./bin/marionette_client %s 18079 %s:20150701 &" %
         (client_listen_iface, format))
     time.sleep(3)
 

@@ -14,18 +14,19 @@ class MarionetteException(Exception):
 
 class Client(object):
 
-    def __init__(self, format_name):
+    def __init__(self, format_name, format_version):
         self.multiplexer_outgoing_ = marionette_tg.multiplexer.BufferOutgoing()
         self.multiplexer_incoming_ = marionette_tg.multiplexer.BufferIncoming()
         self.multiplexer_incoming_.addCallback(self.process_cell)
         self.format_name_ = format_name
+        self.format_version_ = format_version
         self.streams_ = {}
         self.stream_counter_ = 1
 
         self.driver_ = marionette_tg.driver.ClientDriver("client")
         self.driver_.set_multiplexer_incoming(self.multiplexer_incoming_)
         self.driver_.set_multiplexer_outgoing(self.multiplexer_outgoing_)
-        self.driver_.setFormat(self.format_name_)
+        self.driver_.setFormat(self.format_name_, self.format_version_)
 
     def execute(self, reactor):
         if self.driver_.isRunning():

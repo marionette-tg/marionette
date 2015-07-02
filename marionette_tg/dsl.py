@@ -392,7 +392,7 @@ def parse(s):
     return retval
 
 
-def find_mar_files(format_name, version=None):
+def find_mar_files(party, format_name, version=None):
     retval = []
 
     current_dir = os.path.dirname(os.path.join(__file__))
@@ -414,6 +414,8 @@ def find_mar_files(format_name, version=None):
                 contents = contents.strip()
                 if contents != FORMAT_BANNER:
                     continue
+        else:
+            continue
 
         # check all subdirs unless a version is specified
         if version:
@@ -421,20 +423,32 @@ def find_mar_files(format_name, version=None):
         else:
             subdirs = glob.glob(os.path.join(cur_dir, '*'))
 
+        # make sure we prefer the most recent format
+        subdirs.sort()
+
         # for each subdir, load our format_name
+        formats = {}
         for path in subdirs:
             if os.path.isdir(path):
                 conf_path = os.path.join(path, format_name + '.mar')
                 if os.path.exists(conf_path):
-                    retval.append(conf_path)
+                    if not formats.get(format_name):
+                        formats[format_name] = []
+                    if party == 'client':
+                        formats[format_name] = [conf_path]
+                    elif party == 'server':
+                        formats[format_name] += [conf_path]
+
+        for key in formats.keys():
+            retval += formats[key]
 
     return retval
 
 
-def load_all(party, format_name):
+def load_all(party, format_name, version=None):
     retval = []
 
-    mar_files = find_mar_files(format_name)
+    mar_files = find_mar_files(party, format_name, version)
     if not mar_files:
         raise Exception("Can't find "+format_name)
 
@@ -457,7 +471,7 @@ def load(party, format_name, mar_path):
 
     executable = marionette_tg.executables.pioa.PIOA(party, first_sender)
     executable.set_port(parsed_format.get_port())
-    executable.marionette_state_.set_local(
+    executable.set_local(
         "model_uuid", get_model_uuid(mar_str))
 
     for transition in parsed_format.get_transitions():

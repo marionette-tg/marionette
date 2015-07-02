@@ -9,16 +9,26 @@ EVENT_LOOP_FREQUENCY_S = 0.001
 
 class Executable(object):
 
-    def __init__(self, party, format, multiplexer_outgoing, multiplexer_incoming):
+    def __init__(self, party, format_name, format_version, multiplexer_outgoing, multiplexer_incoming):
         self.party_ = party
-        self.format_ = format
+        self.format_ = format_name
+        self.format_version_ = format_version
         self.port_ = None
         self.multiplexer_outgoing_ = multiplexer_outgoing
         self.multiplexer_incoming_ = multiplexer_incoming
-        self.executables_ = self.load(party, format)
+        self.executables_ = self.load(party, self.format_, self.format_version_)
 
-    def load(self, party, format):
-        executables = marionette_tg.dsl.load_all(party, format)
+    def load(self, party, format_name, format_version):
+        executables = marionette_tg.dsl.load_all(party, format_name, format_version)
+
+        executables_tmp = {}
+        for executable in executables:
+            key = executable.get_local('model_uuid')
+            executables_tmp[key] = executable
+
+        executables = []
+        for key in executables_tmp.keys():
+            executables.append(executables_tmp[key])
 
         for executable in executables:
             executable.set_multiplexer_outgoing(self.multiplexer_outgoing_)
@@ -28,7 +38,8 @@ class Executable(object):
 
     def execute(self, reactor):
         for executable in self.executables_:
-            reactor.callFromThread(executable.execute, reactor)
+            if executable.isRunning():
+                reactor.callFromThread(executable.execute, reactor)
         reactor.callLater(EVENT_LOOP_FREQUENCY_S, self.execute, reactor)
 
     def isRunning(self):
@@ -40,7 +51,7 @@ class Executable(object):
         return retval
 
     def replicate(self):
-        retval = Executable(self.party_, self.format_,
+        retval = Executable(self.party_, self.format_, self.format_version_,
                             self.multiplexer_outgoing_,
                             self.multiplexer_incoming_)
         retval.executables_ = [executable.replicate()

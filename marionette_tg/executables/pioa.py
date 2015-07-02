@@ -237,6 +237,12 @@ class PIOA(object):
     def set_global(self, key, value):
         self.marionette_state_.set_global(key, value)
 
+    def get_local(self, key):
+        return self.marionette_state_.get_local(key)
+
+    def get_global(self, key):
+        return self.marionette_state_.get_global(key)
+
 class PAState(object):
 
     def __init__(self, name):
