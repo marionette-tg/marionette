@@ -39,6 +39,7 @@ class PIOA(object):
         self.rng_ = None
         self.state_history_ = []
         self.states_ = {}
+        self.success_ = False
 
         if self.party_ == first_sender:
             self.marionette_state_.set_local(
@@ -150,6 +151,9 @@ class PIOA(object):
             self.next_state_ = None
             retval = True
 
+            if self.current_state_ == 'dead':
+                self.success_ = True
+
         return retval
 
     def eval_action_block(self, action_block):
@@ -215,8 +219,6 @@ class PIOA(object):
 
     def stop(self):
         self.current_state_ = "dead"
-        if self.party_ == 'server':
-            marionette_tg.channel.stop_accepting_new_channels(self.get_port())
 
     def set_port(self, port):
         self.port_ = port
@@ -242,6 +244,9 @@ class PIOA(object):
 
     def get_global(self, key):
         return self.marionette_state_.get_global(key)
+
+    def get_success(self):
+        return self.success_
 
 class PAState(object):
 

@@ -38,15 +38,22 @@ class Executable(object):
 
     def execute(self, reactor):
         for executable in self.executables_:
-            if executable.isRunning():
-                reactor.callFromThread(executable.execute, reactor)
-        reactor.callLater(EVENT_LOOP_FREQUENCY_S, self.execute, reactor)
+            if executable.get_success():
+                for executable in self.executables_:
+                    executable.stop()
+
+        if self.isRunning():
+            for executable in self.executables_:
+                if executable.isRunning():
+                    reactor.callFromThread(executable.execute, reactor)
+
+            reactor.callLater(EVENT_LOOP_FREQUENCY_S, self.execute, reactor)
 
     def isRunning(self):
-        retval = False
+        retval = True
         for executable in self.executables_:
-            if executable.isRunning():
-                retval = True
+            if executable.get_success():
+                retval = False
                 break
         return retval
 

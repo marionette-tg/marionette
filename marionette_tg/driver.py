@@ -89,6 +89,7 @@ class ServerDriver(object):
         self.running_ = [executable for executable
                          in self.running_
                          if executable.isRunning()]
+
         self.num_executables_completed_ += (running_count - len(self.running_))
 
     def isRunning(self):

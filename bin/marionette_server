@@ -107,6 +107,8 @@ class ProxyServer(object):
 
 
 if __name__ == "__main__":
+    import yappi
+    yappi.start()
     if marionette_tg.conf.get("general.debug"):
         log.startLogging(sys.stdout)
 
@@ -116,3 +118,5 @@ if __name__ == "__main__":
     reactor.callFromThread(server.execute, reactor)
 
     reactor.run()
+
+    yappi.get_func_stats().print_all()
