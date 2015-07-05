@@ -112,9 +112,13 @@ for param in [
         'http_squid_blocking',
         'http_simple_nonblocking',
         'http_probabilistic_blocking',
+        'http_simple_blocking_with_msg_lens',
         'ssh_simple_nonblocking',
         'smb_simple_nonblocking',
         'http_active_probing',
-        'http_active_probing2']:
+        'http_active_probing2',
+        'active_probing/http_apache_247',
+        'active_probing/ssh_openssh_661',
+        'active_probing/ftp_pureftpd_10',]:
         suite.addTest(ParametrizedTestCase.parametrize(CliTest, param=param))
 unittest.TextTestRunner(verbosity=2).run(suite)
