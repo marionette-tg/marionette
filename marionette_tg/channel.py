@@ -30,6 +30,7 @@ class Channel(object):
         self.model_ = None
         self.remote_host = None
         self.remote_port = None
+        self.party = None #client/server
 
     def appendToBuffer(self, chunk):
         with self.buffer_lock_:
@@ -50,8 +51,6 @@ class Channel(object):
         if self.transport_protocol_ == 'tcp':
             self.protocol_.transport.write(data)
         else: #udp
-            #TODO: Handle UDP Here
-            #print "channel.send data =", repr(data)[:60]
             self.protocol_.transport.write(data, (self.remote_host, self.remote_port))
         return len(data)
 
@@ -77,12 +76,8 @@ class Channel(object):
     def close(self):
         self.closed_ = True
         self.is_alive_ = False
-        if self.transport_protocol_ == 'tcp':
+        if not (self.transport_protocol_ == 'udp' and self.party == 'server'):
             self.protocol_.transport.loseConnection()
-        else:
-            #TODO: Should this only be done for the server?
-            #TODO: This is a hack
-            self.protocol_.connectionMade()
 
 
 ### Client async. classes
@@ -93,25 +88,18 @@ class MyUdpClient(protocol.DatagramProtocol):
         self.port = port
         self.callback_ = callback
 
-    def connectionMade(self):
-        log.msg("channel.Client.connectionMade")
-
     def startProtocol(self):
         self.channel = Channel(self, "udp")
         self.channel.remote_host = self.host
         self.channel.remote_port = self.port
+        self.channel.party = 'client'
         self.callback_(self.channel)
-        #TODO: Do we want connected UDP?
-        self.transport.connect(self.host, self.port)
         log.msg("channel.Client: UDP Connection established %s:%d" 
                 % (self.host, self.port))
 
     def datagramReceived(self, chunk, (host, port)):
         log.msg("channel.Client: %d bytes received" % len(chunk))
         self.channel.appendToBuffer(chunk)
-
-    def doStop(self):
-        log.msg("channel.Client.doStop: Stopping UDP connection")
 
 class MyClient(protocol.Protocol):
     def connectionMade(self):
@@ -130,6 +118,7 @@ class MyClientFactory(protocol.ClientFactory):
     def buildProtocol(self, address):
         proto = protocol.ClientFactory.buildProtocol(self, address)
         channel = Channel(proto, "tcp")
+        channel.party = "client"
         proto.channel = channel
         self.callback_(channel)
         return proto
@@ -146,7 +135,6 @@ def start_connection(transport_protocol, port, callback):
         factory.protocol = MyClient
         reactor.connectTCP(SERVER_IFACE, int(port), factory)
     else: #udp
-        #TODO: Handle UDP here
         reactor.listenUDP(0, MyUdpClient(SERVER_IFACE, int(port), callback))
 
     return True
@@ -172,14 +160,16 @@ class MyServer(protocol.Protocol):
                 incoming[port] = []
             incoming[port].append(self)
         self.channel = Channel(self, self.transport_protocol)
+        self.channel.party = "server"
 
     def dataReceived(self, chunk):
         self.channel.appendToBuffer(chunk)
-
         log.msg("channel.Server[%s]: %d bytes received" % (self.channel, len(chunk)))
 
     def datagramReceived(self, chunk, (host, port)):
         log.msg("channel.Server[%s]: %d bytes received" % (self.channel, len(chunk)))
+        if self.channel.is_closed():
+            self.connectionMade()
         self.channel.remote_host = host
         self.channel.remote_port = port
         self.channel.appendToBuffer(chunk)
@@ -213,7 +203,6 @@ def start_listener(transport_protocol, port):
                 factory.protocol = MyServer
                 connector = reactor.listenTCP(int(port), factory, interface=SERVER_IFACE)
             else: #udp
-                #TODO: Handle UDP
                 connector = reactor.listenUDP(int(port), MyServer('udp'), interface=SERVER_IFACE)
             port = connector.getHost().port
             listening_sockets_[port] = connector
@@ -226,7 +215,6 @@ def start_listener(transport_protocol, port):
 
 
 def stop_accepting_new_channels(transport_protocol, port):
-    #TODO: Handle TCP/UDP differences
     with incoming_lock:
         if listening_sockets_.get(port):
             listening_sockets_[port].stopListening()
