@@ -52,9 +52,10 @@ def download_wrapper(use_marionette, url, dst_path, format_package):
 
 class FormatUpdater(object):
 
-    def __init__(self, addr, use_marionette=True):
+    def __init__(self, addr, use_marionette=True, callback=None):
         self.addr_ = addr
         self.use_marionette_ = use_marionette
+        self.callback_ = callback
 
     def do_update(self):
         manifest_file_url = 'http://%s/manifest.txt' % (self.addr_)
@@ -101,3 +102,6 @@ class FormatUpdater(object):
         tar = tarfile.open(package_path, "r:gz")
         tar.extractall(package_dir)
         tar.close()
+
+        if self.callback_:
+            self.callback_()

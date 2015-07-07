@@ -13,6 +13,7 @@ import marionette_tg.record_layer
 import marionette_tg.updater
 
 EVENT_LOOP_FREQUENCY_S = 0.01
+AUTOUPDATE_DELAY = 5
 
 
 class MarionetteException(Exception):
@@ -29,9 +30,10 @@ class Client(object):
         self.stream_counter_ = 1
 
         self.set_driver(format_name, format_version)
+        self.reload_ = False
 
         # first update must be
-        reactor.callLater(5, self.check_for_update)
+        reactor.callLater(AUTOUPDATE_DELAY, self.check_for_update)
 
     def set_driver(self, format_name, format_version):
         self.format_name_ = format_name
@@ -45,6 +47,9 @@ class Client(object):
         if self.driver_.isRunning():
             self.driver_.execute(reactor)
         else:
+            if self.reload_:
+                self.set_driver(self.format_name_, self.format_version_)
+                self.reload_ = False
             self.driver_.reset()
 
         reactor.callLater(EVENT_LOOP_FREQUENCY_S, self.execute, reactor)
@@ -69,20 +74,25 @@ class Client(object):
     def terminate(self, stream_id):
         del self.streams_[stream_id]
 
+    # call this function if you want reload formats from disk
+    # at the next possible time
+    def reload_driver(self):
+        self.reload_ = True
+
     def check_for_update(self):
         # uncomment the following line to check for updates every N seconds
         # instead of just on startup
         # reactor.callLater(N, self.check_for_update, reactor)
 
         if marionette_tg.conf.get("general.autoupdate"):
-            self.do_update()
+            self.do_update(self.reload_driver)
 
-    def do_update(self):
+    def do_update(self, callback):
         # could be replaced with code that updates from a different
         # source (e.g., local computations)
 
         update_server = marionette_tg.conf.get("general.update_server")
-        updater = marionette_tg.updater.FormatUpdater(update_server, use_marionette=True)
+        updater = marionette_tg.updater.FormatUpdater(update_server, use_marionette=True, callback=callback)
         return updater.do_update()
 
 
@@ -100,6 +110,7 @@ class Server(object):
             self.do_update()
 
         self.set_driver(format_name)
+        self.reload_ = False
 
     def set_driver(self, format_name):
         self.format_name_ = format_name
@@ -109,8 +120,12 @@ class Server(object):
         self.driver_.setFormat(self.format_name_)
 
     def execute(self, reactor):
-        self.driver_.execute(reactor)
+        if self.driver_.isRunning():
+            if self.reload_:
+                self.set_driver(self.format_name_)
+                self.reload_ = False
 
+        self.driver_.execute(reactor)
         reactor.callLater(EVENT_LOOP_FREQUENCY_S, self.execute, reactor)
 
     def process_cell(self, cell_obj):
@@ -132,18 +147,23 @@ class Server(object):
             if payload:
                 self.factory_instances[stream_id].dataReceived(payload)
 
+    # call this function if you want reload formats from disk
+    # at the next possible time
+    def reload_driver(self):
+        self.reload_ = True
+
     def check_for_update(self):
         # uncomment the following line to check for updates every N seconds
         # instead of just on startup
         # reactor.callLater(N, self.check_for_update, reactor)
 
         if marionette_tg.conf.get("general.autoupdate"):
-            self.do_update()
+            self.do_update(self.reload_driver)
 
-    def do_update(self):
+    def do_update(self, callback):
         # could be replaced with code that updates from a different
         # source (e.g., local computations)
 
         update_server = marionette_tg.conf.get("general.update_server")
-        updater = marionette_tg.updater.FormatUpdater(update_server, use_marionette=False)
+        updater = marionette_tg.updater.FormatUpdater(update_server, use_marionette=False, callback=callback)
         return updater.do_update()
