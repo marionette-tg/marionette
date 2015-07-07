@@ -4,9 +4,7 @@ import tarfile
 import tempfile
 import threading
 
-from twisted.internet import reactor
 from twisted.internet import threads
-from twisted.internet import defer
 from twisted.internet import defer
 defer.setDebugging(True)
 
@@ -28,7 +26,6 @@ class Downloader(threading.Thread):
         self.socks_port_ = socks_port
 
     def run(self):
-        print 'downloading.run', self.src_url_
         with open(self.dst_path_, 'w+b') as fh:
             c = pycurl.Curl()
             c.setopt(pycurl.URL, self.src_url_)
@@ -38,12 +35,10 @@ class Downloader(threading.Thread):
                 c.setopt(pycurl.PROXYPORT, self.socks_port_)
                 c.setopt(pycurl.PROXYTYPE, pycurl.PROXYTYPE_SOCKS4)
             c.perform()
-        print 'downloading.done', self.src_url_
 
         return self.dst_path_
 
 def download_wrapper(use_marionette, url, dst_path, format_package):
-    print 'wrapper.start'
     socks_ip = None
     socks_port = None
     if use_marionette:
@@ -52,7 +47,6 @@ def download_wrapper(use_marionette, url, dst_path, format_package):
 
     downloader = Downloader(url, dst_path, socks_ip, socks_port)
     downloader.run()
-    print 'wrapper.ran', (format_package, dst_path)
 
     return (format_package, dst_path)
 
@@ -72,7 +66,6 @@ class FormatUpdater(object):
         d.addCallback(self.unpack_manifest)
 
     def unpack_manifest(self, result):
-        print [result]
         (format_package, manifest_path) = result
 
         with open(manifest_path) as f:

@@ -19,10 +19,16 @@ if len(sys.argv)<3:
     sys.exit(1)
 REMOTE_IP = str(sys.argv[1])
 REMOTE_PORT = int(sys.argv[2])
+
+FORMAT_VERSION = None
 if len(sys.argv) >= 4:
-    FORMAT = str(sys.argv[3])
+    if ':' in sys.argv[3]:
+        FORMAT = sys.argv[3].split(':')[0]
+        FORMAT_VERSION = sys.argv[3].split(':')[1]
+    else:
+        FORMAT = str(sys.argv[3])
 else:
-    FORMAT = 'http_simple_blocking'
+    FORMAT = 'dummy'
 
 class ProxyServerProtocol(protocol.Protocol):
 
