@@ -1,9 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
+
+sys.path.append('.')
+
+from twisted.internet import reactor
+
 import marionette_tg.driver
 import marionette_tg.multiplexer
 import marionette_tg.record_layer
+import marionette_tg.updater
 
 EVENT_LOOP_FREQUENCY_S = 0.01
 
@@ -18,11 +25,17 @@ class Client(object):
         self.multiplexer_outgoing_ = marionette_tg.multiplexer.BufferOutgoing()
         self.multiplexer_incoming_ = marionette_tg.multiplexer.BufferIncoming()
         self.multiplexer_incoming_.addCallback(self.process_cell)
-        self.format_name_ = format_name
-        self.format_version_ = format_version
         self.streams_ = {}
         self.stream_counter_ = 1
 
+        self.set_driver(format_name, format_version)
+
+        # first update must be
+        reactor.callLater(5, self.check_for_update)
+
+    def set_driver(self, format_name, format_version):
+        self.format_name_ = format_name
+        self.format_version_ = format_version
         self.driver_ = marionette_tg.driver.ClientDriver("client")
         self.driver_.set_multiplexer_incoming(self.multiplexer_incoming_)
         self.driver_.set_multiplexer_outgoing(self.multiplexer_outgoing_)
@@ -56,6 +69,22 @@ class Client(object):
     def terminate(self, stream_id):
         del self.streams_[stream_id]
 
+    def check_for_update(self):
+        # uncomment the following line to check for updates every N seconds
+        # instead of just on startup
+        # reactor.callLater(N, self.check_for_update, reactor)
+
+        if marionette_tg.conf.get("general.autoupdate"):
+            self.do_update()
+
+    def do_update(self):
+        # could be replaced with code that updates from a different
+        # source (e.g., local computations)
+
+        update_server = marionette_tg.conf.get("general.update_server")
+        updater = marionette_tg.updater.FormatUpdater(update_server, use_marionette=True)
+        return updater.do_update()
+
 
 class Server(object):
     factory = None
@@ -64,14 +93,20 @@ class Server(object):
         self.multiplexer_outgoing_ = marionette_tg.multiplexer.BufferOutgoing()
         self.multiplexer_incoming_ = marionette_tg.multiplexer.BufferIncoming()
         self.multiplexer_incoming_.addCallback(self.process_cell)
-        self.format_name_ = format_name
 
+        self.factory_instances = {}
+
+        if self.check_for_update():
+            self.do_update()
+
+        self.set_driver(format_name)
+
+    def set_driver(self, format_name):
+        self.format_name_ = format_name
         self.driver_ = marionette_tg.driver.ServerDriver("server")
         self.driver_.set_multiplexer_incoming(self.multiplexer_incoming_)
         self.driver_.set_multiplexer_outgoing(self.multiplexer_outgoing_)
         self.driver_.setFormat(self.format_name_)
-
-        self.factory_instances = {}
 
     def execute(self, reactor):
         self.driver_.execute(reactor)
@@ -96,3 +131,19 @@ class Server(object):
             payload = cell_obj.get_payload()
             if payload:
                 self.factory_instances[stream_id].dataReceived(payload)
+
+    def check_for_update(self):
+        # uncomment the following line to check for updates every N seconds
+        # instead of just on startup
+        # reactor.callLater(N, self.check_for_update, reactor)
+
+        if marionette_tg.conf.get("general.autoupdate"):
+            self.do_update()
+
+    def do_update(self):
+        # could be replaced with code that updates from a different
+        # source (e.g., local computations)
+
+        update_server = marionette_tg.conf.get("general.update_server")
+        updater = marionette_tg.updater.FormatUpdater(update_server, use_marionette=False)
+        return updater.do_update()

@@ -391,17 +391,19 @@ def parse(s):
 
     return retval
 
-
-def find_mar_files(party, format_name, version=None):
-    retval = []
-
+def get_search_dirs():
     current_dir = os.path.dirname(os.path.join(__file__))
     current_dir = os.path.join(current_dir, 'formats')
     current_dir = os.path.abspath(current_dir)
-    search_dirs = [current_dir,
+    retval = [current_dir,
                    sys.prefix,
                    sys.exec_prefix]
+    return retval
 
+def get_format_dir():
+    retval = None
+
+    search_dirs = get_search_dirs()
     FORMAT_BANNER = '### marionette formats dir ###'
     for dir in search_dirs:
         cur_dir = os.path.join(os.getcwd(), dir)
@@ -414,33 +416,44 @@ def find_mar_files(party, format_name, version=None):
                 contents = contents.strip()
                 if contents != FORMAT_BANNER:
                     continue
+                else:
+                    retval = dir
+                    break
         else:
             continue
 
-        # check all subdirs unless a version is specified
-        if version:
-            subdirs = glob.glob(os.path.join(cur_dir, version))
-        else:
-            subdirs = glob.glob(os.path.join(cur_dir, '*'))
+    return retval
 
-        # make sure we prefer the most recent format
-        subdirs.sort()
+def find_mar_files(party, format_name, version=None):
+    retval = []
 
-        # for each subdir, load our format_name
-        formats = {}
-        for path in subdirs:
-            if os.path.isdir(path):
-                conf_path = os.path.join(path, format_name + '.mar')
-                if os.path.exists(conf_path):
-                    if not formats.get(format_name):
-                        formats[format_name] = []
-                    if party == 'client':
-                        formats[format_name] = [conf_path]
-                    elif party == 'server':
-                        formats[format_name] += [conf_path]
+    # get marionette format directory
+    format_dir = get_format_dir()
 
-        for key in formats.keys():
-            retval += formats[key]
+    # check all subdirs unless a version is specified
+    if version:
+        subdirs = glob.glob(os.path.join(format_dir, version))
+    else:
+        subdirs = glob.glob(os.path.join(format_dir, '*'))
+
+    # make sure we prefer the most recent format
+    subdirs.sort()
+
+    # for each subdir, load our format_name
+    formats = {}
+    for path in subdirs:
+        if os.path.isdir(path):
+            conf_path = os.path.join(path, format_name + '.mar')
+            if os.path.exists(conf_path):
+                if not formats.get(format_name):
+                    formats[format_name] = []
+                if party == 'client':
+                    formats[format_name] = [conf_path]
+                elif party == 'server':
+                    formats[format_name] += [conf_path]
+
+    for key in formats.keys():
+        retval += formats[key]
 
     return retval
 
