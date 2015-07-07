@@ -109,8 +109,8 @@ for param in [
         'http_timings',
         'ftp_simple_blocking',
         'http_simple_blocking',
-        'http_simple_blocking:20150701',
-        'http_simple_blocking:20150702',
+        'http_simple_blocking:20150701', # tests in-band nego.
+        'http_simple_blocking:20150702', # tests in-band nego.
         'http_squid_blocking',
         'http_simple_nonblocking',
         'http_probabilistic_blocking',
