@@ -120,7 +120,7 @@ class Server(object):
         self.driver_.setFormat(self.format_name_)
 
     def execute(self, reactor):
-        if self.driver_.isRunning():
+        if not self.driver_.isRunning():
             if self.reload_:
                 self.set_driver(self.format_name_)
                 self.reload_ = False
