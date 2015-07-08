@@ -17,7 +17,7 @@ Installation
 
 ```console
 $ sudo apt-get update && sudo apt-get upgrade
-$ sudo apt-get install git libgmp-dev python-pip python-dev
+$ sudo apt-get install git libgmp-dev python-pip python-dev curl
 $ git clone https://github.com/kpdyer/marionette.git
 $ cd marionette
 $ pip install -r requirements.txt
@@ -29,7 +29,7 @@ $ python setup.py install
 Requires homebrew.
 
 ```console
-$ brew install python gmp
+$ brew install python gmp curl
 $ git clone https://github.com/kpdyer/marionette.git
 $ cd marionette
 $ python setup.py install
