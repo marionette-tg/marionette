@@ -58,6 +58,19 @@ $ curl --socks4a 127.0.0.1:8079 example.com
 ```
 
 
+marionette.conf
+---------------
+
+* ```general.debug``` - [boolean] print useful debug information to the console
+* ```general.autoupdate``` - [boolean] enable automatic checks for new marionette formats
+* ```general.update_server``` - [string] the remote address of the server we should use for marionette updates
+* ```client.listen_iface``` - [string] the iface we should listen on if it isn't specified on the CLI
+* ```client.listen_port``` - [int] the port we should listen on if it isn't specified on the CLI
+* ```server.listen_iface``` - [string] the iface we should listen on if it isn't specified on the CLI
+* ```server.proxy_iface``` - [string] the iface we should forward connects to if it isn't specified on the CLI
+* ```server.proxy_port``` - [int] the port we should forward connects to if it isn't specified on the CLI
+
+
 Marionette DSL
 --------------
 
