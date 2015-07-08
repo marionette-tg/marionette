@@ -1,7 +1,7 @@
 import os
 import sys
 import copy
-import string
+import glob
 import hashlib
 
 import ply.lex as lex
@@ -11,7 +11,7 @@ import fte.bit_ops
 
 sys.path.append('.')
 
-import marionette_tg.PA
+import marionette_tg.executables.pioa
 
 # TODO: fix it s.t. "server" in var name doesn't cause problem
 
@@ -391,28 +391,89 @@ def parse(s):
 
     return retval
 
-def find_mar_file(format_name):
+def get_search_dirs():
     current_dir = os.path.dirname(os.path.join(__file__))
     current_dir = os.path.join(current_dir, 'formats')
-    search_dirs = [sys.prefix,
-                   sys.exec_prefix,
-                   current_dir,
-                   '/etc/marionette_tg/formats',
-                   'marionette_tg/formats',]
+    current_dir = os.path.abspath(current_dir)
+    retval = [current_dir,
+                   sys.prefix,
+                   sys.exec_prefix]
+    return retval
 
+def get_format_dir():
+    retval = None
+
+    search_dirs = get_search_dirs()
+    FORMAT_BANNER = '### marionette formats dir ###'
     for dir in search_dirs:
-        conf_path = os.path.join(os.getcwd(), dir, format_name + '.mar')
-        if os.path.exists(conf_path):
-            return conf_path
+        cur_dir = os.path.join(os.getcwd(), dir)
+        init_path = os.path.join(cur_dir, '__init__.py')
 
-    return None
+        # check if __init__ marks our marionette formats dir
+        if os.path.exists(init_path):
+            with open(init_path) as fh:
+                contents = fh.read()
+                contents = contents.strip()
+                if contents != FORMAT_BANNER:
+                    continue
+                else:
+                    retval = dir
+                    break
+        else:
+            continue
 
-def load(party, format_name):
+    return retval
 
-    marionette_file = find_mar_file(format_name)
-    if not marionette_file:
+def find_mar_files(party, format_name, version=None):
+    retval = []
+
+    # get marionette format directory
+    format_dir = get_format_dir()
+
+    # check all subdirs unless a version is specified
+    if version:
+        subdirs = glob.glob(os.path.join(format_dir, version))
+    else:
+        subdirs = glob.glob(os.path.join(format_dir, '*'))
+
+    # make sure we prefer the most recent format
+    subdirs.sort()
+
+    # for each subdir, load our format_name
+    formats = {}
+    for path in subdirs:
+        if os.path.isdir(path):
+            conf_path = os.path.join(path, format_name + '.mar')
+            if os.path.exists(conf_path):
+                if not formats.get(format_name):
+                    formats[format_name] = []
+                if party == 'client':
+                    formats[format_name] = [conf_path]
+                elif party == 'server':
+                    formats[format_name] += [conf_path]
+
+    for key in formats.keys():
+        retval += formats[key]
+
+    return retval
+
+
+def load_all(party, format_name, version=None):
+    retval = []
+
+    mar_files = find_mar_files(party, format_name, version)
+    if not mar_files:
         raise Exception("Can't find "+format_name)
-    with open(marionette_file) as f:
+
+    for mar_path in mar_files:
+        retval.append(load(party, format_name, mar_path))
+
+    return retval
+
+
+def load(party, format_name, mar_path):
+
+    with open(mar_path) as f:
         mar_str = f.read()
 
     parsed_format = parse(mar_str)
@@ -421,9 +482,9 @@ def load(party, format_name):
     if format_name in ["ftp_pasv_transfer"]:
         first_sender = "server"
 
-    executable = marionette_tg.PA.PA(party, first_sender)
+    executable = marionette_tg.executables.pioa.PIOA(party, first_sender)
     executable.set_port(parsed_format.get_port())
-    executable.marionette_state_.set_local(
+    executable.set_local(
         "model_uuid", get_model_uuid(mar_str))
 
     for transition in parsed_format.get_transitions():

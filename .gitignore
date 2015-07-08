@@ -1,4 +1,4 @@
 *.pyc
-marionette.egg-info
+marionette_tg.egg-info
 parsetab.py
 parser.out

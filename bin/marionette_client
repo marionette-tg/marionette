@@ -17,10 +17,16 @@ if len(sys.argv)<3:
     sys.exit(1)
 LOCAL_IP = str(sys.argv[1])
 LOCAL_PORT = int(sys.argv[2])
+
+FORMAT_VERSION = None
 if len(sys.argv) >= 4:
-    FORMAT = str(sys.argv[3])
+    if ':' in sys.argv[3]:
+        FORMAT = sys.argv[3].split(':')[0]
+        FORMAT_VERSION = sys.argv[3].split(':')[1]
+    else:
+        FORMAT = str(sys.argv[3])
 else:
-    FORMAT = 'http_simple_blocking'
+    FORMAT = 'dummy'
 
 
 class ProxyClient(protocol.Protocol):
@@ -52,7 +58,7 @@ if __name__ == "__main__":
     if marionette_tg.conf.get("general.debug"):
         log.startLogging(sys.stdout)
 
-    client = marionette_tg.Client(FORMAT)
+    client = marionette_tg.Client(FORMAT, FORMAT_VERSION)
 
     factory = protocol.Factory()
     factory.protocol = ProxyClient
