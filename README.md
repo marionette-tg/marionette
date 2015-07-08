@@ -77,18 +77,33 @@ Marionette DSL
 Marionette's DSL is 
 
 ```
-connection([connection_type]):
+connection([connection_type], [port]):
   start [dst] [block_name] [prob | error]
   [src] [dst] [block_name] [prob | error]
   ...
   [src] end [block_name] [prob | error]
 
 action [block_name]:
-  [client | server] plugin(arg1, arg2, ...)
-  [client | server] plugin(arg1, arg2, ...) [if regex_match_incoming(regex)]
+  [client | server] [module].[func](arg1, arg2, ...)
+  [client | server] [module].[func](arg1, arg2, ...) [if regex_match_incoming(regex)]
 ...
 ```
 
+The only ```connection_type``` currently supported is tcp. The port specifies the port that the server listens on and client connects to. The ```block_name``` specifies the named action that should be exected when transitioning from src to dst. A single error transition can be specified for each src and will be executed if all other potential transitions from src are impossible.
+
+Action blocks specify actions by either a client or server. For brevity we allow specification of an action, such as ```fte.send``` and 
+
+Marionette Plugins
+------------------
+
+* ```fte.send(regex, msg_len)``` - sends a string on the channel that's encrypted with fte under ```regex```.
+* ```fte.send_async(regex, msg_len)``` - sends a string on the channel that's encrypted with fte under ```regex```, does not block receiver-side when waiting for the incoming message.
+* ```tg.send(grammar_name)``` - send a message using template grammar ```grammar_name```
+* ```io.puts(str)``` - send string ```str``` on the channel.
+* ```model.sleep(n)``` - sleep for ```n``` seconds.
+* ```model.spawn(format_name, n)``` - spawn ```n``` instances of model ```format_name```, blocks until completion.
+
+*note*: by specifying a send or a puts, that implicity invokes a recv or a gets on the receiver side.
 
 Example Formats
 ---------------
