@@ -14,6 +14,7 @@ $ sudo apt-get update && sudo apt-get upgrade
 $ sudo apt-get install git libgmp-dev python-pip python-dev
 $ git clone https://github.com/kpdyer/marionette.git
 $ cd marionette
+$ pip install -r requirements.txt
 $ python setup.py install
 ```
 
