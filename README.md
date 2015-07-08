@@ -1,6 +1,7 @@
 # marionette
 
-[![Build Status](https://travis-ci.org/kpdyer/marionette.svg?branch=master)](https://travis-ci.org/kpdyer/marionette)
+Overview
+--------
 
 Marionette is a programmable client-server proxy that enables the user to control network traffic features with a lightweight domain-specific language. The marionette system is described in [2] and builds on ideas from other papers, such as Format-Transforming Encryption [1].
 
