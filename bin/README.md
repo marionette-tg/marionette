@@ -16,7 +16,7 @@ Spins up a marionette client with ```marionette_format``` and accepts incoming r
 The version of the format can be specified with the version parameter.
 
 ```
-./bin/marionette_server [listen_iface] [port] [[marionette_format]:version]
+./bin/marionette_client [listen_iface] [port] [[marionette_format]:version]
 ```
 
 ### benchmark
