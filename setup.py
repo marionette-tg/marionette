@@ -13,7 +13,7 @@ setup(name='marionette-tg',
       scripts=['bin/marionette_client','bin/marionette_server'],
       test_suite='marionette_tg',
       packages=['marionette_tg','marionette_tg.plugins','marionette_tg.executables'],
-      package_data={'marionette_tg': ['marionette.conf','formats/*.mar']},
+      package_data={'marionette_tg': ['marionette.conf','formats/*.mar','formats/*.py']},
       zipfile="marionette.zip",
       options={"py2exe": {
           "bundle_files": 2,
