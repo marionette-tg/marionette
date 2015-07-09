@@ -60,7 +60,12 @@ class ClientDriver(object):
         self.state_ = state
 
     def stop(self):
-        pass
+        for executable in self.running_:
+            executable.stop()
+        for executable in self.to_start_:
+            executable.stop()
+        self.running_ = []
+        self.to_start_ = []
 
 class ServerDriver(object):
 

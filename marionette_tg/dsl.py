@@ -457,6 +457,27 @@ def find_mar_files(party, format_name, version=None):
     return retval
 
 
+def get_latest_version(party, format_name):
+    mar_version = None
+
+    # get marionette format directory
+    format_dir = get_format_dir()
+
+    subdirs = glob.glob(os.path.join(format_dir, '*'))
+
+    # make sure we prefer the most recent format
+    subdirs.sort()
+
+    # for each subdir, load our format_name
+    for path in subdirs:
+        if os.path.isdir(path):
+            conf_path = os.path.join(path, format_name + '.mar')
+            if os.path.exists(conf_path):
+                mar_version = path.split('/')[-1]
+
+    return mar_version
+
+
 def load_all(party, format_name, version=None):
     retval = []
 

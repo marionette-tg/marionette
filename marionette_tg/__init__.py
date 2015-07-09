@@ -35,20 +35,30 @@ class Client(object):
         # first update must be
         reactor.callLater(AUTOUPDATE_DELAY, self.check_for_update)
 
-    def set_driver(self, format_name, format_version):
+    def set_driver(self, format_name, format_version=None):
         self.format_name_ = format_name
-        self.format_version_ = format_version
+        if format_version == None:
+            self.format_version_ = marionette_tg.dsl.get_latest_version(
+                'client', format_name)
+        else:
+            self.format_version_ = format_version
         self.driver_ = marionette_tg.driver.ClientDriver("client")
         self.driver_.set_multiplexer_incoming(self.multiplexer_incoming_)
         self.driver_.set_multiplexer_outgoing(self.multiplexer_outgoing_)
         self.driver_.setFormat(self.format_name_, self.format_version_)
+
+    def get_format(self):
+        retval = str(self.format_name_) + \
+                 ':' + \
+                 str(self.format_version_)
+        return retval
 
     def execute(self, reactor):
         if self.driver_.isRunning():
             self.driver_.execute(reactor)
         else:
             if self.reload_:
-                self.set_driver(self.format_name_, self.format_version_)
+                self.set_driver(self.format_name_)
                 self.reload_ = False
             self.driver_.reset()
 
