@@ -416,7 +416,7 @@ def get_format_dir():
                 if contents != FORMAT_BANNER:
                     continue
                 else:
-                    retval = dir
+                    retval = cur_dir
                     break
         else:
             continue
