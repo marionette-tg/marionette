@@ -405,8 +405,7 @@ def get_format_dir():
 
     search_dirs = get_search_dirs()
     FORMAT_BANNER = '### marionette formats dir ###'
-    for dir in search_dirs:
-        cur_dir = os.path.join(os.getcwd(), dir)
+    for cur_dir in search_dirs:
         init_path = os.path.join(cur_dir, '__init__.py')
 
         # check if __init__ marks our marionette formats dir
