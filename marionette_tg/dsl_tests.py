@@ -547,7 +547,10 @@ action downstream_async:
 
 
     def test_hex_input_strings(self):
-        with open(marionette_tg.dsl.find_mar_file("test_hex_input_strings")) as f:
+        mar_files = marionette_tg.dsl.find_mar_files('client',
+                                                     'test_hex_input_strings',
+                                                     '20150701')
+        with open(mar_files[0]) as f:
             mar_format = f.read()
 
         parsed_format = marionette_tg.dsl.parse(mar_format)

@@ -1,0 +1,10 @@
+connection(tcp, 8081):
+  start      upstream   NULL     1.0
+  upstream   downstream http_get 1.0
+  downstream end        http_ok  1.0
+
+action http_get:
+  client fte.send("^GET\ \/([a-zA-Z0-9\.\/]*) HTTP/1\.0\r\n\r\n$", 128)
+
+action http_ok:
+  server fte.send("^HTTP/1\.0\ 200 OK\r\nContent-Type:\ ([a-zA-Z0-9]+)\r\n\r\n\C*$", 128)

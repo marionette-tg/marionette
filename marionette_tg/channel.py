@@ -179,7 +179,8 @@ class MyServer(protocol.Protocol):
 
 def bind(port=0):
     with incoming_lock:
-        retval = start_listener(port)
+        #TODO: handle UDP
+        retval = start_listener('tcp', port)
 
     return retval
 

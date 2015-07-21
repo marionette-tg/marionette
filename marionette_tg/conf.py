@@ -36,6 +36,8 @@ def get(key):
 
         conf_ = {}
         conf_["general.debug"] = confparser.getboolean("general", "debug")
+        conf_["general.autoupdate"] = confparser.getboolean("general", "autoupdate")
+        conf_["general.update_server"] = confparser.get("general", "update_server")
         conf_["client.listen_iface"] = confparser.get("client", "listen_iface")
         conf_["client.listen_port"] = confparser.getint(
             "client", "listen_port")

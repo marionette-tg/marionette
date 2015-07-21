@@ -1,8 +1,14 @@
 # marionette
 
-[![Build Status](https://travis-ci.org/kpdyer/marionette.svg?branch=master)](https://travis-ci.org/kpdyer/marionette)
+Overview
+--------
 
-Marionette is a programmable client-server proxy that enables the user to control network traffic features with a lightweight programming language.
+Marionette is a programmable client-server proxy that enables the user to control network traffic features with a lightweight domain-specific language. The marionette system is described in [2] and builds on ideas from other papers, such as Format-Transforming Encryption [1].
+
+1. Protocol Misidentification Made Easy with Format-Transforming Encryption
+   url: https://kpdyer.com/publications/ccs2013-fte.pdf
+2. Marionette: A Programmable Network Traffic Obfuscation System
+   url: https://kpdyer.com/publications/usenix2015-marionette.pdf
 
 Installation
 ------------
@@ -11,9 +17,10 @@ Installation
 
 ```console
 $ sudo apt-get update && sudo apt-get upgrade
-$ sudo apt-get install git libgmp-dev python-pip python-dev
-$ git clone https://github.com/kpdyer/marionette.git
+$ sudo apt-get install git libgmp-dev python-pip python-dev curl
+$ git clone https://github.com/redjack/marionette.git
 $ cd marionette
+$ pip install -r requirements.txt
 $ python setup.py install
 ```
 
@@ -22,13 +29,13 @@ $ python setup.py install
 Requires homebrew.
 
 ```console
-$ brew install python gmp
-$ git clone https://github.com/kpdyer/marionette.git
+$ brew install python gmp curl
+$ git clone https://github.com/redjack/marionette.git
 $ cd marionette
 $ python setup.py install
 ```
 
-### Testing
+### Sanity check
 
 ```console
 $ python setup.py test
@@ -44,16 +51,66 @@ OK
 And then testing with the servers...
 
 ```console
-$ ./bin/socksserver 18081 &
-$ ./bin/marionette_server 127.0.0.1 18081 &
-$ ./bin/marionette_client 127.0.0.1 18079 &
-$ curl --socks4a 127.0.0.1:18079 example.com
+$ ./bin/socksserver 8081 &
+$ ./bin/marionette_server 127.0.0.1 8081 &
+$ ./bin/marionette_client 127.0.0.1 8079 &
+$ curl --socks4a 127.0.0.1:8079 example.com
 ```
+
+
+marionette.conf
+---------------
+
+* ```general.debug``` - [boolean] print useful debug information to the console
+* ```general.autoupdate``` - [boolean] enable automatic checks for new marionette formats
+* ```general.update_server``` - [string] the remote address of the server we should use for marionette updates
+* ```client.listen_iface``` - [string] the iface we should listen on if it isn't specified on the CLI
+* ```client.listen_port``` - [int] the port we should listen on if it isn't specified on the CLI
+* ```server.listen_iface``` - [string] the iface we should listen on if it isn't specified on the CLI
+* ```server.proxy_iface``` - [string] the iface we should forward connects to if it isn't specified on the CLI
+* ```server.proxy_port``` - [int] the port we should forward connects to if it isn't specified on the CLI
+
+
+Marionette DSL
+--------------
+
+Marionette's DSL is 
+
+```
+connection([connection_type], [port]):
+  start [dst] [block_name] [prob | error]
+  [src] [dst] [block_name] [prob | error]
+  ...
+  [src] end [block_name] [prob | error]
+
+action [block_name]:
+  [client | server] [module].[func](arg1, arg2, ...)
+  [client | server] [module].[func](arg1, arg2, ...) [if regex_match_incoming(regex)]
+...
+```
+
+The only ```connection_type``` currently supported is tcp. The port specifies the port that the server listens on and client connects to. The ```block_name``` specifies the named action that should be exected when transitioning from src to dst. A single error transition can be specified for each src and will be executed if all other potential transitions from src are impossible.
+
+Action blocks specify actions by either a client or server. For brevity we allow specification of an action, such as ```fte.send``` and 
+
+Marionette Plugins
+------------------
+
+* ```fte.send(regex, msg_len)``` - sends a string on the channel that's encrypted with fte under ```regex```.
+* ```fte.send_async(regex, msg_len)``` - sends a string on the channel that's encrypted with fte under ```regex```, does not block receiver-side when waiting for the incoming message.
+* ```tg.send(grammar_name)``` - send a message using template grammar ```grammar_name```
+* ```io.puts(str)``` - send string ```str``` on the channel.
+* ```model.sleep(n)``` - sleep for ```n``` seconds.
+* ```model.spawn(format_name, n)``` - spawn ```n``` instances of model ```format_name```, blocks until completion.
+
+*note*: by specifying a send or a puts, that implicity invokes a recv or a gets on the receiver side.
 
 Example Formats
 ---------------
 
-### Synchronous HTTP
+### Simple HTTP
+
+The following format generates a TCP connection sends one upstream GET and is followed by a downstream OK.
 
 ```
 connection(tcp, 80):
@@ -68,51 +125,26 @@ action http_ok:
   server fte.send("^HTTP/1\.1\ 200 OK\r\nContent-Type:\ ([a-zA-Z0-9]+)\r\n\r\n\C*$", 128)
 ```
 
-### Asynchronous HTTP
+### HTTP with error transitions and conditionals
+
+We use error transitions in the following format to deal with incoming connections that aren't from a marionette client. The conditionals are used to match a regex aginst the incoming request.
 
 ```
-connection(tcp, 80):
-  start      handshake  NULL              1.0
-  handshake  upstream   http_get_blocking 1.0
-  upstream   downstream http_get          1.0
-  downstream upstream   http_ok           1.0
+connection(tcp, 8080):
+  start          upstream       NULL        1.0
+  upstream       downstream     http_get    1.0
+  upstream       downstream_err NULL        error
+  downstream_err end            http_ok_err 1.0
+  downstream     end            http_ok     1.0
 
-action http_get_blocking:
+action http_get:
   client fte.send("^GET\ \/([a-zA-Z0-9\.\/]*) HTTP/1\.1\r\n\r\n$", 128)
 
-action http_get:
-  client fte.send_async("^GET\ \/([a-zA-Z0-9\.\/]*) HTTP/1\.1\r\n\r\n$", 128)
-
 action http_ok:
-  server fte.send_async("^HTTP/1\.1\ 200 OK\r\nContent-Type:\ ([a-zA-Z0-9]+)\r\n\r\n\C*$", 128)
-```
+  server fte.send("^HTTP/1\.1\ 200 OK\r\nContent-Type:\ ([a-zA-Z0-9]+)\r\n\r\n\C*$", 128)
 
-### Nondeterministic HTTP
-
-```
-connection(tcp, 80):
-  start http_get http_get 0.5
-  start http_post http_post 0.5
-  http_get http10_ok http10_ok 0.5
-  http_get http11_ok http11_ok 0.5
-  http_post http10_ok http10_ok 0.5
-  http_post http11_ok http11_ok 0.5
-  http10_ok http_get NULL 0.33
-  http10_ok http_post NULL 0.33
-  http10_ok end NULL 0.33
-  http11_ok http_get NULL 0.33
-  http11_ok http_post NULL 0.33
-  http11_ok end NULL 0.33
-
-action http_get:
-  client fte.send("GET\s/.*", 128)
-
-action http10_ok:
-  server fte.send("HTTP/1\.0.*", 128)
-
-action http_post:
-  client fte.send("POST\s/.*", 128)
-
-action http11_ok:
-  server fte.send("HTTP/1\.1.*", 128)
+action http_ok_err:
+  server io.puts("HTTP/1.1 200 OK\r\n\r\nHello, World!") if regex_match_incoming("^GET /(index\.html)? HTTP/1\.(0|1).*")
+  server io.puts("HTTP/1.1 404 File Not Found\r\n\r\nFile not found!") if regex_match_incoming("^GET /.* HTTP/1\.(0|1).*")
+  server io.puts("HTTP/1.1 400 Bad Request\r\n\r\nBad request!") if regex_match_incoming("^.+")
 ```
