@@ -74,6 +74,8 @@ class Channel(object):
         return self.channel_id_
 
     def close(self):
+        if self.is_closed():
+            return
         self.closed_ = True
         self.is_alive_ = False
         if not (self.transport_protocol_ == 'udp' and self.party == 'server'):
@@ -100,6 +102,9 @@ class MyUdpClient(protocol.DatagramProtocol):
     def datagramReceived(self, chunk, (host, port)):
         log.msg("channel.Client: %d bytes received" % len(chunk))
         self.channel.appendToBuffer(chunk)
+
+    def doStop(self):
+        log.msg("channel.Client.doStop: Stopping UDP connection")
 
 class MyClient(protocol.Protocol):
     def connectionMade(self):
