@@ -7,9 +7,9 @@ import sys
 import ConfigParser
 
 def find_conf_file():
-    search_dirs = [sys.prefix,
+    search_dirs = ['.',
+                   sys.prefix,
                    '/etc',
-                   '.',
                    os.path.dirname(__file__),
                   ]
     for dir in search_dirs:
@@ -22,29 +22,51 @@ def find_conf_file():
 
     return None
 
+def parse_conf():
+    global conf_
+
+    confparser = ConfigParser.SafeConfigParser()
+    conf_file_path = find_conf_file()
+    if not conf_file_path:
+        raise Exception('can\'t find marionette_tg.conf')
+    confparser.read(conf_file_path)
+
+    conf_ = {}
+    try:
+        conf_["general.debug"] = confparser.getboolean("general", "debug")
+        conf_["general.autoupdate"] = confparser.getboolean("general",
+            "autoupdate")
+        conf_["general.update_server"] = confparser.get("general",
+            "update_server")
+        conf_["client.client_ip"] = confparser.get("client", "client_ip")
+        conf_["client.client_port"] = confparser.getint(
+            "client", "client_port")
+        conf_["server.server_ip"] = confparser.get("server", "server_ip")
+        conf_["server.proxy_ip"] = confparser.get("server", "proxy_ip")
+        conf_["server.proxy_port"] = confparser.getint("server", "proxy_port")
+    except:
+        print 'cannot parse conf file'
+        sys.exit(1)
+
+
 def get(key):
     global conf_
 
     try:
         retval = conf_[key]
     except:
-        confparser = ConfigParser.RawConfigParser()
-        conf_file_path = find_conf_file()
-        if not conf_file_path:
-            raise Exception('can\'t find marionette_tg.conf')
-        confparser.read(conf_file_path)
-
-        conf_ = {}
-        conf_["general.debug"] = confparser.getboolean("general", "debug")
-        conf_["general.autoupdate"] = confparser.getboolean("general", "autoupdate")
-        conf_["general.update_server"] = confparser.get("general", "update_server")
-        conf_["client.listen_iface"] = confparser.get("client", "listen_iface")
-        conf_["client.listen_port"] = confparser.getint(
-            "client", "listen_port")
-        conf_["server.listen_iface"] = confparser.get("server", "listen_iface")
-        conf_["server.proxy_iface"] = confparser.get("server", "proxy_iface")
-        conf_["server.proxy_port"] = confparser.getint("server", "proxy_port")
+        parse_conf()
     finally:
         retval = conf_[key]
 
     return retval
+
+def set(key, value):
+    global conf_
+
+    try:
+        conf_[key] = value
+    except:
+        parse_conf()
+    finally:
+        conf_[key] = value

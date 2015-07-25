@@ -42,8 +42,8 @@ def download_wrapper(use_marionette, url, dst_path, format_package):
     socks_ip = None
     socks_port = None
     if use_marionette:
-        socks_ip = marionette_tg.conf.get("client.listen_iface")
-        socks_port = marionette_tg.conf.get("client.listen_port")
+        socks_ip = marionette_tg.conf.get("client.client_ip")
+        socks_port = marionette_tg.conf.get("client.client_port")
 
     downloader = Downloader(url, dst_path, socks_ip, socks_port)
     downloader.run()

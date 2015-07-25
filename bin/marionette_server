@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import sys
+import argparse
 
 from twisted.internet import defer
 from twisted.internet import protocol
@@ -13,22 +14,35 @@ sys.path.append(".")
 import marionette_tg
 import marionette_tg.conf
 
+parser = argparse.ArgumentParser(
+    description='Marionette proxy server.')
+parser.add_argument('--server_ip', '-sip', dest='server_ip', required=False,
+    help='IP address for client to bind to')
+parser.add_argument('--proxy_port', '-pport', dest='proxy_port',
+    required=False, help='port for client to bind to')
+parser.add_argument('--proxy_ip', '-pip', dest='proxy_ip', required=False,
+    help='server IP address to connect to')
+parser.add_argument('--format', '-f', dest='format', required=True,
+    help='Marionette format to use for connection')
+args = parser.parse_args()
 
-if len(sys.argv)<3:
-    print 'usage: marionette_server [proxy_ip] [proxy_port] [format]'
-    sys.exit(1)
-REMOTE_IP = str(sys.argv[1])
-REMOTE_PORT = int(sys.argv[2])
+if args.server_ip != None:
+    marionette_tg.conf.set('server.server_ip', str(args.server_ip))
+if args.proxy_ip != None:
+    marionette_tg.conf.set('server.proxy_ip', str(args.proxy_ip))
+if args.proxy_port != None:
+    marionette_tg.conf.set('server.proxy_port', int(args.proxy_port))
+
+LOCAL_IP = marionette_tg.conf.get('server.server_ip')
+REMOTE_IP = marionette_tg.conf.get('server.proxy_ip')
+REMOTE_PORT = marionette_tg.conf.get('server.proxy_port')
 
 FORMAT_VERSION = None
-if len(sys.argv) >= 4:
-    if ':' in sys.argv[3]:
-        FORMAT = sys.argv[3].split(':')[0]
-        FORMAT_VERSION = sys.argv[3].split(':')[1]
-    else:
-        FORMAT = str(sys.argv[3])
+if ':' in args.format:
+    FORMAT, FORMAT_VERSION = args.format.split(':', 1)
 else:
-    FORMAT = 'dummy'
+    FORMAT = str(args.format)
+
 
 class ProxyServerProtocol(protocol.Protocol):
 
