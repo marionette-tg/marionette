@@ -526,17 +526,17 @@ def generate_template(grammar):
 
 templates = {}
 
-server_listen_iface = marionette_tg.conf.get("server.listen_iface")
+server_listen_ip = marionette_tg.conf.get("server.server_ip")
 
 templates["http_request_keep_alive"] = [
     "GET http://" +
-    server_listen_iface +
+    server_listen_ip +
     ":8080/%%URL%% HTTP/1.1\r\nUser-Agent: marionette 0.1\r\nConnection: keep-alive\r\n\r\n",
 ]
 
 templates["http_request_close"] = [
     "GET http://" +
-    server_listen_iface +
+    server_listen_ip +
     ":8080/%%URL%% HTTP/1.1\r\nUser-Agent: marionette 0.1\r\nConnection: close\r\n\r\n",
 ]
 

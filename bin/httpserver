@@ -2,16 +2,24 @@
 # coding: utf-8
 
 import sys
+import argparse
 
 from twisted.web import server, resource
 from twisted.internet import reactor
 from twisted.python import log
 
+
 sys.path.append('.')
 
 import marionette_tg.conf
 
-LOCAL_PORT = int(sys.argv[1])
+parser = argparse.ArgumentParser(
+    description='Respond to HTTP requests with integer strings.')
+parser.add_argument('--local_port', '-lport', dest='local_port', required=True,
+    help='local port to listen on for HTTP requests')
+args = parser.parse_args()
+
+LOCAL_PORT = int(args.local_port)
 
 
 class GetResource(resource.Resource):

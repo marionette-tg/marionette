@@ -14,8 +14,6 @@ sys.path.append('.')
 
 import marionette_tg.conf
 
-SERVER_IFACE = marionette_tg.conf.get("server.listen_iface")
-
 class Channel(object):
 
     def __init__(self, protocol, port):
@@ -105,7 +103,8 @@ def open_new_channel(port, callback):
 def start_connection(port, callback):
     factory = MyClientFactory(callback)
     factory.protocol = MyClient
-    reactor.connectTCP(SERVER_IFACE, int(port), factory)
+    reactor.connectTCP(marionette_tg.conf.get("server.server_ip"),
+        int(port), factory)
 
     return True
 
@@ -154,7 +153,8 @@ def start_listener(port):
         try:
             factory = protocol.Factory()
             factory.protocol = MyServer
-            connector = reactor.listenTCP(int(port), factory, interface=SERVER_IFACE)
+            connector = reactor.listenTCP(int(port), factory,
+                interface=marionette_tg.conf.get("server.server_ip"))
             port = connector.getHost().port
             listening_sockets_[port] = connector
             retval = port
