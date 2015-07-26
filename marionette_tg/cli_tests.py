@@ -62,11 +62,11 @@ class CliTest(ParametrizedTestCase):
         client_listen_ip = marionette_tg.conf.get("client.client_ip")
         server_proxy_ip = marionette_tg.conf.get("server.proxy_ip")
 
-        execute("./bin/httpserver 18081 %s &" % format)
-        execute("./bin/marionette_server %s 18081 %s &" %
+        execute("./bin/httpserver --local_port 18081 %s &" % format)
+        execute("./bin/marionette_server --proxy_ip %s --proxy_port 18081 --format %s &" %
                 (server_proxy_ip, format))
         time.sleep(5)
-        execute("./bin/marionette_client %s 18079 %s &" %
+        execute("./bin/marionette_client --client_ip %s --client_port 18079 --format %s &" %
                 (client_listen_ip, format))
         time.sleep(5)
 

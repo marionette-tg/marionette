@@ -103,7 +103,7 @@ def open_new_channel(port, callback):
 def start_connection(port, callback):
     factory = MyClientFactory(callback)
     factory.protocol = MyClient
-    reactor.connectTCP(marionette_tg.conf.get("server.server_ip"), 
+    reactor.connectTCP(marionette_tg.conf.get("server.server_ip"),
         int(port), factory)
 
     return True

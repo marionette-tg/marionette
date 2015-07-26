@@ -8,8 +8,9 @@ requests to ```server_ip:port```.
 If multiple versions of the same format exist, then the server will listen with all of them simultaneously.
 
 ```
-./bin/marionette_server [server_ip] [port] [proxy_ip] [proxy_port] 
-[marionette_format]
+./bin/marionette_server [-h] [--server_ip SERVER_IP]
+                         [--proxy_port PROXY_PORT] [--proxy_ip PROXY_IP]
+                         --format format_name
 ```
 
 ### marionette_client
@@ -19,8 +20,9 @@ requests on ```client_ip:port```.
 The version of the format can be specified with the version parameter.
 
 ```
-./bin/marionette_client [client_ip] [port] [server_ip] [
-[marionette_format]:version]
+./bin/marionette_client [-h] [--client_ip CLIENT_IP]
+                         [--client_port CLIENT_PORT] [--server_ip SERVER_IP]
+                         --format format_name[:format_version]
 ```
 
 ### benchmark
