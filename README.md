@@ -51,11 +51,13 @@ OK
 And then testing with the servers...
 
 ```console
-$ ./bin/socksserver 8081 &
-$ ./bin/marionette_server 127.0.0.1 8081 &
-$ ./bin/marionette_client 127.0.0.1 8079 &
+$ ./bin/socksserver --local_port 8081 &
+$ ./bin/marionette_server --server_ip 127.0.0.1 --proxy_ip 127.0.0.1 --proxy_port 8081 --format dummy&
+$ ./bin/marionette_client --server_ip 127.0.0.1 --client_ip 127.0.0.1 --client_port 8079 --format dummy&
 $ curl --socks4a 127.0.0.1:8079 example.com
 ```
+
+A complete list of options is available with the `--help` parameter.
 
 
 marionette.conf
@@ -78,7 +80,7 @@ isn't specified on the CLI
 Marionette DSL
 --------------
 
-Marionette's DSL is 
+Marionette's DSL is
 
 ```
 connection([connection_type], [port]):
@@ -95,7 +97,7 @@ action [block_name]:
 
 The only ```connection_type``` currently supported is tcp. The port specifies the port that the server listens on and client connects to. The ```block_name``` specifies the named action that should be exected when transitioning from src to dst. A single error transition can be specified for each src and will be executed if all other potential transitions from src are impossible.
 
-Action blocks specify actions by either a client or server. For brevity we allow specification of an action, such as ```fte.send``` and 
+Action blocks specify actions by either a client or server. For brevity we allow specification of an action, such as ```fte.send```
 
 Marionette Plugins
 ------------------
@@ -107,7 +109,7 @@ Marionette Plugins
 * ```model.sleep(n)``` - sleep for ```n``` seconds.
 * ```model.spawn(format_name, n)``` - spawn ```n``` instances of model ```format_name```, blocks until completion.
 
-*note*: by specifying a send or a puts, that implicity invokes a recv or a gets on the receiver side.
+*note*: by specifying a send or a puts, that implicitly invokes a recv or a gets on the receiver side.
 
 Example Formats
 ---------------
