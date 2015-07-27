@@ -3,6 +3,7 @@ import sys
 import copy
 import glob
 import hashlib
+import fnmatch
 
 import ply.lex as lex
 import ply.yacc as yacc
@@ -443,6 +444,7 @@ def find_mar_files(party, format_name, version=None):
     for path in subdirs:
         if os.path.isdir(path):
             conf_path = os.path.join(path, format_name + '.mar')
+            print conf_path
             if os.path.exists(conf_path):
                 if not formats.get(format_name):
                     formats[format_name] = []
@@ -456,6 +458,24 @@ def find_mar_files(party, format_name, version=None):
 
     return retval
 
+def list_mar_files(party):
+    format_dir = get_format_dir()
+
+    subdirs = glob.glob(os.path.join(format_dir,'*'))
+
+    mar_files = []
+    for path in subdirs:
+        if os.path.isdir(path):
+            format_version = os.path.basename(path)
+
+            for root, dirnames, filenames in os.walk(path):
+                for filename in fnmatch.filter(filenames, '*.mar'):
+                    full_path = os.path.join(root,filename)
+                    format = os.path.relpath(full_path, path)
+                    mar_file = "%s:%s" % (format_version, format)
+                    mar_files.append(mar_file)
+
+    return mar_files
 
 def get_latest_version(party, format_name):
     mar_version = None

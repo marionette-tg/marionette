@@ -13,9 +13,16 @@ sys.path.append(".")
 
 import marionette_tg
 import marionette_tg.conf
+import marionette_tg.dsl
 
-parser = argparse.ArgumentParser(
-    description='Marionette proxy client.')
+mar_files = marionette_tg.dsl.list_mar_files('client')
+ver_string = "Marionette proxy client.\nAvailable formats:\n"
+for mar_file in mar_files:
+    ver_string += " %s\n" % (mar_file)
+
+parser = argparse.ArgumentParser(description='Marionette proxy client.',
+    formatter_class=argparse.RawTextHelpFormatter)
+parser.add_argument('--version', action='version', version=ver_string)
 parser.add_argument('--client_ip', '-cip', dest='client_ip', required=False,
     help='IP address for client to bind to')
 parser.add_argument('--client_port', '-cport', dest='client_port',
