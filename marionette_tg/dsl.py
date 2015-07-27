@@ -444,7 +444,6 @@ def find_mar_files(party, format_name, version=None):
     for path in subdirs:
         if os.path.isdir(path):
             conf_path = os.path.join(path, format_name + '.mar')
-            print conf_path
             if os.path.exists(conf_path):
                 if not formats.get(format_name):
                     formats[format_name] = []
