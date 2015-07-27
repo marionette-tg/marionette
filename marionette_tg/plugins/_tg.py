@@ -80,6 +80,12 @@ def recv(channel, marionette_state, input_args):
 
     return retval
 
+def get_grammar_capacity(grammar):
+    retval = 0
+    for handler_key in conf[grammar]["handler_order"]:
+        retval += conf[grammar]['handlers'][handler_key].capacity()
+    retval /= 8.0
+    return retval
 
 # handler + (un)embed functions
 

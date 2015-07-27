@@ -1,0 +1,114 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+import sys
+
+sys.path.append(".")
+
+import marionette_tg.dsl
+import marionette_tg.plugins._tg
+
+
+MAX_TRIALS = 5
+MAX_PATH_LEN = 100
+FTE_CAPACITY = 2**16
+FTE_COST = 0.5
+
+def do_simulation(format, latency, path = [], elapsed = [], capacity_up = [], capacity_down = []):
+    for k in range(MAX_TRIALS):
+        executable = marionette_tg.dsl.load('client', format)
+        executable.check_rng_state()
+
+        elapsed.append(latency*2)
+        for i in range(MAX_PATH_LEN):
+            current_state = executable.current_state_
+            next_state = executable.get_potential_transitions()[0]
+
+            actions = executable.determine_action_block(current_state, next_state)
+            analyze_actions(actions, latency, path, elapsed, capacity_up, capacity_down)
+
+            path.append(current_state)
+
+            executable.next_state_ = None
+            executable.current_state_ = next_state
+
+            if next_state == 'dead': break
+
+    return (path, elapsed, capacity_up, capacity_down)
+
+
+def analyze_actions(actions, latency, path = [], elapsed = [], capacity_up = [], capacity_down = []):
+    cost = 0
+    bits_up = 0
+    bits_down = 0
+
+    if len(actions)==1:
+        action_to_execute = actions[0]
+        if action_to_execute.get_module() == 'fte':
+            if action_to_execute.get_method() == 'send':
+                cost = latency + FTE_COST
+                bits_up = FTE_CAPACITY
+            elif action_to_execute.get_method() == 'recv':
+                cost = latency + FTE_COST
+                bits_down = FTE_CAPACITY
+            elif action_to_execute.get_method() == 'send_async':
+                cost = 0 + FTE_COST
+                bits_up = FTE_CAPACITY
+            elif action_to_execute.get_method() == 'recv_async':
+                cost = 0 + FTE_COST
+                bits_down = FTE_CAPACITY
+        elif action_to_execute.get_module() == 'tg':
+            if action_to_execute.get_method() == 'send':
+                tg_name = action_to_execute.get_args()[0]
+                cost = latency + FTE_COST
+                bits_up = get_tg_capacity(tg_name)
+            elif action_to_execute.get_method() == 'recv':
+                tg_name = action_to_execute.get_args()[0]
+                cost = latency + FTE_COST
+                bits_down = get_tg_capacity(tg_name)
+        elif action_to_execute.get_module() == 'io':
+            if action_to_execute.get_method() == 'puts':
+                cost = latency
+            elif action_to_execute.get_method() == 'gets':
+                cost = latency
+        elif action_to_execute.get_module() == 'model':
+            if action_to_execute.get_method() == 'spawn':
+                format_to_spawn = action_to_execute.get_args()[0]
+                do_simulation(format_to_spawn, latency, path, elapsed, capacity_up, capacity_down)
+    elif len(actions)>1:
+        raise Exception("can't deal with more than one action!")
+
+    elapsed.append(cost)
+    capacity_up.append(bits_up)
+    capacity_down.append(bits_down)
+
+    return True
+
+
+def get_tg_capacity(tg_name):
+    retval = marionette_tg.plugins._tg.get_grammar_capacity(tg_name)
+    return retval
+
+
+def mbps(bytes, ms):
+    Bpms  = 1.0 * bytes / ms
+    MBpms = Bpms / (2**20)
+    Mbpms = MBpms * 8
+    Mbps  = Mbpms * 1000
+    return str(Mbps)
+
+
+def main(format, latency):
+    (path, elapsed, capacity_up, capacity_down) = do_simulation(format, latency)
+
+    ms_elapsed = sum(elapsed)
+    mbps_upstream = mbps(sum(capacity_up), sum(elapsed))
+    mbps_downstream = mbps(sum(capacity_down), sum(elapsed))
+
+    print '%s,%s,%s,%s' % (format,ms_elapsed, mbps_upstream, mbps_downstream)
+
+
+if __name__ == "__main__":
+    format = str(sys.argv[1])
+    latency = int(sys.argv[2])
+    main(format, latency)
