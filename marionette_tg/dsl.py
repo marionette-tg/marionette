@@ -471,7 +471,7 @@ def list_mar_files(party):
                 for filename in fnmatch.filter(filenames, '*.mar'):
                     full_path = os.path.join(root,filename)
                     format = os.path.relpath(full_path, path)
-                    mar_file = "%s:%s" % (format_version, format)
+                    mar_file = "%s:%s" % (format,format_version)
                     mar_files.append(mar_file)
 
     return mar_files
