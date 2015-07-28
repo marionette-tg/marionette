@@ -114,7 +114,7 @@ for param in [
         'http_squid_blocking',
         'http_simple_nonblocking',
         'http_probabilistic_blocking',
-        'http_simple_blocking_with_msg_lens'
+        'http_simple_blocking_with_msg_lens',
         'ssh_simple_nonblocking',
         'smb_simple_nonblocking',
         'http_active_probing',
