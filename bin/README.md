@@ -6,9 +6,10 @@ Marionette Command-line Tools
 Spins up a marionette server with ```marionette_format``` and forward all
 requests to ```server_ip:port```.
 If multiple versions of the same format exist, then the server will listen with all of them simultaneously.
+The --version flag lists all available formats.
 
 ```
-./bin/marionette_server [-h] [--server_ip SERVER_IP]
+./bin/marionette_server [-h] [--version] [--server_ip SERVER_IP]
                          [--proxy_port PROXY_PORT] [--proxy_ip PROXY_IP]
                          --format format_name
 ```
@@ -18,9 +19,10 @@ If multiple versions of the same format exist, then the server will listen with 
 Spins up a marionette client with ```marionette_format``` and accepts incoming
 requests on ```client_ip:port```.
 The version of the format can be specified with the version parameter.
+The --version flag lists all available formats.
 
 ```
-./bin/marionette_client [-h] [--client_ip CLIENT_IP]
+./bin/marionette_client [-h] [--version] [--client_ip CLIENT_IP]
                          [--client_port CLIENT_PORT] [--server_ip SERVER_IP]
                          --format format_name[:format_version]
 ```
