@@ -62,7 +62,7 @@ class CliTest(ParametrizedTestCase):
         client_listen_ip = marionette_tg.conf.get("client.client_ip")
         server_proxy_ip = marionette_tg.conf.get("server.proxy_ip")
 
-        execute("./bin/httpserver --local_port 18081 %s &" % format)
+        execute("./bin/httpserver --local_port 18081 &")
         execute("./bin/marionette_server --proxy_ip %s --proxy_port 18081 --format %s &" %
                 (server_proxy_ip, format))
         time.sleep(5)
@@ -114,13 +114,13 @@ for param in [
         'http_squid_blocking',
         'http_simple_nonblocking',
         'http_probabilistic_blocking',
-        'http_simple_blocking_with_msg_lens',
+        'http_simple_blocking_with_msg_lens'
         'ssh_simple_nonblocking',
         'smb_simple_nonblocking',
         'http_active_probing',
         'http_active_probing2',
         'active_probing/http_apache_247',
         'active_probing/ssh_openssh_661',
-        'active_probing/ftp_pureftpd_10',]:
+        'active_probing/ftp_pureftpd_10']:
         suite.addTest(ParametrizedTestCase.parametrize(CliTest, param=param))
 unittest.TextTestRunner(verbosity=2).run(suite)
