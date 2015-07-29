@@ -14,6 +14,7 @@ sys.path.append('.')
 
 import marionette_tg.conf
 
+#TODO: Replace SERVER_IFACE with marionette_tg.conf.get("server.server_ip")
 SERVER_IFACE = marionette_tg.conf.get("server.listen_iface")
 
 class Channel(object):
@@ -140,7 +141,10 @@ def start_connection(transport_protocol, port, callback):
         factory.protocol = MyClient
         reactor.connectTCP(SERVER_IFACE, int(port), factory)
     else: #udp
-        reactor.listenUDP(0, MyUdpClient(SERVER_IFACE, int(port), callback))
+        #TODO: SERVER_IFACE needs to be changed to marionette_tg.conf.get("server.server_ip") for merge
+        #reactor.listenUDP(0, MyUdpClient(marionette_tg.conf.get("server.server_ip"),
+        #    int(port), callback))
+        reactor.listenUDP(0, MyUdpClient(SERVER_IFACE, int(port), callback), maxPacketSize=65535)
 
     return True
 
@@ -209,7 +213,7 @@ def start_listener(transport_protocol, port):
                 factory.protocol = MyServer
                 connector = reactor.listenTCP(int(port), factory, interface=SERVER_IFACE)
             else: #udp
-                connector = reactor.listenUDP(int(port), MyServer('udp'), interface=SERVER_IFACE)
+                connector = reactor.listenUDP(int(port), MyServer('udp'), interface=SERVER_IFACE, maxPacketSize=65535)
             port = connector.getHost().port
             listening_sockets_[port] = connector
             retval = port
