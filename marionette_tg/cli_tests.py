@@ -18,9 +18,9 @@ def execute(cmd):
 
 
 def exec_download():
-    client_listen_iface = marionette_tg.conf.get("client.listen_iface")
+    client_listen_ip = marionette_tg.conf.get("client.client_ip")
     conn = httplib.HTTPConnection(
-        client_listen_iface, 18079, False, timeout=30)
+        client_listen_ip, 18079, False, timeout=30)
     conn.request("GET", "/")
     response = conn.getresponse()
     actual_response = response.read()
@@ -59,15 +59,15 @@ class ParametrizedTestCase(unittest.TestCase):
 class CliTest(ParametrizedTestCase):
 
     def startservers(self, format):
-        client_listen_iface = marionette_tg.conf.get("client.listen_iface")
-        server_proxy_iface = marionette_tg.conf.get("server.proxy_iface")
+        client_listen_ip = marionette_tg.conf.get("client.client_ip")
+        server_proxy_ip = marionette_tg.conf.get("server.proxy_ip")
 
-        execute("./bin/httpserver 18081 %s &" % format)
-        execute("./bin/marionette_server %s 18081 %s &" %
-                (server_proxy_iface, format))
+        execute("./bin/httpserver --local_port 18081 &")
+        execute("./bin/marionette_server --proxy_ip %s --proxy_port 18081 --format %s &" %
+                (server_proxy_ip, format))
         time.sleep(5)
-        execute("./bin/marionette_client %s 18079 %s &" %
-                (client_listen_iface, format))
+        execute("./bin/marionette_client --client_ip %s --client_port 18079 --format %s &" %
+                (client_listen_ip, format))
         time.sleep(5)
 
     def stopservers(self):
@@ -121,6 +121,6 @@ for param in [
         'http_active_probing2',
         'active_probing/http_apache_247',
         'active_probing/ssh_openssh_661',
-        'active_probing/ftp_pureftpd_10',]:
+        'active_probing/ftp_pureftpd_10']:
         suite.addTest(ParametrizedTestCase.parametrize(CliTest, param=param))
 unittest.TextTestRunner(verbosity=2).run(suite)

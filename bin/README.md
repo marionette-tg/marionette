@@ -3,20 +3,28 @@ Marionette Command-line Tools
 
 ### marionette_server
 
-Spins up a marionette server with ```marionette_format``` and forward all requests to ```listen_iface:port```.
+Spins up a marionette server with ```marionette_format``` and forward all
+requests to ```server_ip:port```.
 If multiple versions of the same format exist, then the server will listen with all of them simultaneously.
+The --version flag lists all available formats.
 
 ```
-./bin/marionette_server [listen_iface] [port] [marionette_format]
+./bin/marionette_server [-h] [--version] [--server_ip SERVER_IP]
+                         [--proxy_port PROXY_PORT] [--proxy_ip PROXY_IP]
+                         --format format_name
 ```
 
 ### marionette_client
 
-Spins up a marionette client with ```marionette_format``` and accepts incoming requests on ```listen_iface:port```.
+Spins up a marionette client with ```marionette_format``` and accepts incoming
+requests on ```client_ip:port```.
 The version of the format can be specified with the version parameter.
+The --version flag lists all available formats.
 
 ```
-./bin/marionette_client [listen_iface] [port] [[marionette_format]:version]
+./bin/marionette_client [-h] [--version] [--client_ip CLIENT_IP]
+                         [--client_port CLIENT_PORT] [--server_ip SERVER_IP]
+                         --format format_name[:format_version]
 ```
 
 ### benchmark

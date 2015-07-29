@@ -81,6 +81,12 @@ def recv(channel, marionette_state, input_args):
 
     return retval
 
+def get_grammar_capacity(grammar):
+    retval = 0
+    for handler_key in conf[grammar]["handler_order"]:
+        retval += conf[grammar]['handlers'][handler_key].capacity()
+    retval /= 8.0
+    return retval
 
 # handler + (un)embed functions
 
@@ -454,6 +460,8 @@ class AmazonMsgLensHandler(FteHandler):
             lens += [key] * amazon_msg_lens[key]
 
         target_len_in_bytes = random.choice(lens)
+        target_len_in_bytes -= fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTTEXT 
+        target_len_in_bytes -= fte.encrypter.Encrypter._CTXT_EXPANSION
 
         target_len_in_bits = target_len_in_bytes * 8.0
         target_len_in_bits = int(target_len_in_bits)
@@ -601,17 +609,17 @@ def generate_template(grammar):
 
 templates = {}
 
-server_listen_iface = marionette_tg.conf.get("server.listen_iface")
+server_listen_ip = marionette_tg.conf.get("server.server_ip")
 
 templates["http_request_keep_alive"] = [
     "GET http://" +
-    server_listen_iface +
+    server_listen_ip +
     ":8080/%%URL%% HTTP/1.1\r\nUser-Agent: marionette 0.1\r\nConnection: keep-alive\r\n\r\n",
 ]
 
 templates["http_request_close"] = [
     "GET http://" +
-    server_listen_iface +
+    server_listen_ip +
     ":8080/%%URL%% HTTP/1.1\r\nUser-Agent: marionette 0.1\r\nConnection: close\r\n\r\n",
 ]
 

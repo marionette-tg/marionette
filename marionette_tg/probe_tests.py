@@ -19,19 +19,19 @@ def execute(cmd):
 class Tests(unittest.TestCase):
 
     def startservers(self, format):
-        server_proxy_iface = marionette_tg.conf.get("server.proxy_iface")
+        server_proxy_ip = marionette_tg.conf.get("server.proxy_ip")
 
-        execute("./bin/marionette_server %s 18081 %s &" %
-                (server_proxy_iface, format))
+        execute("./bin/marionette_server --proxy_ip %s --proxy_port 18081 --format %s &" %
+                (server_proxy_ip, format))
         time.sleep(5)
 
     def stopservers(self):
         execute("pkill -9 -f marionette_server")
 
     def do_probe(self, request_method, request_uri, expected_response):
-        server_listen_iface = marionette_tg.conf.get("server.listen_iface")
+        server_listen_ip = marionette_tg.conf.get("server.server_ip")
         conn = httplib.HTTPConnection(
-            server_listen_iface, 8080, False, timeout=30)
+            server_listen_ip, 8080, False, timeout=30)
         conn.request(request_method, request_uri)
         response = conn.getresponse()
         actual_response = response.read()

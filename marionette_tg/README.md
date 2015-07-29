@@ -23,7 +23,7 @@ The ```marionette.updater``` is responsible for checking a remote server for new
 
 * ```marionette_tg``` holds the ```Server``` and ```Client``` classes, which are the main entry points into marionette.
 * ```marionette_tg.action``` contains the ```MarionetteAction``` class, which describes marionette actions that occur in state transitions.
-* ```marionette_tg.channel``` is responsible for creating/destroying and managing the state of TCP/UDP/etc. connections. 
+* ```marionette_tg.channel``` is responsible for creating/destroying and managing the state of TCP/UDP/etc. connections.
 * ```marionette_tg.conf``` enables read-only access to marionette.conf.
 * ```marionette_tg.driver``` is the core of marionette and is responsible to creating/destroying/running models.
 * ```marionette_tg.dsl``` is our parser for our DSL and converts input formats into ```marionette_tg.executables.pioa```.
