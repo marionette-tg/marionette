@@ -20,9 +20,23 @@ $ sudo apt-get update && sudo apt-get upgrade
 $ sudo apt-get install git libgmp-dev python-pip python-dev curl
 $ git clone https://github.com/redjack/marionette.git
 $ cd marionette
-$ pip install -r requirements.txt
-$ python setup.py install
+$ sudo pip install -r requirements.txt
+$ sudo python setup.py install
 ```
+
+### RedHat/Fedora/CentOS
+
+```console
+$ sudo yum update
+$ yum install epel-release  # EPEL may be required for some distros
+$ sudo yum groupinstall "Development Tools"
+$ sudo yum install git gmp-devel python-pip python-devel curl
+$ git clone https://github.com/redjack/marionette.git
+$ cd marionette
+$ sudo pip install -r requirements.txt
+$ sudo python setup.py install
+```
+
 
 ###  OSX
 
