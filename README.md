@@ -21,6 +21,7 @@ $ sudo apt-get install git libgmp-dev python-pip python-dev curl
 $ git clone https://github.com/redjack/marionette.git
 $ cd marionette
 $ sudo pip install -r requirements.txt
+$ python setup.py build
 $ sudo python setup.py install
 ```
 
@@ -34,6 +35,7 @@ $ sudo yum install git gmp-devel python-pip python-devel curl
 $ git clone https://github.com/redjack/marionette.git
 $ cd marionette
 $ sudo pip install -r requirements.txt
+$ python setup.py build
 $ sudo python setup.py install
 ```
 
