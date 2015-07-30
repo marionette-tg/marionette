@@ -322,7 +322,7 @@ def p_error(p):
     print "Syntax error at '%s' on line %s" % (str([p.value]), p.lineno)
     # yacc.errok()
 
-yacc.yacc()
+yacc.yacc(debug=False, write_tables=False)
 
 ###################
 
