@@ -393,12 +393,16 @@ def parse(s):
     return retval
 
 def get_search_dirs():
-    current_dir = os.path.dirname(os.path.join(__file__))
-    current_dir = os.path.join(current_dir, 'formats')
-    current_dir = os.path.abspath(current_dir)
-    retval = [current_dir,
-                   sys.prefix,
-                   sys.exec_prefix]
+    dsl_dir = os.path.dirname(os.path.join(__file__))
+    dsl_dir = os.path.join(dsl_dir, 'formats')
+    dsl_dir = os.path.abspath(dsl_dir)
+    cwd_dir = os.path.join(os.getcwd(), 'marionette_tg', 'formats')
+    cwd_dir = os.path.abspath(cwd_dir)
+    retval = [dsl_dir, # find formats based on location of dsl.py
+              cwd_dir, # find formats based on location of marionette_client.exe
+              sys.prefix, # find formats based on location of python install
+              sys.exec_prefix, # same as above
+             ]
     return retval
 
 def get_format_dir():
