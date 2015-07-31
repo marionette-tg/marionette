@@ -17,7 +17,6 @@ import marionette_tg.executables.pioa
 # TODO: fix it s.t. "server" in var name doesn't cause problem
 
 tokens = (
-    'BOOLEAN',
     'CONNECTION_KWD',
     'KEY',
     'FLOAT',
@@ -35,11 +34,8 @@ tokens = (
     'REGEX_MATCH_INCOMING_KWD',
     'IF_KWD',
     'NULL_KWD',
-    'MODULE_KWD',
     'ACTION_KWD',
     'DOT',
-    'EQUALS',
-    'NEWLINE',
 )
 
 # Regular expression rules for simple tokens
@@ -50,7 +46,6 @@ t_LPAREN = r'\('
 t_RPAREN = r'\)'
 
 t_ignore_COMMENT = r'\#.*'  # comments
-t_EQUALS = r'='
 
 
 def t_CONNECTION_KWD(t):
@@ -105,12 +100,6 @@ def t_STRING(t):
     return t
 
 
-def t_BOOLEN(t):
-    r'true | false'
-    t.value = (t.value == "true")
-    return t
-
-
 def t_FLOAT(t):
     r'([-]?(\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+))([lL]|[fF])?'
     t.value = float(t.value)
@@ -125,13 +114,6 @@ def t_INTEGER(t):
 
 def t_KEY(t):
     r'[a-zA-Z_][a-zA-Z0-9_#\?]*'
-    return t
-
-# Define a rule so we can track line numbers
-
-
-def t_NEWLINE(t):
-    r'\n+'
     return t
 
 
@@ -393,12 +375,16 @@ def parse(s):
     return retval
 
 def get_search_dirs():
-    current_dir = os.path.dirname(os.path.join(__file__))
-    current_dir = os.path.join(current_dir, 'formats')
-    current_dir = os.path.abspath(current_dir)
-    retval = [current_dir,
-                   sys.prefix,
-                   sys.exec_prefix]
+    dsl_dir = os.path.dirname(os.path.join(__file__))
+    dsl_dir = os.path.join(dsl_dir, 'formats')
+    dsl_dir = os.path.abspath(dsl_dir)
+    cwd_dir = os.path.join(os.getcwd(), 'marionette_tg', 'formats')
+    cwd_dir = os.path.abspath(cwd_dir)
+    retval = [dsl_dir, # find formats based on location of dsl.py
+              cwd_dir, # find formats based on location of marionette_client.exe
+              sys.prefix, # find formats based on location of python install
+              sys.exec_prefix, # same as above
+             ]
     return retval
 
 def get_format_dir():

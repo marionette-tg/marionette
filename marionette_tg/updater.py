@@ -6,7 +6,6 @@ import threading
 
 from twisted.internet import threads
 from twisted.internet import defer
-defer.setDebugging(True)
 
 import pycurl
 
