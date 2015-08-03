@@ -306,7 +306,8 @@ class SetDnsDomain(object):
         if marionette_state.get_local("dns_domain"):
             dns_domain =  marionette_state.get_local("dns_domain")
         else:
-            dns_domain = "\x3f" + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(63)) + "\x03" + random.choice(['com', 'net', 'org'])
+            dns_domain_len = random.randint(3,63)
+            dns_domain = chr(dns_domain_len) + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(dns_domain_len)) + "\x03" + random.choice(['com', 'net', 'org'])
             marionette_state.set_local("dns_domain", dns_domain)
         return str(dns_domain)
 
