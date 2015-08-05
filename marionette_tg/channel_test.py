@@ -14,7 +14,6 @@ class ServerThread(threading.Thread):
         print 'Starting server...'
         self.channel_ = None
         while True:
-            time.sleep(0.1)
             ch = channel.accept_new_channel(
                 'udp', 8080)
             if ch:
@@ -29,7 +28,6 @@ class ClientThread(threading.Thread):
     channel_ = None
 
     def run(self):
-        time.sleep(1)
         print 'Starting client...'
         self.channel_ = None
         channel.open_new_channel(
@@ -41,17 +39,18 @@ class ClientThread(threading.Thread):
     def set_channel(self, ch):
         self.channel_ = ch
 
+
 finished = False
 already_sent = False
-def test_udp_send(msg_len):
+def test_udp_send(msg_lens):
     global already_sent
 
-    expected_msg = 'X'*msg_len
+    expected_msg = 'X'*(msg_lens[0]-28) # Subtract 28 for IP (20) and UDP (8) headers
 
     if client.channel_ and server.channel_:
         if not already_sent:
             try:
-                print "Test: sending message %d bytes" % msg_len
+                print "Test: sending message %d bytes" % msg_lens[0]
                 client.send(expected_msg)
                 already_sent = True
             except:
@@ -63,17 +62,28 @@ def test_udp_send(msg_len):
         if len(recvd) != 0:
             assert len(recvd) == len(expected_msg)
             print 'SUCCESS'
-            reactor.stop()
+            already_sent = False
+            if len(msg_lens) > 1:
+                reactor.callFromThread(test_udp_send, msg_lens[1:])
+            else:
+                reactor.stop()
             return
         else:
-            reactor.callFromThread(test_udp_send, msg_len)
+            reactor.callFromThread(test_udp_send, msg_lens)
     else:
-        reactor.callFromThread(test_udp_send, msg_len)
+        reactor.callFromThread(test_udp_send, msg_lens)
+
+def timeout_failure():
+    print "FAILURE: time out"
+    reactor.stop()
 
 if __name__ == '__main__':
     server = ServerThread()
     client = ClientThread()
     reactor.callFromThread(server.start)
     reactor.callFromThread(client.start)
-    reactor.callFromThread(test_udp_send, 65507)
+    msg_lens = [512, 1024, 2048, 4096, 8192, 16384, 32768, 65535]
+    reactor.callInThread(test_udp_send, msg_lens)
+    
+    reactor.callLater(30, timeout_failure)
     reactor.run()
