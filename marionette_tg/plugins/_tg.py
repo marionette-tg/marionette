@@ -9,6 +9,7 @@ import string
 import regex2dfa
 import fte.encoder
 import fte.bit_ops
+import re
 
 import marionette_tg.record_layer
 
@@ -748,14 +749,63 @@ def ftp_entering_passive_parser(msg):
 
     return retval
 
+
+def validate_dns_domain(msg, dns_response=False):
+    if dns_response:
+        expected_splits = 3
+        split1_msg = '\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00'
+    else:
+        expected_splits = 2
+        split1_msg = '\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00'
+
+    tmp_domain_split1 = msg.split(split1_msg)
+    if len(tmp_domain_split1) != 2:
+        return None
+    tmp_domain_split2 = tmp_domain_split1[1].split('\x00\x01\x00\x01')
+    if len(tmp_domain_split2) != expected_splits:
+        return None
+    tmp_domain = tmp_domain_split2[0]
+    # Check for valid prepended length
+    # Remove trailing tld prepended length (1), tld (3) and trailing null (1) = 5
+    if ord(tmp_domain[0]) != len(tmp_domain[1:-5]): 
+        return None
+    if ord(tmp_domain[-5]) != 3:
+        return None
+    # Check for valid TLD
+    if not re.search("(com|net|org)\x00$", tmp_domain):
+        return None
+    # Check for valid domain characters
+    if not re.match("^[\w\d]+$", tmp_domain[1:-5]):
+        return None
+
+    return tmp_domain
+
+
+def validate_dns_ip(msg):
+    tmp_ip_split = msg.split('\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x00\x02\x00\x04')
+    if len(tmp_ip_split) != 2:
+        return None
+    tmp_ip = tmp_ip_split[1]
+    if len(tmp_ip) != 4:
+        return None
+
+    return tmp_ip
+
+
 def dns_request_parser(msg):
     retval = {}
     if '\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00' not in msg:
         return retval
 
     try:
-        retval["DNS_TRANSACTION_ID"] = msg.split('\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00')[0]
-        retval["DNS_DOMAIN"] = msg.split('\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00')[1].split('\x00\x01\x00\x01')[0]
+        # Nothing to validate for Transaction ID
+        retval["DNS_TRANSACTION_ID"] = msg[:2]
+
+        tmp_domain = validate_dns_domain(msg)
+        if not tmp_domain:
+            raise Exception("Bad DNS Domain")
+        retval["DNS_DOMAIN"] = tmp_domain
+        
     except Exception as e:
         retval = {}
 
@@ -768,9 +818,19 @@ def dns_response_parser(msg):
         return retval
 
     try:
-        retval["DNS_TRANSACTION_ID"] = msg.split('\x81\x80')[0]
-        retval["DNS_DOMAIN"] = msg.split('\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00')[1].split('\x00\x01\x00\x01')[0]
-        retval["DNS_IP"] = msg.split('\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x00\x02\x00\x04')[1]
+        # Nothing to validate for Transaction ID
+        retval["DNS_TRANSACTION_ID"] = msg[:2]
+
+        tmp_domain = validate_dns_domain(msg, dns_response=True)
+        if not tmp_domain:
+            raise Exception("Bad DNS Domain")
+        retval["DNS_DOMAIN"] = tmp_domain
+        
+        tmp_ip = validate_dns_ip(msg)
+        if not tmp_ip:
+            raise Exception("Bad DNS IP")
+        retval["DNS_IP"] = tmp_ip
+
     except Exception as e:
         retval = {}
 
