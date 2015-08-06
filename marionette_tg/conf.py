@@ -38,6 +38,7 @@ def parse_conf():
             "autoupdate")
         conf_["general.update_server"] = confparser.get("general",
             "update_server")
+        conf_["general.format"] = confparser.get("general", "format")
         conf_["client.client_ip"] = confparser.get("client", "client_ip")
         conf_["client.client_port"] = confparser.getint(
             "client", "client_port")

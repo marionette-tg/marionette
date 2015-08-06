@@ -29,7 +29,7 @@ parser.add_argument('--client_port', '-cport', dest='client_port',
     required=False, help='port for client to bind to')
 parser.add_argument('--server_ip', '-sip', dest='server_ip', required=False,
     help='server IP address to connect to')
-parser.add_argument('--format', '-f', dest='format', required=True,
+parser.add_argument('--format', '-f', dest='format', required=False,
     help='Marionette format to use for connection')
 args = parser.parse_args()
 
@@ -39,15 +39,17 @@ if args.client_ip != None:
     marionette_tg.conf.set('client.client_ip', str(args.client_ip))
 if args.client_port != None:
     marionette_tg.conf.set('client.client_port', int(args.client_port))
+if args.format != None:
+    marionette_tg.conf.set('general.format', str(args.format))
 
 LOCAL_IP = marionette_tg.conf.get('client.client_ip')
 LOCAL_PORT = marionette_tg.conf.get('client.client_port')
 
+FORMAT = marionette_tg.conf.get('general.format')
 FORMAT_VERSION = None
-if ':' in args.format:
+if ':' in FORMAT:
     FORMAT, FORMAT_VERSION = args.format.split(':', 1)
-else:
-    FORMAT = str(args.format)
+
 
 
 class ProxyClient(protocol.Protocol):
