@@ -83,20 +83,23 @@ class Channel(object):
 
 
 ### Client async. classes
-
-class MyUdpClient(protocol.DatagramProtocol):
-    def __init__(self, host, port, callback):
-        self.host = host
-        self.port = port
-        self.callback_ = callback
+class MyClient(protocol.Protocol):
+    def __init__(self, callback=None, transport_protocol='tcp', host=None, port=None):
+        self.transport_protocol = transport_protocol
+        if self.transport_protocol == 'udp':
+            self.host = host
+            self.port = port
+            self.callback_ = callback
+            self.startProtocol()
 
     def startProtocol(self):
-        self.channel = Channel(self, "udp")
-        self.channel.remote_host = self.host
-        self.channel.remote_port = self.port
-        self.channel.party = 'client'
-        self.callback_(self.channel)
-        log.msg("channel.Client: UDP Connection established %s:%d" 
+        if self.transport_protocol == 'udp':
+            self.channel = Channel(self, "udp")
+            self.channel.remote_host = self.host
+            self.channel.remote_port = self.port
+            self.channel.party = 'client'
+            self.callback_(self.channel)
+            log.msg("channel.Client: UDP Connection established %s:%d" 
                 % (self.host, self.port))
 
     def datagramReceived(self, chunk, (host, port)):
@@ -104,9 +107,9 @@ class MyUdpClient(protocol.DatagramProtocol):
         self.channel.appendToBuffer(chunk)
 
     def doStop(self):
-        log.msg("channel.Client.doStop: Stopping UDP connection")
+        if self.transport_protocol == 'udp':
+            log.msg("channel.Client.doStop: Stopping UDP connection")
 
-class MyClient(protocol.Protocol):
     def connectionMade(self):
         log.msg("channel.Client.connectionMade")
 
@@ -141,8 +144,10 @@ def start_connection(transport_protocol, port, callback):
         reactor.connectTCP(marionette_tg.conf.get("server.server_ip"),
                 int(port), factory)
     else: #udp
-        reactor.listenUDP(0, MyUdpClient(marionette_tg.conf.get("server.server_ip"),
-            int(port), callback), maxPacketSize=65535)
+        reactor.listenUDP(0, MyClient(callback, 'udp', marionette_tg.conf.get("server.server_ip"),
+            int(port)), maxPacketSize=65535)
+        #reactor.listenUDP(0, MyUdpClient(marionette_tg.conf.get("server.server_ip"),
+        #    int(port), callback), maxPacketSize=65535)
 
 
     return True
