@@ -545,6 +545,17 @@ action downstream_async:
         self.assertEquals(
             parsed_format.get_action_blocks()[1].get_regex_match_incoming(),"^regex2.*")
 
+    def test9(self):
+        mar_format = """connection(udp, 80):
+          start do_nothing NULL 1.0
+          do_nothing end NULL 1.0
+
+        action http_get:
+          client fte.send("^regex1\r\n\r\n$")"""
+
+        parsed_format = marionette_tg.dsl.parse(mar_format)
+
+        self.assertEquals(parsed_format.get_transport(), "udp")
 
     def test_hex_input_strings(self):
         mar_files = marionette_tg.dsl.find_mar_files('client',

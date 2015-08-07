@@ -74,7 +74,7 @@ class Executable(object):
         retval = None
 
         if self.party_ == "server":
-            channel = marionette_tg.channel.accept_new_channel(self.get_port())
+            channel = marionette_tg.channel.accept_new_channel(self.get_transport_protocol(), self.get_port())
             if channel:
                 retval = self.replicate()
                 retval.set_channel(channel)
@@ -89,6 +89,16 @@ class Executable(object):
         assert all(p == ports[0] for p in ports)
 
         return ports[0]
+
+    def get_transport_protocol(self):
+        transport_protocols = []
+        for executable in self.executables_:
+            transport_protocols += [executable.get_transport_protocol()]
+        assert len(transport_protocols)>0
+        assert all(tp == transport_protocols[0] for tp in transport_protocols)
+
+        return transport_protocols[0]
+
 
     def set_global(self, key, value):
         for executable in self.executables_:

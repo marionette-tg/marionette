@@ -508,6 +508,7 @@ def load(party, format_name, mar_path):
         first_sender = "server"
 
     executable = marionette_tg.executables.pioa.PIOA(party, first_sender)
+    executable.set_transport_protocol(parsed_format.get_transport())
     executable.set_port(parsed_format.get_port())
     executable.set_local(
         "model_uuid", get_model_uuid(mar_str))
