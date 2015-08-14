@@ -13,7 +13,6 @@ import re
 
 import marionette_tg.record_layer
 
-
 def send(channel, marionette_state, input_args):
     grammar = input_args[0]
 
@@ -462,8 +461,8 @@ class AmazonMsgLensHandler(FteHandler):
             lens += [key] * amazon_msg_lens[key]
 
         target_len_in_bytes = random.choice(lens)
-        target_len_in_bytes -= fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTTEXT 
-        target_len_in_bytes -= fte.encrypter.Encrypter._CTXT_EXPANSION
+        #target_len_in_bytes -= fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTTEXT 
+        #target_len_in_bytes -= fte.encrypter.Encrypter._CTXT_EXPANSION
 
         target_len_in_bits = target_len_in_bytes * 8.0
         target_len_in_bits = int(target_len_in_bits)
@@ -551,7 +550,7 @@ conf["http_amazon_response"] = {
     "handler_order": ["HTTP-RESPONSE-BODY", "CONTENT-LENGTH"],
     "handlers": {
         "CONTENT-LENGTH": HttpContentLengthHandler(),
-        "HTTP-RESPONSE-BODY": AmazonMsgLensHandler(".+", 128),
+        "HTTP-RESPONSE-BODY": AmazonMsgLensHandler(".+", 96),
     }
 }
 

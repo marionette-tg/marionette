@@ -11,22 +11,22 @@ connection(tcp, 1111):
   do39 end sess39 0.23
 
 action sess33:
-  client model.spawn("amzn_conn", 33)
-  server model.spawn("amzn_conn", 33)
+  client model.spawn("ta/amzn_conn", 33)
+  server model.spawn("ta/amzn_conn", 33)
 
 action sess34:
-  client model.spawn("amzn_conn", 34)
-  server model.spawn("amzn_conn", 34)
+  client model.spawn("ta/amzn_conn", 34)
+  server model.spawn("ta/amzn_conn", 34)
 
 action sess35:
-  client model.spawn("amzn_conn", 35)
-  server model.spawn("amzn_conn", 35)
+  client model.spawn("ta/amzn_conn", 35)
+  server model.spawn("ta/amzn_conn", 35)
 
 action sess37:
-  client model.spawn("amzn_conn", 37)
-  server model.spawn("amzn_conn", 37)
+  client model.spawn("ta/amzn_conn", 37)
+  server model.spawn("ta/amzn_conn", 37)
 
 action sess39:
-  client model.spawn("amzn_conn", 39)
-  server model.spawn("amzn_conn", 39)
+  client model.spawn("ta/amzn_conn", 39)
+  server model.spawn("ta/amzn_conn", 39)
 
