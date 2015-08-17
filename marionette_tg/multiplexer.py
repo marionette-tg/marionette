@@ -3,6 +3,7 @@
 
 import random
 import threading
+import heapq
 
 from twisted.internet import reactor
 
@@ -169,6 +170,8 @@ class BufferIncoming(object):
     def __init__(self):
         self.fifo_ = ''
         self.fifo_len_ = 0
+        self.output_q = {}
+        self.curr_seq_id = {}
         self.has_data_ = False
         self.callback_ = None
         self.lock_ = threading.RLock()
@@ -176,6 +179,25 @@ class BufferIncoming(object):
     def addCallback(self, callback):
         with self.lock_:
             self.callback_ = callback
+
+    def dequeue(self, cell_stream_id):
+        while (len(self.output_q[cell_stream_id]) > 0 and
+            self.output_q[cell_stream_id][0].get_seq_id() == self.curr_seq_id[cell_stream_id]):
+            
+            cell_obj = heapq.heappop(self.output_q[cell_stream_id])
+            self.curr_seq_id[cell_stream_id] += 1
+
+            if cell_obj.get_cell_type == marionette_tg.record_layer.END_OF_STREAM:
+                del self.output_q[cell_stream_id]
+                del self.curr_seq_id[cell_stream_id]
+
+            reactor.callFromThread(self.callback_, cell_obj)
+
+    def enqueue(self, cell_obj, cell_stream_id):
+        if cell_stream_id not in self.output_q:
+            self.output_q[cell_stream_id] = []
+            self.curr_seq_id[cell_stream_id] = 1
+        heapq.heappush(self.output_q[cell_stream_id],cell_obj)
 
     def push(self, s):
         with self.lock_:
@@ -186,7 +208,13 @@ class BufferIncoming(object):
             while True:
                 cell_obj = self.pop()
                 if cell_obj:
-                    reactor.callFromThread(self.callback_, cell_obj)
+                    cell_stream_id = cell_obj.get_stream_id()
+                    if cell_stream_id > 0:
+                        self.enqueue(cell_obj, cell_stream_id)
+                        self.dequeue(cell_stream_id)
+                        break
+                    else:
+                        reactor.callFromThread(self.callback_, cell_obj)
                     continue
                 else:
                     break
