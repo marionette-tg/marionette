@@ -181,23 +181,25 @@ class BufferIncoming(object):
             self.callback_ = callback
 
     def dequeue(self, cell_stream_id):
-        while (len(self.output_q[cell_stream_id]) > 0 and
-            self.output_q[cell_stream_id][0].get_seq_id() == self.curr_seq_id[cell_stream_id]):
-            
-            cell_obj = heapq.heappop(self.output_q[cell_stream_id])
-            self.curr_seq_id[cell_stream_id] += 1
+        with self.lock_:
+            while (len(self.output_q[cell_stream_id]) > 0 and
+                self.output_q[cell_stream_id][0].get_seq_id() == self.curr_seq_id[cell_stream_id]):
+                
+                cell_obj = heapq.heappop(self.output_q[cell_stream_id])
+                self.curr_seq_id[cell_stream_id] += 1
 
-            if cell_obj.get_cell_type == marionette_tg.record_layer.END_OF_STREAM:
-                del self.output_q[cell_stream_id]
-                del self.curr_seq_id[cell_stream_id]
+                if cell_obj.get_cell_type == marionette_tg.record_layer.END_OF_STREAM:
+                    del self.output_q[cell_stream_id]
+                    del self.curr_seq_id[cell_stream_id]
 
-            reactor.callFromThread(self.callback_, cell_obj)
+                reactor.callFromThread(self.callback_, cell_obj)
 
     def enqueue(self, cell_obj, cell_stream_id):
-        if cell_stream_id not in self.output_q:
-            self.output_q[cell_stream_id] = []
-            self.curr_seq_id[cell_stream_id] = 1
-        heapq.heappush(self.output_q[cell_stream_id],cell_obj)
+        with self.lock_:
+            if cell_stream_id not in self.output_q:
+                self.output_q[cell_stream_id] = []
+                self.curr_seq_id[cell_stream_id] = 1
+            heapq.heappush(self.output_q[cell_stream_id],cell_obj)
 
     def push(self, s):
         with self.lock_:
