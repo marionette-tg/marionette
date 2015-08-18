@@ -191,6 +191,7 @@ class BufferIncoming(object):
 
                 log.msg("Stream %d Dequeue ID %d: %s" % 
                     (cell_stream_id,cell_obj.get_seq_id(),cell_obj.get_payload()))
+
                 if cell_obj.get_cell_type == marionette_tg.record_layer.END_OF_STREAM:
                     del self.output_q[cell_stream_id]
                     del self.curr_seq_id[cell_stream_id]
@@ -218,7 +219,6 @@ class BufferIncoming(object):
                     if cell_stream_id > 0:
                         self.enqueue(cell_obj, cell_stream_id)
                         self.dequeue(cell_stream_id)
-                        break
                     else:
                         reactor.callFromThread(self.callback_, cell_obj)
                     continue
