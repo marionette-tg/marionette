@@ -6,6 +6,7 @@ import threading
 import heapq
 
 from twisted.internet import reactor
+from twisted.python import log
 
 import marionette_tg.record_layer
 
@@ -188,6 +189,8 @@ class BufferIncoming(object):
                 cell_obj = heapq.heappop(self.output_q[cell_stream_id])
                 self.curr_seq_id[cell_stream_id] += 1
 
+                log.msg("Stream %d Dequeue ID %d: %s" % 
+                    (cell_stream_id,cell_obj.get_seq_id(),cell_obj.get_payload()))
                 if cell_obj.get_cell_type == marionette_tg.record_layer.END_OF_STREAM:
                     del self.output_q[cell_stream_id]
                     del self.curr_seq_id[cell_stream_id]
@@ -200,6 +203,7 @@ class BufferIncoming(object):
                 self.output_q[cell_stream_id] = []
                 self.curr_seq_id[cell_stream_id] = 1
             heapq.heappush(self.output_q[cell_stream_id],cell_obj)
+            log.msg("Stream %d Enqueue ID %d" % (cell_stream_id,cell_obj.get_seq_id()))
 
     def push(self, s):
         with self.lock_:
