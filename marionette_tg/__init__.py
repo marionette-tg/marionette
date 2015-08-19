@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
-
+import random
 sys.path.append('.')
 
 from twisted.internet import reactor
@@ -27,7 +27,7 @@ class Client(object):
         self.multiplexer_incoming_ = marionette_tg.multiplexer.BufferIncoming()
         self.multiplexer_incoming_.addCallback(self.process_cell)
         self.streams_ = {}
-        self.stream_counter_ = 1
+        self.stream_counter_ = random.randint(1,2**32-1)
 
         self.set_driver(format_name, format_version)
         self.reload_ = False
@@ -78,7 +78,7 @@ class Client(object):
             srv_queue)
         stream.host = self
         self.streams_[self.stream_counter_] = stream
-        self.stream_counter_ += 1
+        self.stream_counter_ = random.randint(1,2**32-1)
         return stream
 
     def terminate(self, stream_id):
