@@ -99,6 +99,7 @@ class BufferOutgoing(object):
 
                 self.terminate_.remove(stream_id)
                 del self.fifo_[stream_id]
+                del self.sequence_nums[stream_id]
                 return cell_obj
 
             if n > 0:
@@ -183,6 +184,7 @@ class BufferIncoming(object):
 
     def dequeue(self, cell_stream_id):
         with self.lock_:
+            remove_keys = set()
             while (len(self.output_q[cell_stream_id]) > 0 and
                 self.output_q[cell_stream_id][0].get_seq_id() == self.curr_seq_id[cell_stream_id]):
                 
@@ -192,11 +194,15 @@ class BufferIncoming(object):
                 log.msg("Stream %d Dequeue ID %d: %s" % 
                     (cell_stream_id,cell_obj.get_seq_id(),cell_obj.get_payload()))
 
-                if cell_obj.get_cell_type == marionette_tg.record_layer.END_OF_STREAM:
-                    del self.output_q[cell_stream_id]
-                    del self.curr_seq_id[cell_stream_id]
+                if cell_obj.get_cell_type() == marionette_tg.record_layer.END_OF_STREAM:
+                    log.msg("Removing Stream %d" % (cell_stream_id))
+                    remove_keys.add(cell_stream_id)
 
                 reactor.callFromThread(self.callback_, cell_obj)
+
+            for key in remove_keys:
+                del self.output_q[key]
+                del self.curr_seq_id[key]
 
     def enqueue(self, cell_obj, cell_stream_id):
         with self.lock_:
