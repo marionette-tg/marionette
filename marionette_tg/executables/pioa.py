@@ -7,6 +7,8 @@ import sys
 import random
 import importlib
 
+from twisted.python import log
+
 sys.path.append('.')
 
 import regex2dfa
@@ -131,6 +133,7 @@ class PIOA(object):
             try:
                 success = self.eval_action_block(action_block)
             except Exception as e:
+                log.msg("EXCEPTION: %s" % (str(e)))
                 fatal += 1
             finally:
                 if success:
