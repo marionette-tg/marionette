@@ -1,0 +1,14 @@
+connection(tcp, 2222):
+  start          banner         ssh_banner  1.0
+  banner         upstream       ssh_up      1.0
+  upstream       downstream     ssh_down    1.0
+  downstream     upstream       ssh_up      1.0
+
+action ssh_banner:
+  server io.puts("SSH-2.0-OpenSSH_6.6.1p1 Ubuntu-2ubuntu2\r\n")
+
+action ssh_up:
+  client fte.send("^\C+$", 128)
+
+action ssh_down:
+  server fte.send("^\C+$", 128)
