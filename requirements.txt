@@ -1,5 +1,6 @@
 importlib==1.0.3
 twisted==15.1.0
-fte==0.1.0
+fte==0.1.1
 regex2dfa>=0.1.7
 ply==3.4
+pycurl==7.19.5.1

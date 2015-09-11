@@ -21,7 +21,6 @@ def sleep(channel, marionette_state, input_args, blocking=True):
     while '\r' in sleep_dist:
         sleep_dist = sleep_dist.replace('\r', '')
     sleep_dist = sleep_dist.split(',')
-
     dist = {}
     for item in sleep_dist:
         val = float(item.split(':')[0][1:-1])
@@ -41,29 +40,59 @@ def sleep(channel, marionette_state, input_args, blocking=True):
     return True
 
 
+
+# maybe these should be in marionette_state?
+client_driver_ = None
+server_driver_ = None
 def spawn(channel, marionette_state, input_args, blocking=True):
+    global client_driver_, server_driver_
+
+    success = False
+
     format_name_ = input_args[0]
     num_models = int(input_args[1])
 
     if marionette_state.get_local("party") == 'server':
-        driver = marionette_tg.driver.ServerDriver(
-            marionette_state.get_local("party"))
+        if not server_driver_:
+            driver = marionette_tg.driver.ServerDriver(
+                marionette_state.get_local("party"))
+
+            driver.set_multiplexer_incoming(
+                marionette_state.get_global("multiplexer_incoming"))
+            driver.set_multiplexer_outgoing(
+                marionette_state.get_global("multiplexer_outgoing"))
+            driver.setFormat(format_name_)
+            driver.set_state(marionette_state)
+
+            server_driver_ = driver
+
+        if server_driver_.num_executables_completed_ < num_models:
+            server_driver_.execute(reactor)
+        else:
+            server_driver_.stop()
+            server_driver_ = None
+            success = True
+
     elif marionette_state.get_local("party") == 'client':
-        driver = marionette_tg.driver.ClientDriver(
-            marionette_state.get_local("party"))
+        if not client_driver_:
+            driver = marionette_tg.driver.ClientDriver(
+                marionette_state.get_local("party"))
 
-    driver.set_multiplexer_incoming(
-        marionette_state.get_global("multiplexer_incoming"))
-    driver.set_multiplexer_outgoing(
-        marionette_state.get_global("multiplexer_outgoing"))
-    driver.setFormat(format_name_)
+            driver.set_multiplexer_incoming(
+                marionette_state.get_global("multiplexer_incoming"))
+            driver.set_multiplexer_outgoing(
+                marionette_state.get_global("multiplexer_outgoing"))
+            driver.setFormat(format_name_)
+            driver.set_state(marionette_state)
 
-    if marionette_state.get_local("party") == 'server':
-        while driver.num_executables_completed_ < num_models:
-            driver.execute(reactor)
-    elif marionette_state.get_local("party") == 'client':
-        driver.reset(num_models)
-        while driver.isRunning():
-            driver.execute(reactor)
+            driver.reset(num_models)
+            client_driver_ = driver
 
-    return True
+        if client_driver_.isRunning():
+            client_driver_.execute(reactor)
+        else:
+            client_driver_.stop()
+            client_driver_ = None
+            success = True
+
+    return success

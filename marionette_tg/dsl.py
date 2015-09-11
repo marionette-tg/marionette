@@ -1,8 +1,9 @@
 import os
 import sys
 import copy
-import string
+import glob
 import hashlib
+import fnmatch
 
 import ply.lex as lex
 import ply.yacc as yacc
@@ -11,12 +12,11 @@ import fte.bit_ops
 
 sys.path.append('.')
 
-import marionette_tg.PA
+import marionette_tg.executables.pioa
 
 # TODO: fix it s.t. "server" in var name doesn't cause problem
 
 tokens = (
-    'BOOLEAN',
     'CONNECTION_KWD',
     'KEY',
     'FLOAT',
@@ -34,11 +34,8 @@ tokens = (
     'REGEX_MATCH_INCOMING_KWD',
     'IF_KWD',
     'NULL_KWD',
-    'MODULE_KWD',
     'ACTION_KWD',
     'DOT',
-    'EQUALS',
-    'NEWLINE',
 )
 
 # Regular expression rules for simple tokens
@@ -49,7 +46,6 @@ t_LPAREN = r'\('
 t_RPAREN = r'\)'
 
 t_ignore_COMMENT = r'\#.*'  # comments
-t_EQUALS = r'='
 
 
 def t_CONNECTION_KWD(t):
@@ -104,12 +100,6 @@ def t_STRING(t):
     return t
 
 
-def t_BOOLEN(t):
-    r'true | false'
-    t.value = (t.value == "true")
-    return t
-
-
 def t_FLOAT(t):
     r'([-]?(\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+))([lL]|[fF])?'
     t.value = float(t.value)
@@ -124,13 +114,6 @@ def t_INTEGER(t):
 
 def t_KEY(t):
     r'[a-zA-Z_][a-zA-Z0-9_#\?]*'
-    return t
-
-# Define a rule so we can track line numbers
-
-
-def t_NEWLINE(t):
-    r'\n+'
     return t
 
 
@@ -164,9 +147,15 @@ def p_model(p):
 
 
 def p_connection_banner(p):
-    """connection_banner : CONNECTION_KWD LPAREN TRANSPORT_KWD COMMA INTEGER RPAREN COLON"""
+    """connection_banner : CONNECTION_KWD LPAREN TRANSPORT_KWD COMMA port RPAREN COLON"""
     p[0] = [p[3], p[5]]
 
+def p_port(p):
+    """
+    port : KEY
+    port : p_integer_arg
+    """
+    p[0] = p[1]
 
 def p_transition_list(p):
     """
@@ -295,9 +284,7 @@ def p_string_arg(p):
     p_string_arg : STRING
     """
     p[0] = str(p[1][1:-1])
-    p[0] = string.replace(p[0], '\\t', '\t')
-    p[0] = string.replace(p[0], '\\r', '\r')
-    p[0] = string.replace(p[0], '\\n', '\n')
+    p[0] = p[0].decode("string_escape")
 
 def p_integer_arg(p):
     """
@@ -317,7 +304,7 @@ def p_error(p):
     print "Syntax error at '%s' on line %s" % (str([p.value]), p.lineno)
     # yacc.errok()
 
-yacc.yacc()
+yacc.yacc(debug=False, write_tables=False)
 
 ###################
 
@@ -387,28 +374,132 @@ def parse(s):
 
     return retval
 
-def find_mar_file(format_name):
-    current_dir = os.path.dirname(os.path.join(__file__))
-    current_dir = os.path.join(current_dir, 'formats')
-    search_dirs = [sys.prefix,
-                   sys.exec_prefix,
-                   current_dir,
-                   '/etc/marionette/formats',
-                   'marionette/formats',]
+def get_search_dirs():
+    dsl_dir = os.path.dirname(os.path.join(__file__))
+    dsl_dir = os.path.join(dsl_dir, 'formats')
+    dsl_dir = os.path.abspath(dsl_dir)
+    cwd_dir = os.path.join(os.getcwd(), 'marionette_tg', 'formats')
+    cwd_dir = os.path.abspath(cwd_dir)
+    retval = [dsl_dir, # find formats based on location of dsl.py
+              cwd_dir, # find formats based on location of marionette_client.exe
+              sys.prefix, # find formats based on location of python install
+              sys.exec_prefix, # same as above
+             ]
+    return retval
 
-    for dir in search_dirs:
-        conf_path = os.path.join(dir, format_name + '.mar')
-        if os.path.exists(conf_path):
-            return conf_path
+def get_format_dir():
+    retval = None
 
-    return None
+    search_dirs = get_search_dirs()
+    FORMAT_BANNER = '### marionette formats dir ###'
+    for cur_dir in search_dirs:
+        init_path = os.path.join(cur_dir, '__init__.py')
 
-def load(party, format_name):
+        # check if __init__ marks our marionette formats dir
+        if os.path.exists(init_path):
+            with open(init_path) as fh:
+                contents = fh.read()
+                contents = contents.strip()
+                if contents != FORMAT_BANNER:
+                    continue
+                else:
+                    retval = cur_dir
+                    break
+        else:
+            continue
 
-    marionette_file = find_mar_file(format_name)
-    if not marionette_file:
+    return retval
+
+def find_mar_files(party, format_name, version=None):
+    retval = []
+
+    # get marionette format directory
+    format_dir = get_format_dir()
+
+    # check all subdirs unless a version is specified
+    if version:
+        subdirs = glob.glob(os.path.join(format_dir, version))
+    else:
+        subdirs = glob.glob(os.path.join(format_dir, '*'))
+
+    # make sure we prefer the most recent format
+    subdirs.sort()
+
+    # for each subdir, load our format_name
+    formats = {}
+    for path in subdirs:
+        if os.path.isdir(path):
+            conf_path = os.path.join(path, format_name + '.mar')
+            if os.path.exists(conf_path):
+                if not formats.get(format_name):
+                    formats[format_name] = []
+                if party == 'client':
+                    formats[format_name] = [conf_path]
+                elif party == 'server':
+                    formats[format_name] += [conf_path]
+
+    for key in formats.keys():
+        retval += formats[key]
+
+    return retval
+
+def list_mar_files(party):
+    format_dir = get_format_dir()
+
+    subdirs = glob.glob(os.path.join(format_dir,'*'))
+
+    mar_files = []
+    for path in subdirs:
+        if os.path.isdir(path):
+            format_version = os.path.basename(path)
+
+            for root, dirnames, filenames in os.walk(path):
+                for filename in fnmatch.filter(filenames, '*.mar'):
+                    full_path = os.path.join(root,filename)
+                    rel_path = os.path.relpath(full_path, path)
+                    format = os.path.splitext(rel_path)[0]
+                    mar_file = "%s:%s" % (format,format_version)
+                    mar_files.append(mar_file)
+
+    return mar_files
+
+def get_latest_version(party, format_name):
+    mar_version = None
+
+    # get marionette format directory
+    format_dir = get_format_dir()
+
+    subdirs = glob.glob(os.path.join(format_dir, '*'))
+
+    # make sure we prefer the most recent format
+    subdirs.sort()
+
+    # for each subdir, load our format_name
+    for path in subdirs:
+        if os.path.isdir(path):
+            conf_path = os.path.join(path, format_name + '.mar')
+            if os.path.exists(conf_path):
+                mar_version = path.split('/')[-1]
+
+    return mar_version
+
+
+def load_all(party, format_name, version=None):
+    retval = []
+
+    mar_files = find_mar_files(party, format_name, version)
+    if not mar_files:
         raise Exception("Can't find "+format_name)
-    with open(marionette_file) as f:
+
+    for mar_path in mar_files:
+        retval.append(load(party, format_name, mar_path))
+
+    return retval
+
+
+def load(party, format_name, mar_path):
+
+    with open(mar_path) as f:
         mar_str = f.read()
 
     parsed_format = parse(mar_str)
@@ -417,9 +508,10 @@ def load(party, format_name):
     if format_name in ["ftp_pasv_transfer"]:
         first_sender = "server"
 
-    executable = marionette_tg.PA.PA(party, first_sender)
+    executable = marionette_tg.executables.pioa.PIOA(party, first_sender)
+    executable.set_transport_protocol(parsed_format.get_transport())
     executable.set_port(parsed_format.get_port())
-    executable.marionette_state_.set_local(
+    executable.set_local(
         "model_uuid", get_model_uuid(mar_str))
 
     for transition in parsed_format.get_transitions():
@@ -462,6 +554,7 @@ def load(party, format_name):
             actions.append(complementary_action)
 
     executable.actions_ = actions
+    executable.do_precomputations()
 
     if executable.states_.get("end"):
         executable.add_state("dead")

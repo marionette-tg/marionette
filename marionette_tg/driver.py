@@ -4,9 +4,7 @@
 import marionette_tg.action
 import marionette_tg.channel
 import marionette_tg.conf
-import marionette_tg.dsl
-import marionette_tg.PA
-
+import marionette_tg.executable
 
 class ClientDriver(object):
 
@@ -19,12 +17,19 @@ class ClientDriver(object):
         self.executeable_ = None
         self.multiplexer_outgoing_ = None
         self.multiplexer_incoming_ = None
+        self.state_ = None
 
     def execute(self, reactor):
         while len(self.to_start_) > 0:
             executable = self.to_start_.pop()
             self.running_.append(executable)
-            reactor.callInThread(executable.execute, reactor)
+
+            if self.state_:
+                for key in self.state_.local_:
+                    if key not in marionette_tg.executables.pioa.RESERVED_LOCAL_VARS:
+                        executable.set_local(key, self.state_.local_[key])
+
+            reactor.callFromThread(executable.execute, reactor)
 
         self.running_ = [executable for executable
                          in self.running_
@@ -33,11 +38,11 @@ class ClientDriver(object):
     def isRunning(self):
         return len(self.running_ + self.to_start_) > 0
 
-    def setFormat(self, format_name):
-        executable = marionette_tg.dsl.load(self.party_, format_name)
-        executable.set_multiplexer_outgoing(self.multiplexer_outgoing_)
-        executable.set_multiplexer_incoming(self.multiplexer_incoming_)
-        self.executeable_ = executable
+    def setFormat(self, format_name, format_version=None):
+        self.executeable_ = marionette_tg.executable.Executable(self.party_, format_name,
+                                                         format_version,
+                                                         self.multiplexer_outgoing_,
+                                                         self.multiplexer_incoming_)
         self.reset()
 
     def set_multiplexer_outgoing(self, multiplexer):
@@ -51,6 +56,16 @@ class ClientDriver(object):
         for i in range(n):
             self.to_start_ += [self.executeable_.replicate()]
 
+    def set_state(self, state):
+        self.state_ = state
+
+    def stop(self):
+        for executable in self.running_:
+            executable.stop()
+        for executable in self.to_start_:
+            executable.stop()
+        self.running_ = []
+        self.to_start_ = []
 
 class ServerDriver(object):
 
@@ -64,32 +79,46 @@ class ServerDriver(object):
         self.executable_ = None
         self.multiplexer_outgoing_ = None
         self.multiplexer_incoming_ = None
+        self.state_ = None
 
     def execute(self, reactor):
         while True:
             new_executable = self.executable_.check_for_incoming_connections()
             if new_executable is None:
                 break
+
             self.running_.append(new_executable)
-            reactor.callInThread(new_executable.execute, reactor)
+            reactor.callFromThread(new_executable.execute, reactor)
 
         running_count = len(self.running_)
         self.running_ = [executable for executable
                          in self.running_
                          if executable.isRunning()]
+
         self.num_executables_completed_ += (running_count - len(self.running_))
 
     def isRunning(self):
         return len(self.running_)
 
-    def setFormat(self, format_name):
-        executable = marionette_tg.dsl.load(self.party_, format_name)
-        executable.set_multiplexer_outgoing(self.multiplexer_outgoing_)
-        executable.set_multiplexer_incoming(self.multiplexer_incoming_)
-        self.executable_ = executable
+    def setFormat(self, format_name, format_version=None):
+        self.executable_ = marionette_tg.executable.Executable(self.party_, format_name,
+                                                         format_version,
+                                                         self.multiplexer_outgoing_,
+                                                         self.multiplexer_incoming_)
 
     def set_multiplexer_outgoing(self, multiplexer):
         self.multiplexer_outgoing_ = multiplexer
 
     def set_multiplexer_incoming(self, multiplexer):
         self.multiplexer_incoming_ = multiplexer
+
+    def set_state(self, state):
+        self.state_ = state
+
+        if self.state_:
+            for key in self.state_.local_:
+                if key not in marionette_tg.executables.pioa.RESERVED_LOCAL_VARS:
+                    self.executable_.set_local(key, self.state_.local_[key])
+
+    def stop(self):
+        self.executable_.stop()

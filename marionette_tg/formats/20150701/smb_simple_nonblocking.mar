@@ -1,0 +1,14 @@
+connection(tcp, 8082):
+  start      handshake   NULL          1.0
+  handshake  upstream    send_blocking 1.0
+  upstream   downstream  csend         1.0
+  downstream upstream    ssend         1.0
+
+action send_blocking:
+  client fte.send("^\x00\x00\x00\\x7c\xFF\x53\x4d\x42[\x25\x72]\x00\x00\x00\x00\C{115}$", 128)
+
+action csend:
+  client fte.send_async("^\x00\x00\x00\\x7c\xFF\x53\x4d\x42[\x25\x72]\x00\x00\x00\x00\C{115}$", 128)
+
+action ssend:
+  server fte.send_async("^\x00\x00\x00\\x7c\xFF\x53\x4d\x42[\x25\x72]\x00\x00\x00\x00\C{115}$", 128)

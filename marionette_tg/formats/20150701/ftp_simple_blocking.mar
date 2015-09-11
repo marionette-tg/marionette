@@ -5,7 +5,8 @@ connection(tcp, 2121):
     username_ok password do_password 1
     password password_ok do_password_ok 1
     password_ok pasv_mode do_pasv_mode 1
-    pasv_mode pasv_mode_ok do_pasv_mode_ok 1
+    pasv_mode pasv_mode_bind do_pasv_mode_bind 1
+    pasv_mode_bind pasv_mode_ok do_pasv_mode_ok 1
     pasv_mode_ok ftp_get_file_request do_ftp_get_file_request 1
     ftp_get_file_request ftp_get_file_response_started do_ftp_get_file_response_started 1
     ftp_get_file_response_started ftp_pasv_transfer do_ftp_pasv_transfer 1
@@ -32,8 +33,11 @@ action do_password_ok:
 action do_pasv_mode:
     client io.puts("PASV\n")
 
+action do_pasv_mode_bind:
+    server channel.bind("ftp_pasv_port")
+
 action do_pasv_mode_ok:
-    server io.puts("227 Entering Passive Mode (127,0,0,1,195,86).\n")
+    server tg.send("ftp_entering_passive")
 
 action do_ftp_get_file_request:
     client io.puts("get MyFile.mp3\n")

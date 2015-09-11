@@ -1,0 +1,32 @@
+connection(tcp, 1111):
+  start do33 NULL 0.31
+  do33 end sess33 1.0
+  start do34 NULL 0.15
+  do34 end sess34 1.0
+  start do35 NULL 0.15
+  do35 end sess35 1.0
+  start do37 NULL 0.15
+  do37 end sess37 1.0
+  start do39 NULL 0.24
+  do39 end sess39 1.0
+
+action sess33:
+  client model.spawn("ta/amzn_conn", 33)
+  server model.spawn("ta/amzn_conn", 33)
+
+action sess34:
+  client model.spawn("ta/amzn_conn", 34)
+  server model.spawn("ta/amzn_conn", 34)
+
+action sess35:
+  client model.spawn("ta/amzn_conn", 35)
+  server model.spawn("ta/amzn_conn", 35)
+
+action sess37:
+  client model.spawn("ta/amzn_conn", 37)
+  server model.spawn("ta/amzn_conn", 37)
+
+action sess39:
+  client model.spawn("ta/amzn_conn", 39)
+  server model.spawn("ta/amzn_conn", 39)
+

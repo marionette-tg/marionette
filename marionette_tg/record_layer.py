@@ -8,6 +8,7 @@ PAYLOAD_HEADER_SIZE_IN_BYTES = PAYLOAD_HEADER_SIZE_IN_BITS / 8
 
 NORMAL = 0x1
 END_OF_STREAM = 0x2
+NEGOTIATE = 0x3
 
 
 class Cell(object):
@@ -24,6 +25,16 @@ class Cell(object):
         self.stream_id_ = stream_id
         self.model_uuid_ = model_uuid
         self.model_instance_id_ = model_instance_id
+
+    def __cmp__(self, other):
+        self_id = self.get_seq_id()
+        other_id = other.get_seq_id()
+        if self_id < other_id:
+            return -1
+        elif self_id > other_id:
+            return 1
+        else:
+            return 0
 
     def __eq__(self, other):
         retval = (

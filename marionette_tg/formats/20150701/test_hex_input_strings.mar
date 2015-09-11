@@ -1,0 +1,5 @@
+connection(tcp, 80):
+        start do_nothing NULL 1.0
+        do_nothing end NULL 1.0
+        action null_puts:
+        client io.puts('\x41\x42\\backslash')

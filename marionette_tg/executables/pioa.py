@@ -7,6 +7,8 @@ import sys
 import random
 import importlib
 
+from twisted.python import log
+
 sys.path.append('.')
 
 import regex2dfa
@@ -15,14 +17,20 @@ import fte.bit_ops
 
 import marionette_tg.channel
 
+EVENT_LOOP_FREQUENCY_S = 0.001
 
-class PA(object):
+# the following varibles are reserved and shouldn't be passed down
+#   to spawned models.
+RESERVED_LOCAL_VARS = ['party','model_instance_id','model_uuid']
+
+class PIOA(object):
 
     def __init__(self, party, first_sender):
-        super(PA, self).__init__()
+        super(PIOA, self).__init__()
 
         self.actions_ = []
         self.channel_ = None
+        self.channel_requested_ = False
         self.current_state_ = 'start'
         self.first_sender_ = first_sender
         self.next_state_ = None
@@ -30,10 +38,11 @@ class PA(object):
         self.marionette_state_.set_local("party", party)
         self.party_ = party
         self.port_ = None
-        self.listening_sockets_ = {}
+        self.transport_protocol_ = None
         self.rng_ = None
         self.state_history_ = []
         self.states_ = {}
+        self.success_ = False
 
         if self.party_ == first_sender:
             self.marionette_state_.set_local(
@@ -42,18 +51,30 @@ class PA(object):
             self.rng_.seed(
                 self.marionette_state_.get_local("model_instance_id"))
 
+    def do_precomputations(self):
+        for action in self.actions_:
+            if action.get_module() == 'fte' and action.get_method().startswith('send'):
+                [regex, msg_len] = action.get_args()
+                self.marionette_state_.get_fte_obj(regex, msg_len)
+
     def execute(self, reactor):
         if self.isRunning():
             self.transition()
-            reactor.callInThread(self.execute, reactor)
+            reactor.callLater(EVENT_LOOP_FREQUENCY_S, self.execute, reactor)
         else:
             self.channel_.close()
+
 
     def check_channel_state(self):
         if self.party_ == "client":
             if not self.channel_:
-                channel = marionette_tg.channel.open_new_channel(self.get_port())
-                self.channel_ = channel
+                if not self.channel_requested_:
+                    marionette_tg.channel.open_new_channel(self.get_transport_protocol(), self.get_port(), self.set_channel)
+                    self.channel_requested_ = True
+        return (self.channel_ != None)
+
+    def set_channel(self, channel):
+        self.channel_ = channel
 
     def check_rng_state(self):
         if not self.rng_:
@@ -112,6 +133,7 @@ class PA(object):
             try:
                 success = self.eval_action_block(action_block)
             except Exception as e:
+                log.msg("EXCEPTION: %s" % (str(e)))
                 fatal += 1
             finally:
                 if success:
@@ -132,6 +154,9 @@ class PA(object):
             self.current_state_ = dst_state
             self.next_state_ = None
             retval = True
+
+            if self.current_state_ == 'dead':
+                self.success_ = True
 
         return retval
 
@@ -154,25 +179,14 @@ class PA(object):
         return retval
 
     def transition(self):
-        self.check_channel_state()
-        self.check_rng_state()
-        success = self.advance_to_next_state()
+        success = False
+        if self.check_channel_state():
+            self.check_rng_state()
+            success = self.advance_to_next_state()
         return success
 
-    def check_for_incoming_connections(self):
-        retval = None
-
-        if self.party_ == "server":
-            channel = marionette_tg.channel.accept_new_channel(
-                self.listening_sockets_, self.get_port())
-            if channel:
-                retval = self.replicate()
-                retval.channel_ = channel
-
-        return retval
-
     def replicate(self):
-        retval = PA(self.party_,
+        retval = PIOA(self.party_,
                     self.first_sender_)
         retval.actions_ = self.actions_
         retval.states_ = self.states_
@@ -180,6 +194,7 @@ class PA(object):
         model_uuid = self.marionette_state_.get_local("model_uuid")
         retval.marionette_state_.set_local("model_uuid", model_uuid)
         retval.port_ = self.port_
+        retval.transport_protocol_ = self.transport_protocol_
         return retval
 
     def isRunning(self):
@@ -192,7 +207,7 @@ class PA(object):
 
         i = importlib.import_module("marionette_tg.plugins._" + module)
         method_obj = getattr(i, method)
-        
+
         success = method_obj(self.channel_, self.marionette_state_, args)
 
         return success
@@ -214,8 +229,34 @@ class PA(object):
         self.port_ = port
 
     def get_port(self):
-        return self.port_
+        retval = None
 
+        try:
+            retval = int(self.port_)
+        except ValueError:
+            retval = self.marionette_state_.get_local(self.port_)
+
+        return retval
+    def set_transport_protocol(self, transport_protocol):
+        self.transport_protocol_ = transport_protocol
+
+    def get_transport_protocol(self):
+        return self.transport_protocol_
+
+    def set_local(self, key, value):
+        self.marionette_state_.set_local(key, value)
+
+    def set_global(self, key, value):
+        self.marionette_state_.set_global(key, value)
+
+    def get_local(self, key):
+        return self.marionette_state_.get_local(key)
+
+    def get_global(self, key):
+        return self.marionette_state_.get_global(key)
+
+    def get_success(self):
+        return self.success_
 
 class PAState(object):
 

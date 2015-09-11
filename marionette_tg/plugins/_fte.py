@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import socket
 import math
 
 import fte.encoder
 import marionette_tg.record_layer
 
-MAX_CELL_LENGTH_IN_BITS = (2 ** 16) * 8
+MAX_CELL_LENGTH_IN_BITS = (2 ** 18) * 8
 
 
 def send_async(channel, marionette_state, input_args):
@@ -29,6 +28,7 @@ def send(channel, marionette_state, input_args, blocking=True):
     stream_id = marionette_state.get_global(
         "multiplexer_outgoing").has_data_for_any_stream()
     if stream_id or blocking:
+
         fteObj = marionette_state.get_fte_obj(regex, msg_len)
 
         bits_in_buffer = len(
@@ -51,14 +51,7 @@ def send(channel, marionette_state, input_args, blocking=True):
 
         ctxt = fteObj.encode(ptxt)
         ctxt_len = len(ctxt)
-        while len(ctxt) > 0:
-            try:
-                bytes_sent = channel.send(ctxt)
-                ctxt = ctxt[bytes_sent:]
-            except socket.timeout:
-                continue
-            except socket.error:
-                continue
+        bytes_sent = channel.sendall(ctxt)
         retval = (ctxt_len == bytes_sent)
 
     return retval
@@ -82,6 +75,7 @@ def recv(channel, marionette_state, input_args, blocking=True):
 
             marionette_state.set_local(
                 "model_instance_id", cell_obj.get_model_instance_id())
+
             if marionette_state.get_local("model_instance_id"):
                 if cell_obj.get_stream_id() > 0:
                     marionette_state.get_global(
@@ -90,13 +84,15 @@ def recv(channel, marionette_state, input_args, blocking=True):
     except fte.encrypter.RecoverableDecryptionError as e:
         retval = False
     except Exception as e:
-        channel.rollback()
+        if len(ctxt)>0:
+            channel.rollback()
         raise e
 
-    if not retval:
-        channel.rollback()
-    else:
+    if retval:
         if len(remainder) > 0:
             channel.rollback(len(remainder))
+    else:
+        if len(ctxt)>0:
+            channel.rollback()
 
     return retval

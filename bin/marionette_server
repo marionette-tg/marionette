@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import sys
+import argparse
 
 from twisted.internet import defer
 from twisted.internet import protocol
@@ -12,17 +13,47 @@ sys.path.append(".")
 
 import marionette_tg
 import marionette_tg.conf
+import marionette_tg.dsl
 
+mar_files = marionette_tg.dsl.list_mar_files('server')
+ver_string = "Marionette proxy server.\nAvailable formats:\n"
+for mar_file in mar_files:
+    ver_string += " %s\n" % (mar_file)
 
-if len(sys.argv)<3:
-    print 'usage: marionette_server [proxy_ip] [proxy_port] [format]'
-    sys.exit(1)
-REMOTE_IP = str(sys.argv[1])
-REMOTE_PORT = int(sys.argv[2])
-if len(sys.argv) >= 4:
-    FORMAT = str(sys.argv[3])
-else:
-    FORMAT = 'http_simple_blocking'
+parser = argparse.ArgumentParser(description='Marionette proxy server.',
+    formatter_class=argparse.RawTextHelpFormatter)
+parser.add_argument('--version', action='version', version=ver_string)
+parser.add_argument('--server_ip', '-sip', dest='server_ip', required=False,
+    help='IP address for client to bind to')
+parser.add_argument('--proxy_port', '-pport', dest='proxy_port',
+    required=False, help='port for client to bind to')
+parser.add_argument('--proxy_ip', '-pip', dest='proxy_ip', required=False,
+    help='server IP address to connect to')
+parser.add_argument('--format', '-f', dest='format', required=False,
+    help='Marionette format to use for connection')
+parser.add_argument('--debug', '-d', dest='debug', required=False, action='store_true',
+    help='Turn on debug output')
+args = parser.parse_args()
+
+if args.server_ip != None:
+    marionette_tg.conf.set('server.server_ip', str(args.server_ip))
+if args.proxy_ip != None:
+    marionette_tg.conf.set('server.proxy_ip', str(args.proxy_ip))
+if args.proxy_port != None:
+    marionette_tg.conf.set('server.proxy_port', int(args.proxy_port))
+if args.format != None:
+    marionette_tg.conf.set('general.format', str(args.format))
+if args.debug != None:
+    marionette_tg.conf.set('general.debug', args.debug)
+
+LOCAL_IP = marionette_tg.conf.get('server.server_ip')
+REMOTE_IP = marionette_tg.conf.get('server.proxy_ip')
+REMOTE_PORT = marionette_tg.conf.get('server.proxy_port')
+
+FORMAT = marionette_tg.conf.get('general.format')
+FORMAT_VERSION = None
+if ':' in FORMAT:
+    FORMAT, FORMAT_VERSION = args.format.split(':', 1)
 
 
 class ProxyServerProtocol(protocol.Protocol):
@@ -42,6 +73,7 @@ class ProxyServerProtocol(protocol.Protocol):
             log.msg(
                 "ProxyServerProtocol: writing %d bytes to peer" %
                 len(chunk))
+
             self.transport.write(chunk)
             self.cli_queue.get().addCallback(self.serverDataReceived)
         else:
@@ -113,6 +145,6 @@ if __name__ == "__main__":
     server = marionette_tg.Server(FORMAT)
     server.factory = ProxyServer
 
-    reactor.callInThread(server.execute, reactor)
+    reactor.callFromThread(server.execute, reactor)
 
     reactor.run()

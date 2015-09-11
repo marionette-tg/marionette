@@ -1,0 +1,10 @@
+connection(udp, 53535):
+  start      upstream   NULL         1.0
+  upstream   downstream dns_request  1.0
+  downstream end        dns_response 1.0
+
+action dns_request:
+  client tg.send("dns_request")
+
+action dns_response:
+  server tg.send("dns_response")

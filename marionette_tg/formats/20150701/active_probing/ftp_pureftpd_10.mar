@@ -1,0 +1,14 @@
+connection(tcp, 2121):
+  start          banner         ftp_banner  1.0
+  banner         upstream       ftp_up      1.0
+  upstream       downstream     ftp_down    1.0
+  downstream     upstream       ftp_up      1.0
+
+action ftp_banner:
+  server io.puts("220---------- Welcome to Pure-FTPd [privsep] [TLS] ----------\r\n220-You are user number 1 of 50 allowed.\r\n220-Local time is now 15:28. Server port: 21.\r\n220-IPv6 connections are also welcome on this server.\r\n220 You will be disconnected after 15 minutes of inactivity.\r\n220 Logout.\r\n")
+
+action ftp_up:
+  client fte.send("^\C+$", 128)
+
+action ftp_down:
+  server fte.send("^\C+$", 128)

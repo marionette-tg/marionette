@@ -4,13 +4,14 @@
 import math
 import socket
 import random
+import string
 
 import regex2dfa
 import fte.encoder
 import fte.bit_ops
+import re
 
 import marionette_tg.record_layer
-
 
 def send(channel, marionette_state, input_args):
     grammar = input_args[0]
@@ -52,19 +53,22 @@ def recv(channel, marionette_state, input_args):
                 if tmp_str:
                     cell_str += tmp_str
 
-            ##
-            cell_obj = marionette_tg.record_layer.unserialize(cell_str)
-            assert cell_obj.get_model_uuid() == marionette_state.get_local(
-                "model_uuid")
-
-            marionette_state.set_local(
-                "model_instance_id", cell_obj.get_model_instance_id())
-            ##
-
-            if marionette_state.get_local("model_instance_id"):
-                marionette_state.get_global(
-                    "multiplexer_incoming").push(cell_str)
+            if not cell_str:
                 retval = True
+            else:
+                ##
+                cell_obj = marionette_tg.record_layer.unserialize(cell_str)
+                assert cell_obj.get_model_uuid() == marionette_state.get_local(
+                    "model_uuid")
+
+                marionette_state.set_local(
+                    "model_instance_id", cell_obj.get_model_instance_id())
+                ##
+
+                if marionette_state.get_local("model_instance_id"):
+                    marionette_state.get_global(
+                        "multiplexer_incoming").push(cell_str)
+                    retval = True
     except socket.timeout as e:
         pass
     except socket.error as e:
@@ -77,6 +81,12 @@ def recv(channel, marionette_state, input_args):
 
     return retval
 
+def get_grammar_capacity(grammar):
+    retval = 0
+    for handler_key in conf[grammar]["handler_order"]:
+        retval += conf[grammar]['handlers'][handler_key].capacity()
+    retval /= 8.0
+    return retval
 
 # handler + (un)embed functions
 
@@ -110,7 +120,7 @@ def execute_handler_sender(marionette_state, grammar, handler_key,
                                marionette_state.get_local("model_instance_id"),
                                cell_len_in_bits)
         to_embed = cell.to_string()
-    value_to_embed = to_execute.encode(template, to_embed)
+    value_to_embed = to_execute.encode(marionette_state, template, to_embed)
     template = do_embed(grammar, template, handler_key, value_to_embed)
 
     return template
@@ -123,8 +133,7 @@ def execute_handler_receiver(marionette_state, grammar, handler_key,
     to_execute = conf[grammar]["handlers"][handler_key]
 
     handler_key_value = do_unembed(grammar, ctxt, handler_key)
-    if handler_key_value:
-        ptxt = to_execute.decode(handler_key_value)
+    ptxt = to_execute.decode(marionette_state, handler_key_value)
 
     return ptxt
 
@@ -152,12 +161,12 @@ class RankerHandler(object):
         cell_len_in_bits = cell_len_in_bytes * 8
         return cell_len_in_bits
 
-    def encode(self, template, to_embed):
+    def encode(self, marionette_state, template, to_embed):
         to_embed_as_int = fte.bit_ops.bytes_to_long(to_embed)
         ctxt = self.encoder_.unrank(to_embed_as_int)
         return ctxt
 
-    def decode(self, ctxt):
+    def decode(self, marionette_state, ctxt):
         try:
             ptxt = self.encoder_.rank(ctxt)
             ptxt = fte.bit_ops.long_to_bytes(ptxt, self.capacity() / 8)
@@ -181,7 +190,7 @@ class FteHandler(object):
 
     def capacity(self):
         if self.regex_.endswith(".+"):
-            retval = (2 ** 16) * 8
+            retval = (2 ** 18) * 8
         else:
             cell_len_in_bytes = int(math.floor(self.fte_encrypter_.getCapacity(
             ) / 8.0)) - fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTTEXT - fte.encrypter.Encrypter._CTXT_EXPANSION
@@ -190,11 +199,11 @@ class FteHandler(object):
 
         return retval
 
-    def encode(self, template, to_embed):
+    def encode(self, marionette_state, template, to_embed):
         ctxt = self.fte_encrypter_.encode(to_embed)
         return ctxt
 
-    def decode(self, ctxt):
+    def decode(self, marionette_state, ctxt):
         try:
             retval = self.fte_encrypter_.decode(ctxt)
             ptxt = retval[0]
@@ -218,11 +227,11 @@ class HttpContentLengthHandler(object):
     def capacity(self):
         return 0
 
-    def encode(self, template, to_embed):
+    def encode(self, marionette_state, template, to_embed):
         http_body_length = str(len(template.split("\r\n\r\n")[1]))
         return http_body_length
 
-    def decode(self, ctxt):
+    def decode(self, marionette_state, ctxt):
         return None
 
 
@@ -231,13 +240,98 @@ class Pop3ContentLengthHandler(object):
     def capacity(self):
         return 0
 
-    def encode(self, template, to_embed):
+    def encode(self, marionette_state, template, to_embed):
         pop3_body_length = str(len('\n'.join(template.split("\n")[1:])))
         return pop3_body_length
 
-    def decode(self, ctxt):
+    def decode(self, marionette_state, ctxt):
         return None
 
+
+class SetFTPPasvX(object):
+
+    def capacity(self):
+        return 0
+
+    def encode(self, marionette_state, template, to_embed):
+        ftp_pasv_port = marionette_state.get_local("ftp_pasv_port")
+        ftp_pasv_port_x = int(math.floor(ftp_pasv_port / 256.0))
+        return str(ftp_pasv_port_x)
+
+    def decode(self, marionette_state, ctxt):
+        marionette_state.set_local("ftp_pasv_port_x", int(ctxt))
+        return None
+
+
+class SetFTPPasvY(object):
+
+    def capacity(self):
+        return 0
+
+    def encode(self, marionette_state, template, to_embed):
+        ftp_pasv_port = marionette_state.get_local("ftp_pasv_port")
+        ftp_pasv_port_y = ftp_pasv_port % 256
+        return str(ftp_pasv_port_y)
+
+    def decode(self, marionette_state, ctxt):
+        ftp_pasv_port_x = marionette_state.get_local("ftp_pasv_port_x")
+        ftp_pasv_port_y = int(ctxt)
+        ftp_pasv_port = ftp_pasv_port_x * 256 + ftp_pasv_port_y
+        marionette_state.set_local("ftp_pasv_port", ftp_pasv_port)
+        return None
+
+class SetDnsTransactionId(object):
+    def capacity(self):
+        return 0
+
+    def encode(self, marionette_state, template, to_embed):
+        dns_transaction_id = None
+        if marionette_state.get_local("dns_transaction_id"):
+            dns_transaction_id =  marionette_state.get_local("dns_transaction_id")
+        else:
+            dns_transaction_id = str(chr(random.randint(1,254)))+str(chr(random.randint(1,254)))
+            marionette_state.set_local("dns_transaction_id", dns_transaction_id)
+        return str(dns_transaction_id)
+
+    def decode(self, marionette_state, ctxt):
+        marionette_state.set_local("dns_transaction_id", ctxt)
+        return None
+  
+class SetDnsDomain(object):
+    def capacity(self):
+        return 0
+
+    def encode(self, marionette_state, template, to_embed):
+        dns_domain = None
+        if marionette_state.get_local("dns_domain"):
+            dns_domain =  marionette_state.get_local("dns_domain")
+        else:
+            dns_domain_len = random.randint(3,63)
+            dns_domain = chr(dns_domain_len) + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(dns_domain_len)) + "\x03" + random.choice(['com', 'net', 'org'])
+            marionette_state.set_local("dns_domain", dns_domain)
+        return str(dns_domain)
+
+    def decode(self, marionette_state, ctxt):
+        marionette_state.set_local("dns_domain", ctxt)
+        return None
+
+class SetDnsIp(object):
+    def capacity(self):
+        return 0
+
+    def encode(self, marionette_state, template, to_embed):
+        dns_ip = None
+        if marionette_state.get_local("dns_ip"):
+            dns_ip =  marionette_state.get_local("dns_ip")
+        else:
+            dns_ip = str(chr(random.randint(1,254)))+str(chr(random.randint(1,254)))+str(chr(random.randint(1,254)))+str(chr(random.randint(1,254)))
+            marionette_state.set_local("dns_ip", dns_ip)
+        return str(dns_ip)
+
+    def decode(self, marionette_state, ctxt):
+        marionette_state.set_local("dns_ip", ctxt)
+        return None
+ 
 
 class AmazonMsgLensHandler(FteHandler):
 
@@ -367,6 +461,8 @@ class AmazonMsgLensHandler(FteHandler):
             lens += [key] * amazon_msg_lens[key]
 
         target_len_in_bytes = random.choice(lens)
+        #target_len_in_bytes -= fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTTEXT 
+        #target_len_in_bytes -= fte.encrypter.Encrypter._CTXT_EXPANSION
 
         target_len_in_bits = target_len_in_bytes * 8.0
         target_len_in_bits = int(target_len_in_bits)
@@ -454,8 +550,36 @@ conf["http_amazon_response"] = {
     "handler_order": ["HTTP-RESPONSE-BODY", "CONTENT-LENGTH"],
     "handlers": {
         "CONTENT-LENGTH": HttpContentLengthHandler(),
-        "HTTP-RESPONSE-BODY": AmazonMsgLensHandler(".+", 128),
+        "HTTP-RESPONSE-BODY": AmazonMsgLensHandler(".+", 96),
     }
+}
+
+conf["ftp_entering_passive"] = {
+    "grammar": "ftp_entering_passive",
+    "handler_order": ["FTP_PASV_PORT_X", "FTP_PASV_PORT_Y"],
+    "handlers": {
+        "FTP_PASV_PORT_X": SetFTPPasvX(),
+        "FTP_PASV_PORT_Y": SetFTPPasvY(),
+    }
+}
+
+conf["dns_request"] = {
+    "grammar": "dns_request",
+    "handler_order": ["DNS_TRANSACTION_ID", "DNS_DOMAIN"],
+    "handlers": {
+        "DNS_TRANSACTION_ID": SetDnsTransactionId(),
+        "DNS_DOMAIN": SetDnsDomain(),
+        }
+}
+
+conf["dns_response"] = {
+    "grammar": "dns_response",
+    "handler_order": ["DNS_TRANSACTION_ID", "DNS_DOMAIN", "DNS_IP"],
+    "handlers": {
+        "DNS_TRANSACTION_ID": SetDnsTransactionId(),
+        "DNS_DOMAIN": SetDnsDomain(),
+        "DNS_IP": SetDnsIp(),
+        }
 }
 
 # grammars
@@ -471,6 +595,12 @@ def parser(grammar, msg):
         return pop3_parser(msg)
     elif grammar.startswith("pop3_password"):
         return pop3_password_parser(msg)
+    elif grammar.startswith("ftp_entering_passive"):
+        return ftp_entering_passive_parser(msg)
+    elif grammar.startswith("dns_request"):
+        return dns_request_parser(msg)
+    elif grammar.startswith("dns_response"):
+        return dns_response_parser(msg)
 
 
 def generate_template(grammar):
@@ -480,17 +610,17 @@ def generate_template(grammar):
 
 templates = {}
 
-server_listen_iface = marionette_tg.conf.get("server.listen_iface")
+server_listen_ip = marionette_tg.conf.get("server.server_ip")
 
 templates["http_request_keep_alive"] = [
     "GET http://" +
-    server_listen_iface +
+    server_listen_ip +
     ":8080/%%URL%% HTTP/1.1\r\nUser-Agent: marionette 0.1\r\nConnection: keep-alive\r\n\r\n",
 ]
 
 templates["http_request_close"] = [
     "GET http://" +
-    server_listen_iface +
+    server_listen_ip +
     ":8080/%%URL%% HTTP/1.1\r\nUser-Agent: marionette 0.1\r\nConnection: close\r\n\r\n",
 ]
 
@@ -517,6 +647,17 @@ templates["http_response_keep_alive_with_msg_lens"] = templates[
 templates["http_amazon_request"] = templates["http_request_keep_alive"]
 templates["http_amazon_response"] = templates["http_response_keep_alive"]
 
+templates["ftp_entering_passive"] = [
+    "227 Entering Passive Mode (127,0,0,1,%%FTP_PASV_PORT_X%%,%%FTP_PASV_PORT_Y%%).\n",
+]
+
+templates["dns_request"] = [
+    "%%DNS_TRANSACTION_ID%%\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00%%DNS_DOMAIN%%\x00\x00\x01\x00\x01",
+]
+
+templates["dns_response"] = [
+   "%%DNS_TRANSACTION_ID%%\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00%%DNS_DOMAIN%%\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x00\x02\x00\x04%%DNS_IP%%",
+]
 
 def get_http_header(header_name, msg):
     retval = None
@@ -592,3 +733,105 @@ def pop3_password_parser(msg):
         retval = {}
 
     return retval
+
+def ftp_entering_passive_parser(msg):
+    retval = {}
+
+    try:
+        assert msg.startswith("227 Entering Passive Mode (")
+        assert msg.endswith(").\n")
+        bits = msg.split(',')
+        retval['FTP_PASV_PORT_X'] = int(bits[4])
+        retval['FTP_PASV_PORT_Y'] = int(bits[5][:-3])
+    except Exception as e:
+        retval = {}
+
+    return retval
+
+
+def validate_dns_domain(msg, dns_response=False):
+    if dns_response:
+        expected_splits = 3
+        split1_msg = '\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00'
+    else:
+        expected_splits = 2
+        split1_msg = '\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00'
+
+    tmp_domain_split1 = msg.split(split1_msg)
+    if len(tmp_domain_split1) != 2:
+        return None
+    tmp_domain_split2 = tmp_domain_split1[1].split('\x00\x01\x00\x01')
+    if len(tmp_domain_split2) != expected_splits:
+        return None
+    tmp_domain = tmp_domain_split2[0]
+    # Check for valid prepended length
+    # Remove trailing tld prepended length (1), tld (3) and trailing null (1) = 5
+    if ord(tmp_domain[0]) != len(tmp_domain[1:-5]): 
+        return None
+    if ord(tmp_domain[-5]) != 3:
+        return None
+    # Check for valid TLD
+    if not re.search("(com|net|org)\x00$", tmp_domain):
+        return None
+    # Check for valid domain characters
+    if not re.match("^[\w\d]+$", tmp_domain[1:-5]):
+        return None
+
+    return tmp_domain
+
+
+def validate_dns_ip(msg):
+    tmp_ip_split = msg.split('\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x00\x02\x00\x04')
+    if len(tmp_ip_split) != 2:
+        return None
+    tmp_ip = tmp_ip_split[1]
+    if len(tmp_ip) != 4:
+        return None
+
+    return tmp_ip
+
+
+def dns_request_parser(msg):
+    retval = {}
+    if '\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00' not in msg:
+        return retval
+
+    try:
+        # Nothing to validate for Transaction ID
+        retval["DNS_TRANSACTION_ID"] = msg[:2]
+
+        tmp_domain = validate_dns_domain(msg)
+        if not tmp_domain:
+            raise Exception("Bad DNS Domain")
+        retval["DNS_DOMAIN"] = tmp_domain
+        
+    except Exception as e:
+        retval = {}
+
+    return retval
+
+
+def dns_response_parser(msg):
+    retval = {}
+    if '\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00' not in msg:
+        return retval
+
+    try:
+        # Nothing to validate for Transaction ID
+        retval["DNS_TRANSACTION_ID"] = msg[:2]
+
+        tmp_domain = validate_dns_domain(msg, dns_response=True)
+        if not tmp_domain:
+            raise Exception("Bad DNS Domain")
+        retval["DNS_DOMAIN"] = tmp_domain
+        
+        tmp_ip = validate_dns_ip(msg)
+        if not tmp_ip:
+            raise Exception("Bad DNS IP")
+        retval["DNS_IP"] = tmp_ip
+
+    except Exception as e:
+        retval = {}
+
+    return retval
+
