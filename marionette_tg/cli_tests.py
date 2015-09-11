@@ -124,4 +124,4 @@ for param in [
         'active_probing/ftp_pureftpd_10']:
         suite.addTest(ParametrizedTestCase.parametrize(CliTest, param=param))
 testresult = unittest.TextTestRunner(verbosity=2).run(suite)
-sys.exit(testresult.wasSuccessful())
+sys.exit(not testresult.wasSuccessful())
