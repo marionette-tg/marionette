@@ -1,6 +1,6 @@
 # marionette
 
-[![Build Status](https://travis-ci.org/redjack/marionette.svg?branch=master)](https://travis-ci.org/redjack/marionette)
+[![Build Status](https://travis-ci.org/kpdyer/marionette.svg?branch=master)](https://travis-ci.org/kpdyer/marionette)
 
 Overview
 --------
@@ -20,7 +20,7 @@ Installation
 ```console
 $ sudo apt-get update && sudo apt-get upgrade
 $ sudo apt-get install git libgmp-dev python-pip python-dev curl
-$ git clone https://github.com/redjack/marionette.git
+$ git clone https://github.com/kpdyer/marionette.git
 $ cd marionette
 $ sudo pip install -r requirements.txt
 $ python setup.py build
@@ -34,7 +34,7 @@ $ sudo yum update
 $ yum install epel-release  # EPEL may be required for some distros
 $ sudo yum groupinstall "Development Tools"
 $ sudo yum install git gmp-devel python-pip python-devel curl
-$ git clone https://github.com/redjack/marionette.git
+$ git clone https://github.com/kpdyer/marionette.git
 $ cd marionette
 $ sudo pip install -r requirements.txt
 $ python setup.py build
@@ -48,7 +48,7 @@ Requires homebrew.
 
 ```console
 $ brew install python gmp curl
-$ git clone https://github.com/redjack/marionette.git
+$ git clone https://github.com/kpdyer/marionette.git
 $ cd marionette
 $ python setup.py install
 ```
