@@ -43,7 +43,7 @@ if args.proxy_port != None:
     marionette_tg.conf.set('server.proxy_port', int(args.proxy_port))
 if args.format != None:
     marionette_tg.conf.set('general.format', str(args.format))
-if args.debug != None:
+if args.debug == True:
     marionette_tg.conf.set('general.debug', args.debug)
 
 LOCAL_IP = marionette_tg.conf.get('server.server_ip')
