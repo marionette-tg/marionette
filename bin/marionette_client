@@ -43,7 +43,7 @@ if args.client_port != None:
     marionette_tg.conf.set('client.client_port', int(args.client_port))
 if args.format != None:
     marionette_tg.conf.set('general.format', str(args.format))
-if args.debug != None:
+if args.debug == True:
     marionette_tg.conf.set('general.debug', args.debug)
 
 LOCAL_IP = marionette_tg.conf.get('client.client_ip')
