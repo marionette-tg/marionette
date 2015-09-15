@@ -69,6 +69,8 @@ class Executable(object):
     def stop(self):
         for executable in self.executables_:
             executable.stop()
+        if self.party_ == "server":
+            marionette_tg.channel.stop_accepting_new_channels(self.get_transport_protocol(), self.get_port())
 
     def check_for_incoming_connections(self):
         retval = None
