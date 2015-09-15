@@ -40,7 +40,7 @@ class PIOA(object):
         self.port_ = None
         self.transport_protocol_ = None
         self.rng_ = None
-        self.state_history_ = []
+        self.history_len_ = 0
         self.states_ = {}
         self.success_ = False
 
@@ -69,7 +69,8 @@ class PIOA(object):
         if self.party_ == "client":
             if not self.channel_:
                 if not self.channel_requested_:
-                    marionette_tg.channel.open_new_channel(self.get_transport_protocol(), self.get_port(), self.set_channel)
+                    marionette_tg.channel.open_new_channel(self.get_transport_protocol(), 
+                        self.get_port(), self.set_channel)
                     self.channel_requested_ = True
         return (self.channel_ != None)
 
@@ -77,20 +78,20 @@ class PIOA(object):
         self.channel_ = channel
 
     def check_rng_state(self):
-        if not self.rng_:
-            if self.marionette_state_.get_local("model_instance_id"):
+        if self.marionette_state_.get_local("model_instance_id"):
+            if not self.rng_:
                 self.rng_ = random.Random()
                 self.rng_.seed(
                     self.marionette_state_.get_local("model_instance_id"))
-                transitions = len(self.state_history_)
 
-                self.state_history_ = []
                 self.current_state_ = 'start'
-                for i in range(transitions):
-                    self.state_history_.append(self.current_state_)
+                for i in range(self.history_len_):
                     self.current_state_ = self.states_[
                         self.current_state_].transition(self.rng_)
                 self.next_state_ = None
+
+            #Reset history length once RNGs are sync'd
+            self.history_len_ = 0
 
     def determine_action_block(self, src_state, dst_state):
         retval = []
@@ -150,7 +151,7 @@ class PIOA(object):
 
         # if we have a successful transition, update our state info.
         if success:
-            self.state_history_.append(self.current_state_)
+            self.history_len_ += 1
             self.current_state_ = dst_state
             self.next_state_ = None
             retval = True
