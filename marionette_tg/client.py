@@ -6,6 +6,7 @@ import random
 sys.path.append('.')
 
 from twisted.internet import reactor
+from twisted.python import log
 
 from . import driver
 from . import multiplexer
@@ -66,7 +67,12 @@ class Client(object):
         payload = cell_obj.get_payload()
         if payload:
             stream_id = cell_obj.get_stream_id()
-            self.streams_[stream_id].srv_queue.put(payload)
+            try:
+                self.streams_[stream_id].srv_queue.put(payload)
+            except:
+                log.msg("Client.process_cell: Caught KeyError exception for stream_id :%d"
+                    % (stream_id))
+                return
 
     def start_new_stream(self, srv_queue=None):
         stream = multiplexer.MarionetteStream(
