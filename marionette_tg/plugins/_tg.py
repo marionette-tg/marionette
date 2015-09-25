@@ -550,7 +550,7 @@ conf["http_amazon_response"] = {
     "handler_order": ["HTTP-RESPONSE-BODY", "CONTENT-LENGTH"],
     "handlers": {
         "CONTENT-LENGTH": HttpContentLengthHandler(),
-        "HTTP-RESPONSE-BODY": AmazonMsgLensHandler(".+", 96),
+        "HTTP-RESPONSE-BODY": AmazonMsgLensHandler(".+", 128),
     }
 }
 
