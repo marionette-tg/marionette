@@ -463,6 +463,9 @@ class AmazonMsgLensHandler(object):
         self.regex_ = regex
 
         self.msg_lens_ = msg_lens
+        self.random_lens_ = []
+        for key in self.msg_lens_:
+            self.random_lens_ += [key] * self.msg_lens_[key]
 
         self.min_len_ = min_len
 
@@ -471,12 +474,8 @@ class AmazonMsgLensHandler(object):
 
 
     def capacity(self):
-        
-        lens = []
-        for key in self.msg_lens_:
-            lens += [key] * self.msg_lens_[key]
 
-        self.target_len_ = random.choice(lens)
+        self.target_len_ = random.choice(self.random_lens_)
 
         if self.target_len_ < self.min_len_:
             ptxt_len = 0.0
@@ -506,7 +505,6 @@ class AmazonMsgLensHandler(object):
 
             to_unrank = random.randint(0, encoder.getNumWordsInSlice(self.target_len_))
             ctxt = encoder.unrank(to_unrank)
-            log.msg("Ranking msg of length %d (%d)" % (len(ctxt), self.target_len_))
 
         else:
             key = self.regex_ + str(self.min_len_)
@@ -523,26 +521,25 @@ class AmazonMsgLensHandler(object):
 
                 if len(ctxt) == self.target_len_:
                     break
-
-                i += 1
-                if i > 10000:
-                    raise Exception("Could not find ctxt of len %d (%d)" % (self.target_len_,len(ctxt)))
-            log.msg("FTE Encoding msg of length %d (%d)" % (len(ctxt), self.target_len_))
+                else:
+                    raise Exception("Could not find ctxt of len %d (%d)" % 
+                        (self.target_len_,len(ctxt)))
 
         return ctxt
 
     def decode(self, marionette_state, ctxt):
         ptxt = None
 
-        log.msg("Got ctxt of length %d" % len(ctxt))
-
         ctxt_len = len(ctxt)
+
         if ctxt_len >= self.min_len_:
             key = self.regex_ + str(self.min_len_)
             if not fte_cache_.get(key):
                 dfa = regex2dfa.regex2dfa(self.regex_)
                 fte_cache_[key] = fte.encoder.DfaEncoder(dfa, self.min_len_)
+
             encoder = fte_cache_[key]
+            
             try:
                 retval = encoder.decode(ctxt)
                 ptxt = retval[0]
