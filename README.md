@@ -1,5 +1,7 @@
 # marionette
 
+[![Build Status](https://travis-ci.org/redjack/marionette.svg?branch=master)](https://travis-ci.org/redjack/marionette)
+
 Overview
 --------
 

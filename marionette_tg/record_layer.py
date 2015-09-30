@@ -26,6 +26,16 @@ class Cell(object):
         self.model_uuid_ = model_uuid
         self.model_instance_id_ = model_instance_id
 
+    def __cmp__(self, other):
+        self_id = self.get_seq_id()
+        other_id = other.get_seq_id()
+        if self_id < other_id:
+            return -1
+        elif self_id > other_id:
+            return 1
+        else:
+            return 0
+
     def __eq__(self, other):
         retval = (
             self.get_payload() == other.get_payload()) and (

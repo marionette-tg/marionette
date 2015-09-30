@@ -31,6 +31,8 @@ parser.add_argument('--server_ip', '-sip', dest='server_ip', required=False,
     help='server IP address to connect to')
 parser.add_argument('--format', '-f', dest='format', required=False,
     help='Marionette format to use for connection')
+parser.add_argument('--debug', '-d', dest='debug', required=False, action='store_true',
+    help='Turn on debug output')
 args = parser.parse_args()
 
 if args.server_ip != None:
@@ -41,6 +43,8 @@ if args.client_port != None:
     marionette_tg.conf.set('client.client_port', int(args.client_port))
 if args.format != None:
     marionette_tg.conf.set('general.format', str(args.format))
+if args.debug == True:
+    marionette_tg.conf.set('general.debug', args.debug)
 
 LOCAL_IP = marionette_tg.conf.get('client.client_ip')
 LOCAL_PORT = marionette_tg.conf.get('client.client_port')
