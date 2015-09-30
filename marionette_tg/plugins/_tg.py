@@ -6,6 +6,8 @@ import socket
 import random
 import string
 
+from twisted.python import log
+
 import regex2dfa
 import fte.encoder
 import fte.bit_ops
@@ -333,141 +335,221 @@ class SetDnsIp(object):
         return None
  
 
-class AmazonMsgLensHandler(FteHandler):
+amazon_msg_lens = {
+        2049: 1,
+        2052: 2,
+        2054: 2,
+        2057: 3,
+        2058: 2,
+        2059: 1,
+        2065: 1,
+        17429: 1,
+        3098: 1,
+        687: 3,
+        2084: 1,
+        42: 58,
+        43: 107,
+        9260: 1,
+        11309: 1,
+        11829: 1,
+        9271: 1,
+        6154: 1,
+        64: 15,
+        1094: 1,
+        12376: 1,
+        89: 1,
+        10848: 1,
+        5223: 1,
+        69231: 1,
+        7795: 1,
+        2678: 1,
+        8830: 1,
+        29826: 1,
+        16006: 10,
+        8938: 1,
+        17055: 2,
+        87712: 1,
+        23202: 1,
+        7441: 1,
+        17681: 1,
+        12456: 1,
+        41132: 1,
+        25263: 6,
+        689: 1,
+        9916: 1,
+        10101: 2,
+        1730: 1,
+        10948: 1,
+        26826: 1,
+        6357: 1,
+        13021: 2,
+        1246: 4,
+        19683: 1,
+        1765: 1,
+        1767: 1,
+        1768: 1,
+        1769: 4,
+        1770: 6,
+        1771: 3,
+        1772: 2,
+        1773: 4,
+        1774: 4,
+        1775: 1,
+        1776: 1,
+        1779: 1,
+        40696: 1,
+        767: 1,
+        17665: 1,
+        27909: 1,
+        12550: 1,
+        5385: 1,
+        16651: 1,
+        5392: 1,
+        26385: 1,
+        12056: 1,
+        41245: 2,
+        13097: 1,
+        15152: 1,
+        310: 1,
+        40759: 1,
+        9528: 1,
+        8000: 7,
+        471: 1,
+        15180: 1,
+        14158: 3,
+        37719: 2,
+        1895: 1,
+        31082: 1,
+        19824: 1,
+        30956: 1,
+        18807: 1,
+        11095: 1,
+        37756: 2,
+        746: 1,
+        10475: 1,
+        4332: 1,
+        35730: 1,
+        11667: 1,
+        16788: 1,
+        12182: 4,
+        39663: 1,
+        9126: 1,
+        35760: 1,
+        12735: 1,
+        6594: 1,
+        451: 15,
+        19402: 1,
+        463: 3,
+        10193: 1,
+        16853: 6,
+        982: 1,
+        15865: 1,
+        2008: 2,
+        476: 1,
+        13655: 1,
+        10213: 1,
+        10737: 1,
+        15858: 1,
+        2035: 6,
+        2039: 1,
+        2041: 2
+    }
+
+MIN_PTXT_LEN = fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTTEXT + \
+    fte.encrypter.Encrypter._CTXT_EXPANSION + 32
+
+class AmazonMsgLensHandler(object):
+    def __init__(self, regex, min_len = MIN_PTXT_LEN, msg_lens = amazon_msg_lens):
+        self.regex_ = regex
+
+        self.msg_lens_ = msg_lens
+
+        self.min_len_ = min_len
+
+        self.max_len_ = 2**18
+        self.target_len_ = 0.0
+
 
     def capacity(self):
-        amazon_msg_lens = {
-            2049: 1,
-            2052: 2,
-            2054: 2,
-            2057: 3,
-            2058: 2,
-            2059: 1,
-            2065: 1,
-            17429: 1,
-            3098: 1,
-            687: 3,
-            2084: 1,
-            42: 58,
-            43: 107,
-            9260: 1,
-            11309: 1,
-            11829: 1,
-            9271: 1,
-            6154: 1,
-            64: 15,
-            1094: 1,
-            12376: 1,
-            89: 1,
-            10848: 1,
-            5223: 1,
-            69231: 1,
-            7795: 1,
-            2678: 1,
-            8830: 1,
-            29826: 1,
-            16006: 10,
-            8938: 1,
-            17055: 2,
-            87712: 1,
-            23202: 1,
-            7441: 1,
-            17681: 1,
-            12456: 1,
-            41132: 1,
-            25263: 6,
-            689: 1,
-            9916: 1,
-            10101: 2,
-            1730: 1,
-            10948: 1,
-            26826: 1,
-            6357: 1,
-            13021: 2,
-            1246: 4,
-            19683: 1,
-            1765: 1,
-            1767: 1,
-            1768: 1,
-            1769: 4,
-            1770: 6,
-            1771: 3,
-            1772: 2,
-            1773: 4,
-            1774: 4,
-            1775: 1,
-            1776: 1,
-            1779: 1,
-            40696: 1,
-            767: 1,
-            17665: 1,
-            27909: 1,
-            12550: 1,
-            5385: 1,
-            16651: 1,
-            5392: 1,
-            26385: 1,
-            12056: 1,
-            41245: 2,
-            13097: 1,
-            15152: 1,
-            310: 1,
-            40759: 1,
-            9528: 1,
-            8000: 7,
-            471: 1,
-            15180: 1,
-            14158: 3,
-            37719: 2,
-            1895: 1,
-            31082: 1,
-            19824: 1,
-            30956: 1,
-            18807: 1,
-            11095: 1,
-            37756: 2,
-            746: 1,
-            10475: 1,
-            4332: 1,
-            35730: 1,
-            11667: 1,
-            16788: 1,
-            12182: 4,
-            39663: 1,
-            9126: 1,
-            35760: 1,
-            12735: 1,
-            6594: 1,
-            451: 15,
-            19402: 1,
-            463: 3,
-            10193: 1,
-            16853: 6,
-            982: 1,
-            15865: 1,
-            2008: 2,
-            476: 1,
-            13655: 1,
-            10213: 1,
-            10737: 1,
-            15858: 1,
-            2035: 6,
-            2039: 1,
-            2041: 2
-        }
-
+        
         lens = []
-        for key in amazon_msg_lens:
-            lens += [key] * amazon_msg_lens[key]
+        for key in self.msg_lens_:
+            lens += [key] * self.msg_lens_[key]
 
-        target_len_in_bytes = random.choice(lens)
-        #target_len_in_bytes -= fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTTEXT 
-        #target_len_in_bytes -= fte.encrypter.Encrypter._CTXT_EXPANSION
+        self.target_len_ = random.choice(lens)
 
-        target_len_in_bits = target_len_in_bytes * 8.0
-        target_len_in_bits = int(target_len_in_bits)
+        if self.target_len_ < self.min_len_:
+            ptxt_len = 0.0
 
-        return target_len_in_bits
+        elif self.target_len_ > self.max_len_:
+            self.target_len_ = self.max_len_
+            ptxt_len = self.max_len_
+
+        else:
+            ptxt_len = self.target_len_ - fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTTEXT 
+            ptxt_len -= fte.encrypter.Encrypter._CTXT_EXPANSION
+            ptxt_len = int(ptxt_len * 8.0)-1
+
+        return ptxt_len
+
+    def encode(self, marionette_state, template, to_embed):
+        ctxt = ''
+
+        if self.target_len_ < self.min_len_:
+            key = self.regex_ + str(self.target_len_)
+            if not regex_cache_.get(key):
+                dfa = regex2dfa.regex2dfa(self.regex_)
+                cdfa_obj = fte.cDFA.DFA(dfa, self.target_len_)
+                regex_cache_[key] = fte.dfa.DFA(cdfa_obj, self.target_len_)
+
+            encoder = regex_cache_[key]
+
+            to_unrank = random.randint(0, encoder.getNumWordsInSlice(self.target_len_))
+            ctxt = encoder.unrank(to_unrank)
+            log.msg("Ranking msg of length %d (%d)" % (len(ctxt), self.target_len_))
+
+        else:
+            key = self.regex_ + str(self.min_len_)
+            if not fte_cache_.get(key):
+                dfa = regex2dfa.regex2dfa(self.regex_)
+                fte_cache_[key] = fte.encoder.DfaEncoder(dfa, self.min_len_)
+
+            encoder = fte_cache_[key]
+
+            i = 0
+
+            while True:
+                ctxt = encoder.encode(to_embed)
+
+                if len(ctxt) == self.target_len_:
+                    break
+
+                i += 1
+                if i > 10000:
+                    raise Exception("Could not find ctxt of len %d (%d)" % (self.target_len_,len(ctxt)))
+            log.msg("FTE Encoding msg of length %d (%d)" % (len(ctxt), self.target_len_))
+
+        return ctxt
+
+    def decode(self, marionette_state, ctxt):
+        ptxt = None
+
+        log.msg("Got ctxt of length %d" % len(ctxt))
+
+        ctxt_len = len(ctxt)
+        if ctxt_len >= self.min_len_:
+            key = self.regex_ + str(self.min_len_)
+            if not fte_cache_.get(key):
+                dfa = regex2dfa.regex2dfa(self.regex_)
+                fte_cache_[key] = fte.encoder.DfaEncoder(dfa, self.min_len_)
+            encoder = fte_cache_[key]
+            try:
+                retval = encoder.decode(ctxt)
+                ptxt = retval[0]
+            except Exception as e:
+                pass
+
+        return ptxt
 
 # formats
 
@@ -550,7 +632,7 @@ conf["http_amazon_response"] = {
     "handler_order": ["HTTP-RESPONSE-BODY", "CONTENT-LENGTH"],
     "handlers": {
         "CONTENT-LENGTH": HttpContentLengthHandler(),
-        "HTTP-RESPONSE-BODY": AmazonMsgLensHandler(".+", 128),
+        "HTTP-RESPONSE-BODY": AmazonMsgLensHandler(".+"),
     }
 }
 
