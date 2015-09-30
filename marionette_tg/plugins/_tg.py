@@ -469,7 +469,14 @@ class AmazonMsgLensHandler(object):
 
         self.min_len_ = min_len
 
+        key = self.regex_ + str(self.min_len_)
+        if not fte_cache_.get(key):
+            dfa = regex2dfa.regex2dfa(self.regex_)
+            encoder = fte.encoder.DfaEncoder(dfa, self.min_len_)
+            fte_cache_[key] = (dfa, encoder)
+
         self.max_len_ = 2**18
+
         self.target_len_ = 0.0
 
 
@@ -481,8 +488,11 @@ class AmazonMsgLensHandler(object):
             ptxt_len = 0.0
 
         elif self.target_len_ > self.max_len_:
-            self.target_len_ = self.max_len_
+            #We do this to prevent unranking really large slices
+            # in practice this is probably bad since it unnaturally caps 
+            # our message sizes to whatever FTE can support
             ptxt_len = self.max_len_
+            self.target_len_ = self.max_len_
 
         else:
             ptxt_len = self.target_len_ - fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTTEXT 
@@ -494,36 +504,28 @@ class AmazonMsgLensHandler(object):
     def encode(self, marionette_state, template, to_embed):
         ctxt = ''
 
-        if self.target_len_ < self.min_len_:
+        if self.target_len_ < self.min_len_ or self.target_len_ > self.max_len_:
             key = self.regex_ + str(self.target_len_)
             if not regex_cache_.get(key):
                 dfa = regex2dfa.regex2dfa(self.regex_)
                 cdfa_obj = fte.cDFA.DFA(dfa, self.target_len_)
-                regex_cache_[key] = fte.dfa.DFA(cdfa_obj, self.target_len_)
+                encoder = fte.dfa.DFA(cdfa_obj, self.target_len_)
+                regex_cache_[key] = (dfa, encoder)
 
-            encoder = regex_cache_[key]
+            (dfa, encoder) = regex_cache_[key]
 
             to_unrank = random.randint(0, encoder.getNumWordsInSlice(self.target_len_))
             ctxt = encoder.unrank(to_unrank)
 
         else:
             key = self.regex_ + str(self.min_len_)
-            if not fte_cache_.get(key):
-                dfa = regex2dfa.regex2dfa(self.regex_)
-                fte_cache_[key] = fte.encoder.DfaEncoder(dfa, self.min_len_)
+            (dfa, encoder) = fte_cache_[key]
 
-            encoder = fte_cache_[key]
+            ctxt = encoder.encode(to_embed)
 
-            i = 0
-
-            while True:
-                ctxt = encoder.encode(to_embed)
-
-                if len(ctxt) == self.target_len_:
-                    break
-                else:
-                    raise Exception("Could not find ctxt of len %d (%d)" % 
-                        (self.target_len_,len(ctxt)))
+            if len(ctxt) != self.target_len_:
+                raise Exception("Could not find ctxt of len %d (%d)" % 
+                    (self.target_len_,len(ctxt)))
 
         return ctxt
 
@@ -534,11 +536,7 @@ class AmazonMsgLensHandler(object):
 
         if ctxt_len >= self.min_len_:
             key = self.regex_ + str(self.min_len_)
-            if not fte_cache_.get(key):
-                dfa = regex2dfa.regex2dfa(self.regex_)
-                fte_cache_[key] = fte.encoder.DfaEncoder(dfa, self.min_len_)
-
-            encoder = fte_cache_[key]
+            (dfa, encoder) = fte_cache_[key]
             
             try:
                 retval = encoder.decode(ctxt)
