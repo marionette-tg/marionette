@@ -96,11 +96,11 @@ class CliTest(ParametrizedTestCase):
                 self.startservers(format)
                 self.dodownload_serial()
                 self.dodownload_parallel()
-                sys.stdout.write(format+' ')
-                sys.stdout.flush()
             except Exception as e:
                 self.assertFalse(True, e)
             finally:
+                sys.stdout.write(format+' ')
+                sys.stdout.flush()
                 self.stopservers()
 
 suite = unittest.TestSuite()
