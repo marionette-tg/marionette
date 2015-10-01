@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/kpdyer/marionette.svg?branch=master)](https://travis-ci.org/kpdyer/marionette)
 
+**This code is still pre-alpha and is NOT suitable for any real-world deployment.**
+
 Overview
 --------
 
