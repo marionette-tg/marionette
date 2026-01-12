@@ -5,6 +5,8 @@ Unit tests for format validation.
 
 import sys
 import unittest
+import tempfile
+import os
 
 sys.path.insert(0, '.')
 
@@ -36,6 +38,38 @@ class TestFormatValidator(unittest.TestCase):
         parsed = marionette.dsl.parse(content)
         # Should not raise
         marionette.format_validator.validate_format(parsed)
+
+    def test_validation_fails_invalid_probabilities(self):
+        """Test that validation fails when probabilities don't sum to 1."""
+        # Create a format file with invalid probabilities
+        invalid_format = """connection(tcp, 8080):
+  start      upstream   NULL     1.0
+  upstream   downstream http_get 0.5
+  downstream end        http_ok  0.3
+
+action http_get:
+  client fte.send("^.*$", 128)
+
+action http_ok:
+  server fte.send("^.*$", 128)
+"""
+        # Write to temp file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.mar', delete=False) as f:
+            f.write(invalid_format)
+            temp_path = f.name
+        
+        try:
+            # Parse should work (syntax is valid)
+            with open(temp_path, 'r') as f:
+                content = f.read()
+            parsed = marionette.dsl.parse(content)
+            
+            # But validation should fail (probabilities don't sum to 1)
+            with self.assertRaises(marionette.format_validator.FormatValidationError) as cm:
+                marionette.format_validator.validate_format(parsed)
+            self.assertIn("sum", str(cm.exception).lower())
+        finally:
+            os.unlink(temp_path)
 
 
 if __name__ == '__main__':
