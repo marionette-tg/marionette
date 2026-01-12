@@ -504,6 +504,13 @@ def load(party, format_name, mar_path):
         mar_str = f.read()
 
     parsed_format = parse(mar_str)
+    
+    # Validate format before creating executable
+    import marionette.format_validator
+    try:
+        marionette.format_validator.validate_format(parsed_format)
+    except marionette.format_validator.FormatValidationError as e:
+        raise Exception(f"Format validation failed for {format_name}: {str(e)}")
 
     first_sender = 'client'
     if format_name in ["ftp_pasv_transfer"]:
