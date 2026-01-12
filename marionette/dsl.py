@@ -564,10 +564,15 @@ def load(party, format_name, mar_path):
     executable.actions_ = actions
     executable.do_precomputations()
 
-    if executable.states_.get("end"):
-        executable.add_state("dead")
-        executable.states_["end"].add_transition("dead", None, 1)
-        executable.states_["dead"].add_transition("dead", None, 1)
+    # Check if "end" state already has outgoing transitions defined in the format
+    end_state = executable.states_.get("end")
+    if end_state:
+        # Only add automatic "dead" state if "end" has no outgoing transitions
+        # This allows formats to explicitly define transitions from "end"
+        if not end_state.transitions_:
+            executable.add_state("dead")
+            executable.states_["end"].add_transition("dead", None, 1)
+            executable.states_["dead"].add_transition("dead", None, 1)
 
     return executable
 
