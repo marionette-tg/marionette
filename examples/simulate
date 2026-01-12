@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+"""
+Simulate marionette format execution to analyze capacity and timing.
+
+Usage: ./examples/simulate <format_name> <latency_ms>
+"""
+
 import sys
 
 sys.path.append(".")
@@ -14,12 +20,22 @@ MAX_PATH_LEN = 100
 FTE_CAPACITY = 2**16
 FTE_COST = 0.5
 
-def do_simulation(format, latency, path = [], elapsed = [], capacity_up = [], capacity_down = []):
+
+def do_simulation(format_name, latency, path=None, elapsed=None, capacity_up=None, capacity_down=None):
+    if path is None:
+        path = []
+    if elapsed is None:
+        elapsed = []
+    if capacity_up is None:
+        capacity_up = []
+    if capacity_down is None:
+        capacity_down = []
+
     for k in range(MAX_TRIALS):
-        executable = marionette.dsl.load('client', format)
+        executable = marionette.dsl.load('client', format_name)
         executable.check_rng_state()
 
-        elapsed.append(latency*2)
+        elapsed.append(latency * 2)
         for i in range(MAX_PATH_LEN):
             current_state = executable.current_state_
             next_state = executable.get_potential_transitions()[0]
@@ -32,17 +48,27 @@ def do_simulation(format, latency, path = [], elapsed = [], capacity_up = [], ca
             executable.next_state_ = None
             executable.current_state_ = next_state
 
-            if next_state == 'dead': break
+            if next_state == 'dead':
+                break
 
     return (path, elapsed, capacity_up, capacity_down)
 
 
-def analyze_actions(actions, latency, path = [], elapsed = [], capacity_up = [], capacity_down = []):
+def analyze_actions(actions, latency, path=None, elapsed=None, capacity_up=None, capacity_down=None):
+    if path is None:
+        path = []
+    if elapsed is None:
+        elapsed = []
+    if capacity_up is None:
+        capacity_up = []
+    if capacity_down is None:
+        capacity_down = []
+
     cost = 0
     bits_up = 0
     bits_down = 0
 
-    if len(actions)==1:
+    if len(actions) == 1:
         action_to_execute = actions[0]
         if action_to_execute.get_module() == 'fte':
             if action_to_execute.get_method() == 'send':
@@ -75,7 +101,7 @@ def analyze_actions(actions, latency, path = [], elapsed = [], capacity_up = [],
             if action_to_execute.get_method() == 'spawn':
                 format_to_spawn = action_to_execute.get_args()[0]
                 do_simulation(format_to_spawn, latency, path, elapsed, capacity_up, capacity_down)
-    elif len(actions)>1:
+    elif len(actions) > 1:
         raise Exception("can't deal with more than one action!")
 
     elapsed.append(cost)
@@ -90,25 +116,28 @@ def get_tg_capacity(tg_name):
     return retval
 
 
-def mbps(bytes, ms):
-    Bpms  = 1.0 * bytes / ms
+def mbps(bytes_count, ms):
+    Bpms = 1.0 * bytes_count / ms
     MBpms = Bpms / (2**20)
     Mbpms = MBpms * 8
-    Mbps  = Mbpms * 1000
+    Mbps = Mbpms * 1000
     return str(Mbps)
 
 
-def main(format, latency):
-    (path, elapsed, capacity_up, capacity_down) = do_simulation(format, latency)
+def main(format_name, latency):
+    (path, elapsed, capacity_up, capacity_down) = do_simulation(format_name, latency)
 
     ms_elapsed = sum(elapsed)
     mbps_upstream = mbps(sum(capacity_up), sum(elapsed))
     mbps_downstream = mbps(sum(capacity_down), sum(elapsed))
 
-    print '%s,%s,%s,%s' % (format,ms_elapsed, mbps_upstream, mbps_downstream)
+    print('%s,%s,%s,%s' % (format_name, ms_elapsed, mbps_upstream, mbps_downstream))
 
 
 if __name__ == "__main__":
-    format = str(sys.argv[1])
+    if len(sys.argv) < 3:
+        print("Usage: ./examples/simulate <format_name> <latency_ms>")
+        sys.exit(1)
+    format_name = str(sys.argv[1])
     latency = int(sys.argv[2])
-    main(format, latency)
+    main(format_name, latency)

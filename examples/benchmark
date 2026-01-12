@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+"""
+Benchmark script for measuring marionette throughput.
+
+Usage: ./examples/benchmark [format_name]
+"""
+
 import os
 import sys
 import time
-import httplib
+import http.client
 
 sys.path.append('.')
 
@@ -14,40 +20,40 @@ expected_response = ''
 for x in range(2**18):
     expected_response += '_' + str(x)
 
+
 def execute(cmd):
     os.system(cmd)
 
 
 def exec_download():
     client_listen_ip = marionette.conf.get("client.client_ip")
-    conn = httplib.HTTPConnection(
+    conn = http.client.HTTPConnection(
         client_listen_ip,
         18079,
-        False,
         timeout=60)
 
     conn.request("GET", "/")
     response = conn.getresponse()
-    actual_response = response.read()
+    actual_response = response.read().decode('utf-8')
     conn.close()
 
     assert actual_response == expected_response
 
 
-def startservers(format):
+def startservers(format_name):
     client_listen_ip = marionette.conf.get("client.client_ip")
     server_proxy_ip = marionette.conf.get("server.proxy_ip")
 
-    execute("./bin/httpserver --local_port 18081 &")
+    execute("./examples/httpserver --local_port 18081 &")
     time.sleep(3)
     execute(
         "./bin/marionette_server --proxy_ip %s --proxy_port 18081 --format %s &"
-        % (server_proxy_ip, format))
+        % (server_proxy_ip, format_name))
     time.sleep(3)
     execute(
         "./bin/marionette_client --client_ip %s --client_port 18079 "
-        "--format %s &"%
-        (client_listen_ip, format))
+        "--format %s &" %
+        (client_listen_ip, format_name))
     time.sleep(3)
 
 
@@ -60,25 +66,26 @@ def stopservers():
 def dodownload_serial():
     total = 0
     trials = 100
-    for i in xrange(1, trials + 1):
+    for i in range(1, trials + 1):
         start = time.time()
         exec_download()
         elapsed = time.time() - start
         total += elapsed
-        mbps = ((len(expected_response)*i / total) / 2**20) * 8
-        print [i, elapsed, total / i, mbps]
+        mbps = ((len(expected_response) * i / total) / 2**20) * 8
+        print([i, elapsed, total / i, mbps])
 
 
 def main():
+    format_name = sys.argv[1] if len(sys.argv) > 1 else 'dummy'
     try:
-        format = sys.argv[1] if len(sys.argv) > 1 else 'dummy'
-        startservers(format)
+        startservers(format_name)
         dodownload_serial()
-        print '\t', format, '...', 'SUCCESS'
+        print('\t', format_name, '...', 'SUCCESS')
     except Exception as e:
-        print '\t', format, '...', 'FAILED'
+        print('\t', format_name, '...', 'FAILED:', str(e))
     finally:
         stopservers()
+
 
 if __name__ == '__main__':
     main()
