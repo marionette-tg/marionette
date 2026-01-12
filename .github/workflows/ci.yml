@@ -30,13 +30,14 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip wheel setuptools
+        pip install pytest
         pip install -r requirements.txt
         pip install -e .
 
-    - name: Run tests
+    - name: Run unit tests
       run: |
-        python setup.py test
+        python -m pytest marionette_tg/dsl_tests.py marionette_tg/record_layer_tests.py -v
 
   lint:
     runs-on: ubuntu-latest
