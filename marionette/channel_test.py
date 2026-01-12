@@ -6,7 +6,7 @@ from twisted.internet import reactor
 
 sys.path.append('.')
 
-import marionette_tg.channel as channel
+import marionette.channel as channel
 
 
 class ServerThread(threading.Thread):

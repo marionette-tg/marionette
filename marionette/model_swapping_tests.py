@@ -5,13 +5,13 @@ from twisted.internet import reactor
 
 sys.path.append('.')
 
-import marionette_tg
+import marionette
 
 class Tests(unittest.TestCase):
 
     def test_model_swapping1(self):
         # do initial setup
-        client = marionette_tg.Client('http_simple_blocking',
+        client = marionette.Client('http_simple_blocking',
                                       '20150701')
 
         expected_format = 'http_simple_blocking:20150701'

@@ -10,7 +10,7 @@ import threading
 
 sys.path.append('.')
 
-import marionette_tg.conf
+import marionette.conf
 
 
 def execute(cmd):
@@ -18,7 +18,7 @@ def execute(cmd):
 
 
 def exec_download():
-    client_listen_ip = marionette_tg.conf.get("client.client_ip")
+    client_listen_ip = marionette.conf.get("client.client_ip")
     conn = http.client.HTTPConnection(
         client_listen_ip, 18079, timeout=30)
     conn.request("GET", "/")
@@ -59,8 +59,8 @@ class ParametrizedTestCase(unittest.TestCase):
 class CliTest(ParametrizedTestCase):
 
     def startservers(self, format):
-        client_listen_ip = marionette_tg.conf.get("client.client_ip")
-        server_proxy_ip = marionette_tg.conf.get("server.proxy_ip")
+        client_listen_ip = marionette.conf.get("client.client_ip")
+        server_proxy_ip = marionette.conf.get("server.proxy_ip")
 
         execute("./bin/httpserver --local_port 18081 &")
         execute("./bin/marionette_server --proxy_ip %s --proxy_port 18081 --format %s &" %

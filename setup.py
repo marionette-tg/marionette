@@ -18,7 +18,7 @@ setup(
     license='MIT',
     scripts=['bin/marionette_client', 'bin/marionette_server'],
     packages=find_packages(),
-    package_data={'marionette_tg': ['marionette.conf', 'formats/*.mar', 'formats/**/*.mar', 'formats/**/**/*.mar']},
+    package_data={'marionette': ['marionette.conf', 'formats/*.mar', 'formats/**/*.mar', 'formats/**/**/*.mar']},
     include_package_data=True,
     python_requires='>=3.8',
     install_requires=[

@@ -13,7 +13,7 @@ import fte.bit_ops
 
 sys.path.append('.')
 
-import marionette_tg.executables.pioa
+import marionette.executables.pioa
 
 # TODO: fix it s.t. "server" in var name doesn't cause problem
 
@@ -226,7 +226,7 @@ def p_action_block(p):
     """
     p[0] = []
     for i in range(len(p[4])):
-        p[0] += [marionette_tg.action.MarionetteAction(p[2], p[4][i][0],
+        p[0] += [marionette.action.MarionetteAction(p[2], p[4][i][0],
                                                           p[4][i][1],
                                                           p[4][i][2],
                                                           p[4][i][3],
@@ -379,7 +379,7 @@ def get_search_dirs():
     dsl_dir = os.path.dirname(os.path.join(__file__))
     dsl_dir = os.path.join(dsl_dir, 'formats')
     dsl_dir = os.path.abspath(dsl_dir)
-    cwd_dir = os.path.join(os.getcwd(), 'marionette_tg', 'formats')
+    cwd_dir = os.path.join(os.getcwd(), 'marionette', 'formats')
     cwd_dir = os.path.abspath(cwd_dir)
     retval = [dsl_dir, # find formats based on location of dsl.py
               cwd_dir, # find formats based on location of marionette_client.exe
@@ -509,7 +509,7 @@ def load(party, format_name, mar_path):
     if format_name in ["ftp_pasv_transfer"]:
         first_sender = "server"
 
-    executable = marionette_tg.executables.pioa.PIOA(party, first_sender)
+    executable = marionette.executables.pioa.PIOA(party, first_sender)
     executable.set_transport_protocol(parsed_format.get_transport())
     executable.set_port(parsed_format.get_port())
     executable.set_local(

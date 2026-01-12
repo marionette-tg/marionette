@@ -13,7 +13,7 @@ import fte.encoder
 import fte.bit_ops
 import re
 
-import marionette_tg.record_layer
+import marionette.record_layer
 
 def send(channel, marionette_state, input_args):
     grammar = input_args[0]
@@ -59,7 +59,7 @@ def recv(channel, marionette_state, input_args):
                 retval = True
             else:
                 ##
-                cell_obj = marionette_tg.record_layer.unserialize(cell_str)
+                cell_obj = marionette.record_layer.unserialize(cell_str)
                 assert cell_obj.get_model_uuid() == marionette_state.get_local(
                     "model_uuid")
 
@@ -75,7 +75,7 @@ def recv(channel, marionette_state, input_args):
         pass
     except socket.error as e:
         pass
-    except marionette_tg.record_layer.UnserializeException as e:
+    except marionette.record_layer.UnserializeException as e:
         pass
 
     if not retval:
@@ -687,7 +687,7 @@ def generate_template(grammar):
 
 templates = {}
 
-server_listen_ip = marionette_tg.conf.get("server.server_ip")
+server_listen_ip = marionette.conf.get("server.server_ip")
 
 templates["http_request_keep_alive"] = [
     "GET http://" +

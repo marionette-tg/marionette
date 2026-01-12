@@ -1,4 +1,4 @@
 include LICENSE
 include PYPI_README.md
-include marionette_tg/marionette.conf
-recursive-include marionette_tg *.mar
+include marionette/marionette.conf
+recursive-include marionette *.mar

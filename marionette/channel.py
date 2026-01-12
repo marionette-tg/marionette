@@ -12,7 +12,7 @@ from twisted.python import log
 
 sys.path.append('.')
 
-import marionette_tg.conf
+import marionette.conf
 
 
 
@@ -142,12 +142,12 @@ def start_connection(transport_protocol, port, callback):
     if transport_protocol == 'tcp':
         factory = MyClientFactory(callback)
         factory.protocol = MyClient
-        reactor.connectTCP(marionette_tg.conf.get("server.server_ip"),
+        reactor.connectTCP(marionette.conf.get("server.server_ip"),
                 int(port), factory)
     else: #udp
-        reactor.listenUDP(0, MyClient(callback, 'udp', marionette_tg.conf.get("server.server_ip"),
+        reactor.listenUDP(0, MyClient(callback, 'udp', marionette.conf.get("server.server_ip"),
             int(port)), maxPacketSize=65535)
-        #reactor.listenUDP(0, MyUdpClient(marionette_tg.conf.get("server.server_ip"),
+        #reactor.listenUDP(0, MyUdpClient(marionette.conf.get("server.server_ip"),
         #    int(port), callback), maxPacketSize=65535)
 
 
@@ -218,10 +218,10 @@ def start_listener(transport_protocol, port):
                 factory = protocol.Factory()
                 factory.protocol = MyServer
                 connector = reactor.listenTCP(int(port), factory,
-                        interface=marionette_tg.conf.get("server.server_ip"))
+                        interface=marionette.conf.get("server.server_ip"))
             else: #udp
                 connector = reactor.listenUDP(int(port), MyServer('udp'),
-                        interface=marionette_tg.conf.get("server.server_ip"), maxPacketSize=65535)
+                        interface=marionette.conf.get("server.server_ip"), maxPacketSize=65535)
             port = connector.getHost().port
             listening_sockets_[port] = connector
             retval = port
