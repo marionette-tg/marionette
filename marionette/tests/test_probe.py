@@ -6,6 +6,7 @@ import sys
 import time
 import http.client
 import unittest
+import pytest
 
 sys.path.append('.')
 
@@ -39,6 +40,7 @@ class Tests(unittest.TestCase):
 
         self.assertEqual(actual_response, expected_response)
 
+    @pytest.mark.skip(reason="Integration test requiring external services - excluded from CI")
     def test_active_probing1(self):
             try:
                 self.startservers("http_active_probing")
@@ -46,6 +48,7 @@ class Tests(unittest.TestCase):
             finally:
                 self.stopservers()
 
+    @pytest.mark.skip(reason="Integration test requiring external services - excluded from CI")
     def test_active_probing2(self):
             try:
                 self.startservers("http_active_probing2")

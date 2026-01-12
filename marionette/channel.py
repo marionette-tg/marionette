@@ -34,6 +34,9 @@ class Channel(object):
 
     def appendToBuffer(self, chunk):
         with self.buffer_lock_:
+            # Convert bytes to string using latin-1 encoding (preserves byte values 0-255)
+            if isinstance(chunk, bytes):
+                chunk = chunk.decode('latin-1')
             self.buffer_ += chunk
 
     def recv(self):

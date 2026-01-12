@@ -285,7 +285,12 @@ def p_string_arg(p):
     p_string_arg : STRING
     """
     p[0] = str(p[1][1:-1])
-    p[0] = codecs.decode(p[0], 'unicode_escape')
+    # Suppress deprecation warning for invalid escape sequences (e.g., \C, \ , \.)
+    # These are intentional in format files and codecs.decode handles them correctly
+    import warnings
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=DeprecationWarning, message='.*invalid escape.*')
+        p[0] = codecs.decode(p[0], 'unicode_escape')
 
 def p_integer_arg(p):
     """
