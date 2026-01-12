@@ -22,9 +22,9 @@ class TestActiveProbingExample(unittest.TestCase):
 
     def test_active_probing_format_exists(self):
         """Verify active probing formats exist."""
-        import marionette_tg.dsl
+        import marionette.dsl
         
-        formats = marionette_tg.dsl.list_mar_files('client')
+        formats = marionette.dsl.list_mar_files('client')
         probing_formats = [f for f in formats if 'probing' in f.lower()]
         self.assertTrue(len(probing_formats) > 0, "No active probing formats found")
 

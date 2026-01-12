@@ -24,8 +24,8 @@ from twisted.internet import defer, protocol, reactor
 from twisted.protocols import socks
 from twisted.python import log
 
-import marionette_tg
-import marionette_tg.conf
+import marionette
+import marionette.conf
 
 
 # Configuration
@@ -139,11 +139,11 @@ def run_client(debug=False):
     print(f"  Server: {SERVER_IP}")
     print(f"\nTest with: curl --socks4a {CLIENT_IP}:{CLIENT_PORT} http://example.com")
     
-    marionette_tg.conf.set('server.server_ip', SERVER_IP)
-    marionette_tg.conf.set('client.client_ip', CLIENT_IP)
-    marionette_tg.conf.set('client.client_port', CLIENT_PORT)
+    marionette.conf.set('server.server_ip', SERVER_IP)
+    marionette.conf.set('client.client_ip', CLIENT_IP)
+    marionette.conf.set('client.client_port', CLIENT_PORT)
     
-    client = marionette_tg.Client(FORMAT, None)
+    client = marionette.Client(FORMAT, None)
     
     factory = protocol.Factory()
     factory.protocol = ProxyClient
@@ -165,11 +165,11 @@ def run_server(debug=False):
     print(f"  Proxy to: {PROXY_IP}:{PROXY_PORT}")
     print(f"\nMake sure a SOCKS server is running on {PROXY_IP}:{PROXY_PORT}")
     
-    marionette_tg.conf.set('server.server_ip', SERVER_IP)
-    marionette_tg.conf.set('server.proxy_ip', PROXY_IP)
-    marionette_tg.conf.set('server.proxy_port', PROXY_PORT)
+    marionette.conf.set('server.server_ip', SERVER_IP)
+    marionette.conf.set('server.proxy_ip', PROXY_IP)
+    marionette.conf.set('server.proxy_port', PROXY_PORT)
     
-    server = marionette_tg.Server(FORMAT)
+    server = marionette.Server(FORMAT)
     server.factory = ProxyServer
     
     reactor.callFromThread(server.execute, reactor)

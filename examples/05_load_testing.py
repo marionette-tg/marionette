@@ -18,7 +18,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 sys.path.insert(0, '.')
 
-import marionette_tg.dsl
+import marionette.dsl
 
 
 class LoadTestResult:
@@ -79,7 +79,7 @@ def simulate_request(format_name, request_id):
         start_time = time.time()
         
         # Load the format
-        executable = marionette_tg.dsl.load('client', format_name)
+        executable = marionette.dsl.load('client', format_name)
         
         # Simulate execution (simplified - real test would use actual network)
         # For now, we'll just measure format loading time
@@ -168,8 +168,8 @@ def main():
     args = parser.parse_args()
     
     # Verify format exists
-    import marionette_tg.dsl
-    formats = marionette_tg.dsl.list_mar_files('client')
+    import marionette.dsl
+    formats = marionette.dsl.list_mar_files('client')
     format_found = any(args.format in f for f in formats)
     
     if not format_found:

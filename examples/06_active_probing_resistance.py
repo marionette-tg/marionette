@@ -19,7 +19,7 @@ import argparse
 
 sys.path.insert(0, '.')
 
-import marionette_tg.dsl
+import marionette.dsl
 
 
 def analyze_probing_resistance(format_name):
@@ -31,7 +31,7 @@ def analyze_probing_resistance(format_name):
     
     try:
         # Load client format
-        client_exec = marionette_tg.dsl.load('client', format_name)
+        client_exec = marionette.dsl.load('client', format_name)
         
         # Check for error transitions
         error_transitions = []
@@ -62,7 +62,7 @@ def analyze_probing_resistance(format_name):
                 print(f"      Regex: {action.get_regex_match_incoming()}")
         
         # Load server format
-        server_exec = marionette_tg.dsl.load('server', format_name)
+        server_exec = marionette.dsl.load('server', format_name)
         
         # Check server-side error handling
         server_error_transitions = []
@@ -115,7 +115,7 @@ def list_probing_formats():
     print("=" * 60)
     
     all_formats = set()
-    for fmt in marionette_tg.dsl.list_mar_files('client'):
+    for fmt in marionette.dsl.list_mar_files('client'):
         name = fmt.rsplit(':', 1)[0] if ':' in fmt else fmt
         all_formats.add(name)
     

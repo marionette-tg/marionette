@@ -17,7 +17,7 @@ import tempfile
 
 sys.path.insert(0, '.')
 
-import marionette_tg.dsl
+import marionette.dsl
 
 
 # Example: Simple Chat Protocol
@@ -81,7 +81,7 @@ def test_format(format_path):
     print("-" * 60)
     
     try:
-        executable = marionette_tg.dsl.load('client', format_path)
+        executable = marionette.dsl.load('client', format_path)
         
         print("✓ Format parsed successfully!")
         print(f"  States: {list(executable.states_.keys())}")
@@ -129,8 +129,8 @@ def show_protocol_templates():
    python examples/10_custom_protocol.py --test-format my_protocol.mar
 
 3. Use the format in your client/server:
-   client = marionette_tg.Client('my_protocol', None)
-   server = marionette_tg.Server('my_protocol')
+   client = marionette.Client('my_protocol', None)
+   server = marionette.Server('my_protocol')
 
 4. Integrate with your application logic
 """)
@@ -159,7 +159,7 @@ def main():
             test_format(args.test_format)
         else:
             # Try to find it in formats directory
-            format_path = marionette_tg.dsl.find_format_file('client', args.test_format)
+            format_path = marionette.dsl.find_format_file('client', args.test_format)
             if format_path:
                 test_format(format_path)
             else:

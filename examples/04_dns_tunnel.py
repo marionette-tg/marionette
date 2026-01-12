@@ -24,8 +24,8 @@ from twisted.internet import defer, protocol, reactor
 from twisted.internet.protocol import DatagramProtocol
 from twisted.python import log
 
-import marionette_tg
-import marionette_tg.conf
+import marionette
+import marionette.conf
 
 
 # Configuration
@@ -116,11 +116,11 @@ def run_client(debug=False):
     print(f"  Server: {SERVER_IP}:{SERVER_PORT}")
     print(f"\nTest with: dig @{CLIENT_IP} -p {CLIENT_PORT} example.com")
     
-    marionette_tg.conf.set('server.server_ip', SERVER_IP)
-    marionette_tg.conf.set('client.client_ip', CLIENT_IP)
-    marionette_tg.conf.set('client.client_port', CLIENT_PORT)
+    marionette.conf.set('server.server_ip', SERVER_IP)
+    marionette.conf.set('client.client_ip', CLIENT_IP)
+    marionette.conf.set('client.client_port', CLIENT_PORT)
     
-    client = marionette_tg.Client(FORMAT, None)
+    client = marionette.Client(FORMAT, None)
     
     protocol = DNSClientProtocol(client)
     reactor.listenUDP(CLIENT_PORT, protocol, interface=CLIENT_IP)
@@ -138,11 +138,11 @@ def run_server(debug=False):
     print(f"  Listen: {SERVER_IP}:{SERVER_PORT} (UDP)")
     print(f"  Forward to: {PROXY_IP}:{PROXY_PORT} (real DNS)")
     
-    marionette_tg.conf.set('server.server_ip', SERVER_IP)
-    marionette_tg.conf.set('server.proxy_ip', PROXY_IP)
-    marionette_tg.conf.set('server.proxy_port', PROXY_PORT)
+    marionette.conf.set('server.server_ip', SERVER_IP)
+    marionette.conf.set('server.proxy_ip', PROXY_IP)
+    marionette.conf.set('server.proxy_port', PROXY_PORT)
     
-    server = marionette_tg.Server(FORMAT)
+    server = marionette.Server(FORMAT)
     
     protocol = DNSServerProtocol(server)
     reactor.listenUDP(SERVER_PORT, protocol, interface=SERVER_IP)

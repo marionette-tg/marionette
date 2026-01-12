@@ -16,7 +16,7 @@ import argparse
 
 sys.path.insert(0, '.')
 
-import marionette_tg.dsl
+import marionette.dsl
 
 
 def list_formats():
@@ -24,8 +24,8 @@ def list_formats():
     print("Available Marionette Formats")
     print("=" * 50)
     
-    client_formats = marionette_tg.dsl.list_mar_files('client')
-    server_formats = marionette_tg.dsl.list_mar_files('server')
+    client_formats = marionette.dsl.list_mar_files('client')
+    server_formats = marionette.dsl.list_mar_files('server')
     
     all_formats = set(client_formats) | set(server_formats)
     
@@ -55,11 +55,11 @@ def validate_format(format_name, verbose=False):
     
     # Check if format exists for client
     try:
-        client_version = marionette_tg.dsl.get_latest_version('client', format_name)
+        client_version = marionette.dsl.get_latest_version('client', format_name)
         print(f"✓ Client format found (version: {client_version})")
         
         # Try to load and parse
-        client_exec = marionette_tg.dsl.load('client', format_name, client_version)
+        client_exec = marionette.dsl.load('client', format_name, client_version)
         if client_exec:
             print(f"✓ Client format parses successfully")
             if verbose:
@@ -71,10 +71,10 @@ def validate_format(format_name, verbose=False):
     
     # Check if format exists for server
     try:
-        server_version = marionette_tg.dsl.get_latest_version('server', format_name)
+        server_version = marionette.dsl.get_latest_version('server', format_name)
         print(f"✓ Server format found (version: {server_version})")
         
-        server_exec = marionette_tg.dsl.load('server', format_name, server_version)
+        server_exec = marionette.dsl.load('server', format_name, server_version)
         if server_exec:
             print(f"✓ Server format parses successfully")
             if verbose:
@@ -102,10 +102,10 @@ def validate_all_formats():
     print("=" * 50)
     
     all_formats = set()
-    for fmt in marionette_tg.dsl.list_mar_files('client'):
+    for fmt in marionette.dsl.list_mar_files('client'):
         name = fmt.rsplit(':', 1)[0] if ':' in fmt else fmt
         all_formats.add(name)
-    for fmt in marionette_tg.dsl.list_mar_files('server'):
+    for fmt in marionette.dsl.list_mar_files('server'):
         name = fmt.rsplit(':', 1)[0] if ':' in fmt else fmt
         all_formats.add(name)
     

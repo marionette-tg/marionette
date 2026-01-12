@@ -14,9 +14,9 @@ class TestDNSTunnelExample(unittest.TestCase):
 
     def test_dns_format_exists(self):
         """Verify the dns_request format exists."""
-        import marionette_tg.dsl
+        import marionette.dsl
         
-        formats = marionette_tg.dsl.list_mar_files('client')
+        formats = marionette.dsl.list_mar_files('client')
         dns_formats = [f for f in formats if 'dns' in f.lower()]
         self.assertTrue(len(dns_formats) > 0, "No DNS format found")
 
@@ -32,9 +32,9 @@ class TestDNSTunnelExample(unittest.TestCase):
         """Verify DNS format uses UDP (not TCP)."""
         # DNS tunneling typically uses UDP
         # This is a basic check that the format exists
-        import marionette_tg.dsl
+        import marionette.dsl
         
-        formats = marionette_tg.dsl.list_mar_files('client')
+        formats = marionette.dsl.list_mar_files('client')
         dns_formats = [f for f in formats if 'dns' in f.lower()]
         self.assertTrue(len(dns_formats) > 0)
 

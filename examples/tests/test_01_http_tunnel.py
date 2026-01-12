@@ -17,19 +17,19 @@ class TestHttpTunnelExample(unittest.TestCase):
 
     def test_format_exists(self):
         """Verify the http_simple_blocking format exists."""
-        import marionette_tg.dsl
+        import marionette.dsl
         
-        formats = marionette_tg.dsl.list_mar_files('client')
+        formats = marionette.dsl.list_mar_files('client')
         # Format names include version, check for any http_simple_blocking variant
         http_formats = [f for f in formats if 'http_simple_blocking' in f]
         self.assertTrue(len(http_formats) > 0, "No http_simple_blocking format found")
 
     def test_format_parses(self):
         """Verify the format can be parsed."""
-        import marionette_tg.dsl
+        import marionette.dsl
         
         # Get the format path and parse it
-        version = marionette_tg.dsl.get_latest_version('client', 'http_simple_blocking')
+        version = marionette.dsl.get_latest_version('client', 'http_simple_blocking')
         self.assertIsNotNone(version)
 
     def test_example_imports(self):
@@ -44,13 +44,13 @@ class TestHttpTunnelExample(unittest.TestCase):
 
     def test_client_class_exists(self):
         """Verify marionette Client class is accessible."""
-        import marionette_tg
-        self.assertTrue(hasattr(marionette_tg, 'Client'))
+        import marionette
+        self.assertTrue(hasattr(marionette, 'Client'))
 
     def test_server_class_exists(self):
         """Verify marionette Server class is accessible."""
-        import marionette_tg
-        self.assertTrue(hasattr(marionette_tg, 'Server'))
+        import marionette
+        self.assertTrue(hasattr(marionette, 'Server'))
 
 
 if __name__ == '__main__':
