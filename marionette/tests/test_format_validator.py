@@ -16,15 +16,6 @@ import marionette.format_validator
 
 class TestFormatValidator(unittest.TestCase):
 
-<<<<<<< HEAD
-    def test_validate_existing_format(self):
-        """Test validation of an existing format file."""
-        # Use an actual format file that we know parses correctly
-        with open('marionette/formats/20150701/dummy.mar', 'r') as f:
-            content = f.read()
-        
-        parsed = marionette.dsl.parse(content)
-=======
     def test_valid_format(self):
         """Test validation of a valid format."""
         format_str = """
@@ -114,7 +105,6 @@ action http_error:
   server fte.send("^.*$", 64)
 """
         parsed = marionette.dsl.parse(format_str)
->>>>>>> 89dfd07 (Remove validation from load() - keep as standalone utility)
         # Should not raise
         marionette.format_validator.validate_format(parsed)
 
@@ -131,41 +121,6 @@ action http_error:
         # Should not raise
         marionette.format_validator.validate_format(parsed)
 
-<<<<<<< HEAD
-    def test_validation_fails_invalid_probabilities(self):
-        """Test that validation fails when probabilities don't sum to 1."""
-        # Create a format file with invalid probabilities
-        invalid_format = """connection(tcp, 8080):
-  start      upstream   NULL     1.0
-  upstream   downstream http_get 0.5
-  downstream end        http_ok  0.3
-
-action http_get:
-  client fte.send("^.*$", 128)
-
-action http_ok:
-  server fte.send("^.*$", 128)
-"""
-        # Write to temp file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.mar', delete=False) as f:
-            f.write(invalid_format)
-            temp_path = f.name
-        
-        try:
-            # Parse should work (syntax is valid)
-            with open(temp_path, 'r') as f:
-                content = f.read()
-            parsed = marionette.dsl.parse(content)
-            
-            # But validation should fail (probabilities don't sum to 1)
-            with self.assertRaises(marionette.format_validator.FormatValidationError) as cm:
-                marionette.format_validator.validate_format(parsed)
-            self.assertIn("sum", str(cm.exception).lower())
-        finally:
-            os.unlink(temp_path)
-
-=======
->>>>>>> 89dfd07 (Remove validation from load() - keep as standalone utility)
 
 if __name__ == '__main__':
     unittest.main()
