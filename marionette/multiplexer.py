@@ -252,7 +252,7 @@ class BufferIncoming(object):
                 cell_len = marionette.record_layer.bytes_to_long(
                     str(self.fifo_[:4]))
                 cell_obj = marionette.record_layer.unserialize(
-                    self.fifo_[cell_len:])
+                    self.fifo_[:cell_len])
                 self.fifo_ = self.fifo_[cell_len:]
                 self.fifo_len_ -= cell_len
                 self.fifo_len_ = max(self.fifo_len_, 0)
