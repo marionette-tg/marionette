@@ -111,7 +111,7 @@ class BufferOutgoing(object):
                         sequence_id,
                         n)
                     payload_length = (
-                        n - marionette_tg.record_layer.PAYLOAD_HEADER_SIZE_IN_BITS) / 8
+                        n - marionette_tg.record_layer.PAYLOAD_HEADER_SIZE_IN_BITS) // 8
                     payload = self.fifo_[stream_id][:payload_length]
                     self.fifo_[stream_id] = self.fifo_[
                         stream_id][payload_length:]

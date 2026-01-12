@@ -4,6 +4,7 @@ import copy
 import glob
 import hashlib
 import fnmatch
+import codecs
 
 import ply.lex as lex
 import ply.yacc as yacc
@@ -284,7 +285,7 @@ def p_string_arg(p):
     p_string_arg : STRING
     """
     p[0] = str(p[1][1:-1])
-    p[0] = p[0].decode("string_escape")
+    p[0] = codecs.decode(p[0], 'unicode_escape')
 
 def p_integer_arg(p):
     """
@@ -301,7 +302,7 @@ def p_float_arg(p):
 
 
 def p_error(p):
-    print "Syntax error at '%s' on line %s" % (str([p.value]), p.lineno)
+    print("Syntax error at '%s' on line %s" % (str([p.value]), p.lineno))
     # yacc.errok()
 
 yacc.yacc(debug=False, write_tables=False)
@@ -566,6 +567,6 @@ def load(party, format_name, mar_path):
 
 def get_model_uuid(format_str):
     m = hashlib.md5()
-    m.update(format_str)
-    bytes = m.digest()
-    return fte.bit_ops.bytes_to_long(bytes[:4])
+    m.update(format_str.encode('utf-8'))
+    bytes_digest = m.digest()
+    return fte.bit_ops.bytes_to_long(bytes_digest[:4])

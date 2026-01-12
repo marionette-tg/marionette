@@ -1,40 +1,46 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import os
+from setuptools import setup, find_packages
 
-from setuptools import setup
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
 
-if os.name == 'nt':
-    import py2exe
-
-setup(name='marionette-tg',
-      console=['bin/marionette_client','bin/marionette_server'],
-      scripts=['bin/marionette_client','bin/marionette_server'],
-      test_suite='marionette_tg',
-      packages=['marionette_tg','marionette_tg.plugins','marionette_tg.executables'],
-      package_data={'marionette_tg': ['marionette.conf','formats/*.mar','formats/*.py']},
-      zipfile="marionette.zip",
-      options={"py2exe": {
-          "bundle_files": 2,
-          "optimize": 0,
-          "compressed": True,
-          "includes": [
-                       'importlib','twisted','fte','regex2dfa','ply','pycurl',
-                       'marionette_tg.plugins._channel',
-                       'marionette_tg.plugins._fte',
-                       'marionette_tg.plugins._io',
-                       'marionette_tg.plugins._model',
-                       'marionette_tg.plugins._tg',
-                      ],
-          "dll_excludes": ["w9xpopen.exe"],
-      }
-      },
-      include_package_data=True,
-      install_requires=['importlib','twisted','fte','regex2dfa','ply','pycurl'],
-      version='0.0.3',
-      description='Marionette',
-      long_description='The polymorphic, programmable proxy.',
-      author='Kevin P. Dyer',
-      author_email='kpdyer@gmail.com',
-      url='https://github.com/kpdyer/marionette')
+setup(
+    name='marionette-tg',
+    version='0.1.0',
+    description='Marionette - The polymorphic, programmable proxy.',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    author='Kevin P. Dyer',
+    author_email='kpdyer@gmail.com',
+    url='https://github.com/marionette-tg/marionette',
+    license='MIT',
+    scripts=['bin/marionette_client', 'bin/marionette_server'],
+    test_suite='marionette_tg',
+    packages=find_packages(),
+    package_data={'marionette_tg': ['marionette.conf', 'formats/*.mar', 'formats/**/*.mar', 'formats/**/**/*.mar']},
+    include_package_data=True,
+    python_requires='>=3.7',
+    install_requires=[
+        'twisted>=21.0.0',
+        'fte>=0.1.0',
+        'regex2dfa>=0.1.9',
+        'ply>=3.11',
+        'pycurl>=7.43.0',
+    ],
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Topic :: Internet :: Proxy Servers',
+        'Topic :: Security',
+    ],
+)

@@ -4,7 +4,7 @@
 import os
 import sys
 
-import ConfigParser
+import configparser
 
 def find_conf_file():
     search_dirs = ['.',
@@ -25,7 +25,7 @@ def find_conf_file():
 def parse_conf():
     global conf_
 
-    confparser = ConfigParser.SafeConfigParser()
+    confparser = configparser.ConfigParser()
     conf_file_path = find_conf_file()
     if not conf_file_path:
         raise Exception('can\'t find marionette_tg.conf')
@@ -45,8 +45,8 @@ def parse_conf():
         conf_["server.server_ip"] = confparser.get("server", "server_ip")
         conf_["server.proxy_ip"] = confparser.get("server", "proxy_ip")
         conf_["server.proxy_port"] = confparser.getint("server", "proxy_port")
-    except:
-        print 'cannot parse conf file'
+    except Exception as e:
+        print('cannot parse conf file')
         sys.exit(1)
 
 

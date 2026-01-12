@@ -2,15 +2,17 @@
 # -*- coding: utf-8 -*-
 
 import binascii
+from functools import total_ordering
 
 PAYLOAD_HEADER_SIZE_IN_BITS = 200
-PAYLOAD_HEADER_SIZE_IN_BYTES = PAYLOAD_HEADER_SIZE_IN_BITS / 8
+PAYLOAD_HEADER_SIZE_IN_BYTES = PAYLOAD_HEADER_SIZE_IN_BITS // 8
 
 NORMAL = 0x1
 END_OF_STREAM = 0x2
 NEGOTIATE = 0x3
 
 
+@total_ordering
 class Cell(object):
 
     def __init__(self, model_uuid, model_instance_id, stream_id, seq_id,
@@ -26,15 +28,8 @@ class Cell(object):
         self.model_uuid_ = model_uuid
         self.model_instance_id_ = model_instance_id
 
-    def __cmp__(self, other):
-        self_id = self.get_seq_id()
-        other_id = other.get_seq_id()
-        if self_id < other_id:
-            return -1
-        elif self_id > other_id:
-            return 1
-        else:
-            return 0
+    def __lt__(self, other):
+        return self.get_seq_id() < other.get_seq_id()
 
     def __eq__(self, other):
         retval = (
@@ -100,7 +95,7 @@ def long_to_bytes(N, blocksize=1):
     bytestring = bytestring[2:] if bytestring.startswith('0x') else bytestring
     bytestring = bytestring[:-1] if bytestring.endswith('L') else bytestring
     bytestring = '0' + bytestring if (len(bytestring) % 2) != 0 else bytestring
-    bytestring = binascii.unhexlify(bytestring)
+    bytestring = binascii.unhexlify(bytestring).decode('latin-1')
 
     if blocksize > 0 and len(bytestring) % blocksize != 0:
         bytestring = '\x00' * \
@@ -113,7 +108,7 @@ def bytes_to_long(bytestring):
     """Given a ``bytestring`` returns its integer representation ``N``.
     """
     bytestring = '\x00' + bytestring
-    N = int(bytestring.encode('hex'), 16)
+    N = int(binascii.hexlify(bytestring.encode('latin-1')), 16)
     return N
 
 
@@ -138,7 +133,7 @@ def serialize(cell_obj, pad_to=0):
     seq_id = cell_obj.get_seq_id()
     payload = cell_obj.get_payload()
     padding = '\x00' * (
-        (pad_to / 8) - len(payload) - PAYLOAD_HEADER_SIZE_IN_BYTES)
+        (pad_to // 8) - len(payload) - PAYLOAD_HEADER_SIZE_IN_BYTES)
     cell_type = cell_obj.get_cell_type()
 
     bytes_cell_len = pad_to_bytes(4, long_to_bytes(

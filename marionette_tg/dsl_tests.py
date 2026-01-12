@@ -15,65 +15,65 @@ class Tests(unittest.TestCase):
           upstream   end        http_ok  1.0
 
         action http_get:
-          client fte.send("^regex\r\n\r\n$", 128)
+          client fte.send("^regex\\r\\n\\r\\n$", 128)
 
         action http_ok:
-          server fte.send("^regex\r\n\r\n\C*$", 128)"""
+          server fte.send("^regex\\r\\n\\r\\n\\C*$", 128)"""
 
         parsed_format = marionette_tg.dsl.parse(mar_format)
 
-        self.assertEquals(parsed_format.get_transport(), "tcp")
-        self.assertEquals(parsed_format.get_port(), 80)
+        self.assertEqual(parsed_format.get_transport(), "tcp")
+        self.assertEqual(parsed_format.get_port(), 80)
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_src(), "start")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_dst(), "downstream")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_action_block(), None)
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_probability(), float(1.0))
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_src(), "downstream")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_dst(), "upstream")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_action_block(), "http_get")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_probability(), float(1.0))
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[2].get_src(), "upstream")
-        self.assertEquals(parsed_format.get_transitions()[2].get_dst(), "end")
-        self.assertEquals(
+        self.assertEqual(parsed_format.get_transitions()[2].get_dst(), "end")
+        self.assertEqual(
             parsed_format.get_transitions()[2].get_action_block(), "http_ok")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[2].get_probability(), float(1.0))
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_name(), "http_get")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_party(), "client")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_module(), "fte")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_method(), "send")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_args(), [
                 "^regex\r\n\r\n$", 128])
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_name(), "http_ok")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_party(), "server")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_module(), "fte")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_method(), "send")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_args(), [
-                "^regex\r\n\r\n\C*$", 128])
+                "^regex\r\n\r\n\\C*$", 128])
 
     def test2(self):
         mar_format = """connection(tcp, 80):
@@ -82,78 +82,78 @@ class Tests(unittest.TestCase):
           upstream   end        http_ok  1.0
 
         action http_get:
-          client fte.send("^regex\r\n\r\n$", 128)
+          client fte.send("^regex\\r\\n\\r\\n$", 128)
 
         action http_ok:
-          server fte.send("^regex\r\n\r\n\C*$", 128)
+          server fte.send("^regex\\r\\n\\r\\n\\C*$", 128)
 
         action http_put:
-          client fte.send("^regex\r\n\r\n$", 128)"""
+          client fte.send("^regex\\r\\n\\r\\n$", 128)"""
 
         parsed_format = marionette_tg.dsl.parse(mar_format)
 
-        self.assertEquals(parsed_format.get_transport(), "tcp")
-        self.assertEquals(parsed_format.get_port(), 80)
+        self.assertEqual(parsed_format.get_transport(), "tcp")
+        self.assertEqual(parsed_format.get_port(), 80)
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_src(), "start")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_dst(), "downstream")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_action_block(), None)
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_probability(), float(1.0))
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_src(), "downstream")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_dst(), "upstream")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_action_block(), "http_get")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_probability(), float(1.0))
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[2].get_src(), "upstream")
-        self.assertEquals(parsed_format.get_transitions()[2].get_dst(), "end")
-        self.assertEquals(
+        self.assertEqual(parsed_format.get_transitions()[2].get_dst(), "end")
+        self.assertEqual(
             parsed_format.get_transitions()[2].get_action_block(), "http_ok")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[2].get_probability(), float(1.0))
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_name(), "http_get")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_party(), "client")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_module(), "fte")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_method(), "send")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_args(), [
                 "^regex\r\n\r\n$", 128])
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_name(), "http_ok")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_party(), "server")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_module(), "fte")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_method(), "send")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_args(), [
-                "^regex\r\n\r\n\C*$", 128])
+                "^regex\r\n\r\n\\C*$", 128])
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[2].get_name(), "http_put")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[2].get_party(), "client")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[2].get_module(), "fte")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[2].get_method(), "send")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[2].get_args(), [
                 "^regex\r\n\r\n$", 128])
 
@@ -164,95 +164,95 @@ class Tests(unittest.TestCase):
           upstream   end        http_ok  1.0
 
         action http_get:
-          client fte.send("^regex\r\n\r\n$", 128)
+          client fte.send("^regex\\r\\n\\r\\n$", 128)
 
         action http_ok:
-          server fte.send("^regex\r\n\r\n\C*$", 128)
+          server fte.send("^regex\\r\\n\\r\\n\\C*$", 128)
 
         action http_put:
-          client fte.send("^regex\r\n\r\n$", 128)
+          client fte.send("^regex\\r\\n\\r\\n$", 128)
 
         action http_notok:
-          server fte.send("^regex\r\n\r\n\C*$", 128)"""
+          server fte.send("^regex\\r\\n\\r\\n\\C*$", 128)"""
 
         parsed_format = marionette_tg.dsl.parse(mar_format)
 
-        self.assertEquals(parsed_format.get_transport(), "tcp")
-        self.assertEquals(parsed_format.get_port(), 80)
+        self.assertEqual(parsed_format.get_transport(), "tcp")
+        self.assertEqual(parsed_format.get_port(), 80)
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_src(), "start")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_dst(), "downstream")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_action_block(), None)
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_probability(), float(1.0))
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_src(), "downstream")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_dst(), "upstream")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_action_block(), "http_get")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_probability(), float(1.0))
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[2].get_src(), "upstream")
-        self.assertEquals(parsed_format.get_transitions()[2].get_dst(), "end")
-        self.assertEquals(
+        self.assertEqual(parsed_format.get_transitions()[2].get_dst(), "end")
+        self.assertEqual(
             parsed_format.get_transitions()[2].get_action_block(), "http_ok")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[2].get_probability(), float(1.0))
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_name(), "http_get")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_party(), "client")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_module(), "fte")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_method(), "send")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_args(), [
                 "^regex\r\n\r\n$", 128])
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_name(), "http_ok")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_party(), "server")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_module(), "fte")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_method(), "send")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_args(), [
-                "^regex\r\n\r\n\C*$", 128])
+                "^regex\r\n\r\n\\C*$", 128])
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[2].get_name(), "http_put")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[2].get_party(), "client")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[2].get_module(), "fte")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[2].get_method(), "send")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[2].get_args(), [
                 "^regex\r\n\r\n$", 128])
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[3].get_name(), "http_notok")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[3].get_party(), "server")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[3].get_module(), "fte")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[3].get_method(), "send")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[3].get_args(), [
-                "^regex\r\n\r\n\C*$", 128])
+                "^regex\r\n\r\n\\C*$", 128])
 
     def test4(self):
         mar_format = """connection(tcp, 8082):
@@ -273,81 +273,81 @@ action downstream_async:
 
         parsed_format = marionette_tg.dsl.parse(mar_format)
 
-        self.assertEquals(parsed_format.get_transport(), "tcp")
-        self.assertEquals(parsed_format.get_port(), 8082)
+        self.assertEqual(parsed_format.get_transport(), "tcp")
+        self.assertEqual(parsed_format.get_port(), 8082)
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_src(), "start")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_dst(), "handshake")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_action_block(), None)
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_probability(), float(1.0))
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_src(), "handshake")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_dst(), "upstream")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_action_block(),
             "upstream_handshake")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_probability(), float(1.0))
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[2].get_src(), "upstream")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[2].get_dst(), "downstream")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[2].get_action_block(),
             "upstream_async")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[2].get_probability(), float(1.0))
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[3].get_src(), "downstream")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[3].get_dst(), "upstream")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[3].get_action_block(),
             "downstream_async")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[3].get_probability(), float(1.0))
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_name(),
             "upstream_handshake")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_party(), "client")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_module(), "fte")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_method(), "send")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_args(), ["^.*$", 128])
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_name(), "upstream_async")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_party(), "client")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_module(), "fte")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_method(), "send_async")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_args(), ["^.*$", 128])
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[2].get_name(),
             "downstream_async")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[2].get_party(), "server")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[2].get_module(), "fte")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[2].get_method(), "send_async")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[2].get_args(), ["^.*$", 128])
 
     def test5(self):
@@ -357,40 +357,40 @@ action downstream_async:
           upstream   end        http_ok  1.0
 
         action http_get:
-          client fte.send("^regex\r\n\r\n$")
+          client fte.send("^regex\\r\\n\\r\\n$")
 
         action http_ok:
-          server fte.send("^regex\r\n\r\n\C*$")"""
+          server fte.send("^regex\\r\\n\\r\\n\\C*$")"""
 
         parsed_format = marionette_tg.dsl.parse(mar_format)
 
-        self.assertEquals(parsed_format.get_transport(), "tcp")
-        self.assertEquals(parsed_format.get_port(), 80)
+        self.assertEqual(parsed_format.get_transport(), "tcp")
+        self.assertEqual(parsed_format.get_port(), 80)
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_src(), "start")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_dst(), "downstream")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_action_block(), None)
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_probability(), float(1.0))
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_src(), "downstream")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_dst(), "upstream")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_action_block(), "http_get")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_probability(), float(1.0))
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[2].get_src(), "upstream")
-        self.assertEquals(parsed_format.get_transitions()[2].get_dst(), "end")
-        self.assertEquals(
+        self.assertEqual(parsed_format.get_transitions()[2].get_dst(), "end")
+        self.assertEqual(
             parsed_format.get_transitions()[2].get_action_block(), "http_ok")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[2].get_probability(), float(1.0))
 
     def test6(self):
@@ -399,52 +399,52 @@ action downstream_async:
           do_nothing end NULL 1.0
 
         action http_get:
-          client fte.send("^regex1\r\n\r\n$")
-          server fte.recv("^regex2\r\n\r\n$")"""
+          client fte.send("^regex1\\r\\n\\r\\n$")
+          server fte.recv("^regex2\\r\\n\\r\\n$")"""
 
         parsed_format = marionette_tg.dsl.parse(mar_format)
 
-        self.assertEquals(parsed_format.get_transport(), "tcp")
-        self.assertEquals(parsed_format.get_port(), 80)
+        self.assertEqual(parsed_format.get_transport(), "tcp")
+        self.assertEqual(parsed_format.get_port(), 80)
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_src(), "start")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_dst(), "do_nothing")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_action_block(), None)
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_probability(), float(1.0))
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_src(), "do_nothing")
-        self.assertEquals(parsed_format.get_transitions()[1].get_dst(), "end")
-        self.assertEquals(
+        self.assertEqual(parsed_format.get_transitions()[1].get_dst(), "end")
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_action_block(), None)
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_probability(), float(1.0))
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_name(), "http_get")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_party(), "client")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_module(), "fte")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_method(), "send")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_args(),
             ["^regex1\r\n\r\n$"])
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_name(), "http_get")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_party(), "server")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_module(), "fte")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_method(), "recv")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_args(),
             ["^regex2\r\n\r\n$"])
 
@@ -457,54 +457,54 @@ action downstream_async:
           do_err end NULL error
 
         action http_get:
-          client fte.send("^regex1\r\n\r\n$")"""
+          client fte.send("^regex1\\r\\n\\r\\n$")"""
 
         parsed_format = marionette_tg.dsl.parse(mar_format)
 
-        self.assertEquals(parsed_format.get_transport(), "tcp")
-        self.assertEquals(parsed_format.get_port(), 80)
+        self.assertEqual(parsed_format.get_transport(), "tcp")
+        self.assertEqual(parsed_format.get_port(), 80)
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_src(), "start")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_dst(), "do_nothing")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_action_block(), None)
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].get_probability(), float(1.0))
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[0].is_error_transition(), False)
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_src(), "do_nothing")
-        self.assertEquals(parsed_format.get_transitions()[1].get_dst(), "end")
-        self.assertEquals(
+        self.assertEqual(parsed_format.get_transitions()[1].get_dst(), "end")
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_action_block(), None)
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].get_probability(), float(1.0))
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[1].is_error_transition(), False)
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[2].get_src(), "start")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[2].get_dst(), "do_err")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[2].get_action_block(), None)
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[2].get_probability(), float(0))
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[2].is_error_transition(), True)
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[3].get_src(), "do_err")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[3].get_dst(), "end")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[3].get_action_block(), None)
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[3].get_probability(), float(0))
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_transitions()[3].is_error_transition(), True)
 
 
@@ -514,35 +514,35 @@ action downstream_async:
           do_nothing end NULL 1.0
 
         action http_get:
-          client fte.send("^regex1\r\n\r\n$")
-          server fte.recv("^regex2\r\n\r\n$") if regex_match_incoming("^regex2.*")"""
+          client fte.send("^regex1\\r\\n\\r\\n$")
+          server fte.recv("^regex2\\r\\n\\r\\n$") if regex_match_incoming("^regex2.*")"""
 
         parsed_format = marionette_tg.dsl.parse(mar_format)
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_name(), "http_get")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_party(), "client")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_module(), "fte")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_method(), "send")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[0].get_args(),
             ["^regex1\r\n\r\n$"])
 
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_name(), "http_get")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_party(), "server")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_module(), "fte")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_method(), "recv")
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_args(),
             ["^regex2\r\n\r\n$"])
-        self.assertEquals(
+        self.assertEqual(
             parsed_format.get_action_blocks()[1].get_regex_match_incoming(),"^regex2.*")
 
     def test9(self):
@@ -551,11 +551,11 @@ action downstream_async:
           do_nothing end NULL 1.0
 
         action http_get:
-          client fte.send("^regex1\r\n\r\n$")"""
+          client fte.send("^regex1\\r\\n\\r\\n$")"""
 
         parsed_format = marionette_tg.dsl.parse(mar_format)
 
-        self.assertEquals(parsed_format.get_transport(), "udp")
+        self.assertEqual(parsed_format.get_transport(), "udp")
 
     def test_hex_input_strings(self):
         mar_files = marionette_tg.dsl.find_mar_files('client',
@@ -566,11 +566,11 @@ action downstream_async:
 
         parsed_format = marionette_tg.dsl.parse(mar_format)
 
-        self.assertEquals(parsed_format.get_action_blocks()[0].get_name(), "null_puts")
-        self.assertEquals(parsed_format.get_action_blocks()[0].get_party(), "client")
-        self.assertEquals(parsed_format.get_action_blocks()[0].get_module(), "io")
-        self.assertEquals(parsed_format.get_action_blocks()[0].get_method(), "puts")
-        self.assertEquals(parsed_format.get_action_blocks()[0].get_args()[0], "\x41\x42\\backslash")
+        self.assertEqual(parsed_format.get_action_blocks()[0].get_name(), "null_puts")
+        self.assertEqual(parsed_format.get_action_blocks()[0].get_party(), "client")
+        self.assertEqual(parsed_format.get_action_blocks()[0].get_module(), "io")
+        self.assertEqual(parsed_format.get_action_blocks()[0].get_method(), "puts")
+        self.assertEqual(parsed_format.get_action_blocks()[0].get_args()[0], "\x41\x42\\backslash")
 
 
 if __name__ == "__main__":
