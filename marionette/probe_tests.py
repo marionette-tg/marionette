@@ -9,7 +9,7 @@ import unittest
 
 sys.path.append('.')
 
-import marionette_tg.conf
+import marionette.conf
 
 
 def execute(cmd):
@@ -19,7 +19,7 @@ def execute(cmd):
 class Tests(unittest.TestCase):
 
     def startservers(self, format):
-        server_proxy_ip = marionette_tg.conf.get("server.proxy_ip")
+        server_proxy_ip = marionette.conf.get("server.proxy_ip")
 
         execute("./bin/marionette_server --proxy_ip %s --proxy_port 18081 --format %s &" %
                 (server_proxy_ip, format))
@@ -29,7 +29,7 @@ class Tests(unittest.TestCase):
         execute("pkill -9 -f marionette_server")
 
     def do_probe(self, request_method, request_uri, expected_response):
-        server_listen_ip = marionette_tg.conf.get("server.server_ip")
+        server_listen_ip = marionette.conf.get("server.server_ip")
         conn = http.client.HTTPConnection(
             server_listen_ip, 8080, timeout=30)
         conn.request(request_method, request_uri)

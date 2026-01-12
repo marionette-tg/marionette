@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import marionette_tg.action
-import marionette_tg.channel
-import marionette_tg.conf
-import marionette_tg.executable
+import marionette.action
+import marionette.channel
+import marionette.conf
+import marionette.executable
 
 class ClientDriver(object):
 
@@ -26,7 +26,7 @@ class ClientDriver(object):
 
             if self.state_:
                 for key in self.state_.local_:
-                    if key not in marionette_tg.executables.pioa.RESERVED_LOCAL_VARS:
+                    if key not in marionette.executables.pioa.RESERVED_LOCAL_VARS:
                         executable.set_local(key, self.state_.local_[key])
 
             reactor.callFromThread(executable.execute, reactor)
@@ -39,7 +39,7 @@ class ClientDriver(object):
         return len(self.running_ + self.to_start_) > 0
 
     def setFormat(self, format_name, format_version=None):
-        self.executeable_ = marionette_tg.executable.Executable(self.party_, format_name,
+        self.executeable_ = marionette.executable.Executable(self.party_, format_name,
                                                          format_version,
                                                          self.multiplexer_outgoing_,
                                                          self.multiplexer_incoming_)
@@ -101,7 +101,7 @@ class ServerDriver(object):
         return len(self.running_)
 
     def setFormat(self, format_name, format_version=None):
-        self.executable_ = marionette_tg.executable.Executable(self.party_, format_name,
+        self.executable_ = marionette.executable.Executable(self.party_, format_name,
                                                          format_version,
                                                          self.multiplexer_outgoing_,
                                                          self.multiplexer_incoming_)
@@ -117,7 +117,7 @@ class ServerDriver(object):
 
         if self.state_:
             for key in self.state_.local_:
-                if key not in marionette_tg.executables.pioa.RESERVED_LOCAL_VARS:
+                if key not in marionette.executables.pioa.RESERVED_LOCAL_VARS:
                     self.executable_.set_local(key, self.state_.local_[key])
 
     def stop(self):

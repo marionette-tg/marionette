@@ -11,8 +11,8 @@ import requests
 
 sys.path.append('.')
 
-import marionette_tg.conf
-import marionette_tg.dsl
+import marionette.conf
+import marionette.dsl
 
 class Downloader(threading.Thread):
 
@@ -42,8 +42,8 @@ def download_wrapper(use_marionette, url, dst_path, format_package):
     socks_ip = None
     socks_port = None
     if use_marionette:
-        socks_ip = marionette_tg.conf.get("client.client_ip")
-        socks_port = marionette_tg.conf.get("client.client_port")
+        socks_ip = marionette.conf.get("client.client_ip")
+        socks_port = marionette.conf.get("client.client_port")
 
     downloader = Downloader(url, dst_path, socks_ip, socks_port)
     downloader.run()
@@ -80,7 +80,7 @@ class FormatUpdater(object):
                 self.install_package(format_package)
 
     def package_exists(self, format_package):
-        format_dir = marionette_tg.dsl.get_format_dir()
+        format_dir = marionette.dsl.get_format_dir()
         package_dir = os.path.join(format_dir, format_package)
         return os.path.isdir(package_dir)
 
@@ -96,7 +96,7 @@ class FormatUpdater(object):
     def extract_package(self, result):
         (format_package, package_path) = result
 
-        format_dir = marionette_tg.dsl.get_format_dir()
+        format_dir = marionette.dsl.get_format_dir()
         package_dir = os.path.join(format_dir, format_package)
 
         tar = tarfile.open(package_path, "r:gz")

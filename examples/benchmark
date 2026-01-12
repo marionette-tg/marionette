@@ -14,7 +14,7 @@ import http.client
 
 sys.path.append('.')
 
-import marionette_tg.conf
+import marionette.conf
 
 expected_response = ''
 for x in range(2**18):
@@ -26,7 +26,7 @@ def execute(cmd):
 
 
 def exec_download():
-    client_listen_ip = marionette_tg.conf.get("client.client_ip")
+    client_listen_ip = marionette.conf.get("client.client_ip")
     conn = http.client.HTTPConnection(
         client_listen_ip,
         18079,
@@ -41,8 +41,8 @@ def exec_download():
 
 
 def startservers(format_name):
-    client_listen_ip = marionette_tg.conf.get("client.client_ip")
-    server_proxy_ip = marionette_tg.conf.get("server.proxy_ip")
+    client_listen_ip = marionette.conf.get("client.client_ip")
+    server_proxy_ip = marionette.conf.get("server.proxy_ip")
 
     execute("./examples/httpserver --local_port 18081 &")
     time.sleep(3)

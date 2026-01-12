@@ -5,7 +5,7 @@ If you wish to create a new marionette plugin called ```my_plugin.my_func``` you
 Create the following file:
 
 ```
-marionette_tg/plugins/_my_plugin.py
+marionette/plugins/_my_plugin.py
 ```
 
 with a function that implementats the following interface

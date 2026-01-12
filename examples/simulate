@@ -11,8 +11,8 @@ import sys
 
 sys.path.append(".")
 
-import marionette_tg.dsl
-import marionette_tg.plugins._tg
+import marionette.dsl
+import marionette.plugins._tg
 
 
 MAX_TRIALS = 5
@@ -32,7 +32,7 @@ def do_simulation(format_name, latency, path=None, elapsed=None, capacity_up=Non
         capacity_down = []
 
     for k in range(MAX_TRIALS):
-        executable = marionette_tg.dsl.load('client', format_name)
+        executable = marionette.dsl.load('client', format_name)
         executable.check_rng_state()
 
         elapsed.append(latency * 2)
@@ -112,7 +112,7 @@ def analyze_actions(actions, latency, path=None, elapsed=None, capacity_up=None,
 
 
 def get_tg_capacity(tg_name):
-    retval = marionette_tg.plugins._tg.get_grammar_capacity(tg_name)
+    retval = marionette.plugins._tg.get_grammar_capacity(tg_name)
     return retval
 
 

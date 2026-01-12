@@ -15,7 +15,7 @@ import fte
 import fte.encoder
 import fte.bit_ops
 
-import marionette_tg.channel
+import marionette.channel
 
 EVENT_LOOP_FREQUENCY_S = 0.001
 
@@ -69,7 +69,7 @@ class PIOA(object):
         if self.party_ == "client":
             if not self.channel_:
                 if not self.channel_requested_:
-                    marionette_tg.channel.open_new_channel(self.get_transport_protocol(), 
+                    marionette.channel.open_new_channel(self.get_transport_protocol(), 
                         self.get_port(), self.set_channel)
                     self.channel_requested_ = True
         return (self.channel_ != None)
@@ -206,7 +206,7 @@ class PIOA(object):
         method = action_obj.get_method()
         args = action_obj.get_args()
 
-        i = importlib.import_module("marionette_tg.plugins._" + module)
+        i = importlib.import_module("marionette.plugins._" + module)
         method_obj = getattr(i, method)
 
         success = method_obj(self.channel_, self.marionette_state_, args)
