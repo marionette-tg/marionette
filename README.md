@@ -42,7 +42,7 @@ python -m pytest marionette/ -v
 Start the backend SOCKS server, marionette server, and marionette client:
 
 ```bash
-./bin/socksserver --local_port 8081 &
+./examples/socksserver --local_port 8081 &
 ./bin/marionette_server --server_ip 127.0.0.1 --proxy_ip 127.0.0.1 --proxy_port 8081 --format dummy &
 ./bin/marionette_client --server_ip 127.0.0.1 --client_ip 127.0.0.1 --client_port 8079 --format dummy &
 ```

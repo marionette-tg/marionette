@@ -18,7 +18,7 @@ pip install marionette-tg
 
 ```bash
 # Start the SOCKS backend
-./bin/socksserver --local_port 8081 &
+./examples/socksserver --local_port 8081 &
 
 # Start the marionette server
 ./bin/marionette_server --server_ip 127.0.0.1 --proxy_ip 127.0.0.1 --proxy_port 8081 --format dummy &
