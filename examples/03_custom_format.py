@@ -132,7 +132,7 @@ Available Plugins:
 
 def parse_format(format_string, name="custom"):
     """Parse a format string and validate it."""
-    import marionette_tg.dsl
+    import marionette.dsl
     
     # Write format to temp file
     with tempfile.NamedTemporaryFile(mode='w', suffix='.mar', delete=False) as f:
@@ -144,7 +144,7 @@ def parse_format(format_string, name="custom"):
         print("-" * 40)
         
         # Parse the format
-        result = marionette_tg.dsl.parse(temp_path)
+        result = marionette.dsl.parse(temp_path)
         
         if result:
             print("✓ Format parsed successfully!")

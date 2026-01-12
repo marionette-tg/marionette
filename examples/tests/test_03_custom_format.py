@@ -14,8 +14,8 @@ class TestCustomFormatExample(unittest.TestCase):
 
     def test_dsl_module_exists(self):
         """Verify DSL module is accessible."""
-        import marionette_tg.dsl
-        self.assertTrue(hasattr(marionette_tg.dsl, 'parse'))
+        import marionette.dsl
+        self.assertTrue(hasattr(marionette.dsl, 'parse'))
 
     def test_example_imports(self):
         """Verify the example script can be imported."""

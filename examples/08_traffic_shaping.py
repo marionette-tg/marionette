@@ -16,7 +16,7 @@ import statistics
 
 sys.path.insert(0, '.')
 
-import marionette_tg.dsl
+import marionette.dsl
 
 
 class TrafficAnalyzer:
@@ -30,7 +30,7 @@ class TrafficAnalyzer:
     def analyze(self):
         """Analyze the format's traffic characteristics."""
         try:
-            executable = marionette_tg.dsl.load('client', self.format_name)
+            executable = marionette.dsl.load('client', self.format_name)
             
             # Extract state information
             self.states = list(executable.states_.keys())

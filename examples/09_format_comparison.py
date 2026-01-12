@@ -15,8 +15,8 @@ import argparse
 
 sys.path.insert(0, '.')
 
-import marionette_tg.dsl
-import marionette_tg.plugins._tg
+import marionette.dsl
+import marionette.plugins._tg
 
 
 def get_format_info(format_name):
@@ -33,9 +33,9 @@ def get_format_info(format_name):
     
     try:
         # Client info
-        client_version = marionette_tg.dsl.get_latest_version('client', format_name)
+        client_version = marionette.dsl.get_latest_version('client', format_name)
         info['client_version'] = client_version
-        client_exec = marionette_tg.dsl.load('client', format_name, client_version)
+        client_exec = marionette.dsl.load('client', format_name, client_version)
         info['states'] = list(client_exec.states_.keys())
         info['actions'] = len(client_exec.actions_)
         
@@ -53,7 +53,7 @@ def get_format_info(format_name):
         
         # Server info
         try:
-            server_version = marionette_tg.dsl.get_latest_version('server', format_name)
+            server_version = marionette.dsl.get_latest_version('server', format_name)
             info['server_version'] = server_version
         except:
             pass
@@ -70,7 +70,7 @@ def compare_all_formats():
     print("=" * 80)
     
     all_formats = set()
-    for fmt in marionette_tg.dsl.list_mar_files('client'):
+    for fmt in marionette.dsl.list_mar_files('client'):
         name = fmt.rsplit(':', 1)[0] if ':' in fmt else fmt
         all_formats.add(name)
     

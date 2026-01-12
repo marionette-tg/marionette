@@ -16,8 +16,8 @@ import threading
 
 sys.path.insert(0, '.')
 
-import marionette_tg
-import marionette_tg.conf
+import marionette
+import marionette.conf
 
 
 class FormatSwitcher:
@@ -81,9 +81,9 @@ def run_client(formats, switch_interval, debug=False):
     print(f"Switch Interval: {switch_interval} seconds")
     print("=" * 60)
     
-    marionette_tg.conf.set('client.client_ip', '127.0.0.1')
-    marionette_tg.conf.set('client.client_port', 8079)
-    marionette_tg.conf.set('server.server_ip', '127.0.0.1')
+    marionette.conf.set('client.client_ip', '127.0.0.1')
+    marionette.conf.set('client.client_port', 8079)
+    marionette.conf.set('server.server_ip', '127.0.0.1')
     
     if debug:
         from twisted.python import log
@@ -91,7 +91,7 @@ def run_client(formats, switch_interval, debug=False):
     
     # Start with first format
     switcher = FormatSwitcher(formats, switch_interval)
-    client = marionette_tg.Client(switcher.get_current_format(), None)
+    client = marionette.Client(switcher.get_current_format(), None)
     
     # Start format switching
     switcher.start_switching(client)
@@ -125,8 +125,8 @@ def main():
     formats = [f.strip() for f in args.formats.split(',')]
     
     # Verify formats exist
-    import marionette_tg.dsl
-    available = marionette_tg.dsl.list_mar_files('client')
+    import marionette.dsl
+    available = marionette.dsl.list_mar_files('client')
     available_names = {f.split(':')[0] for f in available}
     
     invalid = [f for f in formats if f not in available_names]
