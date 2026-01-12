@@ -7,7 +7,7 @@ import threading
 from twisted.internet import threads
 from twisted.internet import defer
 
-import pycurl
+import requests
 
 sys.path.append('.')
 
@@ -25,15 +25,16 @@ class Downloader(threading.Thread):
         self.socks_port_ = socks_port
 
     def run(self):
-        with open(self.dst_path_, 'w+b') as fh:
-            c = pycurl.Curl()
-            c.setopt(pycurl.URL, self.src_url_)
-            c.setopt(c.WRITEDATA, fh)
-            if self.socks_ip_ and self.socks_port_:
-                c.setopt(pycurl.PROXY, self.socks_ip_)
-                c.setopt(pycurl.PROXYPORT, self.socks_port_)
-                c.setopt(pycurl.PROXYTYPE, pycurl.PROXYTYPE_SOCKS4)
-            c.perform()
+        proxies = None
+        if self.socks_ip_ and self.socks_port_:
+            proxy_url = f"socks4://{self.socks_ip_}:{self.socks_port_}"
+            proxies = {"http": proxy_url, "https": proxy_url}
+
+        response = requests.get(self.src_url_, proxies=proxies, timeout=30)
+        response.raise_for_status()
+
+        with open(self.dst_path_, 'wb') as fh:
+            fh.write(response.content)
 
         return self.dst_path_
 

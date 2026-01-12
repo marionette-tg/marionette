@@ -25,7 +25,8 @@ setup(
         'twisted>=25.5.0',
         'fte>=0.2.1',
         'ply>=3.11',
-        'pycurl>=7.45.0',
+        'requests>=2.28.0',
+        'PySocks>=1.7.0',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
