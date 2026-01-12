@@ -123,5 +123,7 @@ for param in [
         'active_probing/ssh_openssh_661',
         'active_probing/ftp_pureftpd_10']:
         suite.addTest(ParametrizedTestCase.parametrize(CliTest, param=param))
-testresult = unittest.TextTestRunner(verbosity=2).run(suite)
-sys.exit(not testresult.wasSuccessful())
+
+if __name__ == '__main__':
+    testresult = unittest.TextTestRunner(verbosity=2).run(suite)
+    sys.exit(not testresult.wasSuccessful())
