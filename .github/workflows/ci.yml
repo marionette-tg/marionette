@@ -32,7 +32,7 @@ jobs:
 
     - name: Run unit tests
       run: |
-        python -m pytest marionette/dsl_tests.py marionette/record_layer_tests.py -v
+        python -m pytest marionette/tests/ -v
 
     - name: Run example tests
       run: |
