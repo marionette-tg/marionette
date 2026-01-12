@@ -32,7 +32,7 @@ jobs:
 
     - name: Run unit tests
       run: |
-        python -m pytest marionette_tg/dsl_tests.py marionette_tg/record_layer_tests.py -v
+        python -m pytest marionette/dsl_tests.py marionette/record_layer_tests.py -v
 
   lint:
     runs-on: ubuntu-latest

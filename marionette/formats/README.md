@@ -6,7 +6,7 @@ See the top-level README for examples of how to use the DSL and specify formats.
 We add formats using the following convention.
 
 ```
-marionette_tg/formats/[fromat_version]/[format_name].mar
+marionette/formats/[fromat_version]/[format_name].mar
 ```
 
 One can specify the format name and version on the CLI.

@@ -11,7 +11,7 @@ from twisted.python import log
 
 sys.path.append('.')
 
-import marionette_tg.conf
+import marionette.conf
 
 parser = argparse.ArgumentParser(
     description='Respond to HTTP requests with integer strings.')
@@ -32,7 +32,7 @@ class GetResource(resource.Resource):
         return retval
 
 if __name__ == "__main__":
-    if marionette_tg.conf.get("general.debug"):
+    if marionette.conf.get("general.debug"):
         log.startLogging(sys.stdout)
 
     reactor.listenTCP(LOCAL_PORT, server.Site(GetResource()))

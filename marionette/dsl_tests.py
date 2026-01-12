@@ -3,7 +3,7 @@ import unittest
 
 sys.path.append('.')
 
-import marionette_tg.dsl
+import marionette.dsl
 
 
 class Tests(unittest.TestCase):
@@ -20,7 +20,7 @@ class Tests(unittest.TestCase):
         action http_ok:
           server fte.send("^regex\\r\\n\\r\\n\\C*$", 128)"""
 
-        parsed_format = marionette_tg.dsl.parse(mar_format)
+        parsed_format = marionette.dsl.parse(mar_format)
 
         self.assertEqual(parsed_format.get_transport(), "tcp")
         self.assertEqual(parsed_format.get_port(), 80)
@@ -90,7 +90,7 @@ class Tests(unittest.TestCase):
         action http_put:
           client fte.send("^regex\\r\\n\\r\\n$", 128)"""
 
-        parsed_format = marionette_tg.dsl.parse(mar_format)
+        parsed_format = marionette.dsl.parse(mar_format)
 
         self.assertEqual(parsed_format.get_transport(), "tcp")
         self.assertEqual(parsed_format.get_port(), 80)
@@ -175,7 +175,7 @@ class Tests(unittest.TestCase):
         action http_notok:
           server fte.send("^regex\\r\\n\\r\\n\\C*$", 128)"""
 
-        parsed_format = marionette_tg.dsl.parse(mar_format)
+        parsed_format = marionette.dsl.parse(mar_format)
 
         self.assertEqual(parsed_format.get_transport(), "tcp")
         self.assertEqual(parsed_format.get_port(), 80)
@@ -271,7 +271,7 @@ action downstream_async:
   server fte.send_async("^.*$", 128)
 """
 
-        parsed_format = marionette_tg.dsl.parse(mar_format)
+        parsed_format = marionette.dsl.parse(mar_format)
 
         self.assertEqual(parsed_format.get_transport(), "tcp")
         self.assertEqual(parsed_format.get_port(), 8082)
@@ -362,7 +362,7 @@ action downstream_async:
         action http_ok:
           server fte.send("^regex\\r\\n\\r\\n\\C*$")"""
 
-        parsed_format = marionette_tg.dsl.parse(mar_format)
+        parsed_format = marionette.dsl.parse(mar_format)
 
         self.assertEqual(parsed_format.get_transport(), "tcp")
         self.assertEqual(parsed_format.get_port(), 80)
@@ -402,7 +402,7 @@ action downstream_async:
           client fte.send("^regex1\\r\\n\\r\\n$")
           server fte.recv("^regex2\\r\\n\\r\\n$")"""
 
-        parsed_format = marionette_tg.dsl.parse(mar_format)
+        parsed_format = marionette.dsl.parse(mar_format)
 
         self.assertEqual(parsed_format.get_transport(), "tcp")
         self.assertEqual(parsed_format.get_port(), 80)
@@ -459,7 +459,7 @@ action downstream_async:
         action http_get:
           client fte.send("^regex1\\r\\n\\r\\n$")"""
 
-        parsed_format = marionette_tg.dsl.parse(mar_format)
+        parsed_format = marionette.dsl.parse(mar_format)
 
         self.assertEqual(parsed_format.get_transport(), "tcp")
         self.assertEqual(parsed_format.get_port(), 80)
@@ -517,7 +517,7 @@ action downstream_async:
           client fte.send("^regex1\\r\\n\\r\\n$")
           server fte.recv("^regex2\\r\\n\\r\\n$") if regex_match_incoming("^regex2.*")"""
 
-        parsed_format = marionette_tg.dsl.parse(mar_format)
+        parsed_format = marionette.dsl.parse(mar_format)
 
         self.assertEqual(
             parsed_format.get_action_blocks()[0].get_name(), "http_get")
@@ -553,18 +553,18 @@ action downstream_async:
         action http_get:
           client fte.send("^regex1\\r\\n\\r\\n$")"""
 
-        parsed_format = marionette_tg.dsl.parse(mar_format)
+        parsed_format = marionette.dsl.parse(mar_format)
 
         self.assertEqual(parsed_format.get_transport(), "udp")
 
     def test_hex_input_strings(self):
-        mar_files = marionette_tg.dsl.find_mar_files('client',
+        mar_files = marionette.dsl.find_mar_files('client',
                                                      'test_hex_input_strings',
                                                      '20150701')
         with open(mar_files[0]) as f:
             mar_format = f.read()
 
-        parsed_format = marionette_tg.dsl.parse(mar_format)
+        parsed_format = marionette.dsl.parse(mar_format)
 
         self.assertEqual(parsed_format.get_action_blocks()[0].get_name(), "null_puts")
         self.assertEqual(parsed_format.get_action_blocks()[0].get_party(), "client")

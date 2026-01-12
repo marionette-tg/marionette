@@ -34,7 +34,7 @@ pip install -e .
 ### Verify Installation
 
 ```bash
-python -m pytest marionette_tg/ -v
+python -m pytest marionette/ -v
 ```
 
 ## Quick Start

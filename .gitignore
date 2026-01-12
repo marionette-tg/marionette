@@ -77,4 +77,4 @@ parser.out
 .DS_Store
 
 # Project specific
-marionette_tg.egg-info/
+marionette.egg-info/

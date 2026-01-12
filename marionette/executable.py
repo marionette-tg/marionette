@@ -2,8 +2,8 @@ import sys
 
 sys.path.append('.')
 
-import marionette_tg.channel
-import marionette_tg.dsl
+import marionette.channel
+import marionette.dsl
 
 EVENT_LOOP_FREQUENCY_S = 0.001
 
@@ -19,7 +19,7 @@ class Executable(object):
         self.executables_ = self.load(party, self.format_, self.format_version_)
 
     def load(self, party, format_name, format_version):
-        executables = marionette_tg.dsl.load_all(party, format_name, format_version)
+        executables = marionette.dsl.load_all(party, format_name, format_version)
 
         executables_tmp = {}
         for executable in executables:
@@ -70,13 +70,13 @@ class Executable(object):
         for executable in self.executables_:
             executable.stop()
         if self.party_ == "server":
-            marionette_tg.channel.stop_accepting_new_channels(self.get_transport_protocol(), self.get_port())
+            marionette.channel.stop_accepting_new_channels(self.get_transport_protocol(), self.get_port())
 
     def check_for_incoming_connections(self):
         retval = None
 
         if self.party_ == "server":
-            channel = marionette_tg.channel.accept_new_channel(self.get_transport_protocol(), self.get_port())
+            channel = marionette.channel.accept_new_channel(self.get_transport_protocol(), self.get_port())
             if channel:
                 retval = self.replicate()
                 retval.set_channel(channel)

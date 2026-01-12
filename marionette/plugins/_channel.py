@@ -1,4 +1,4 @@
-import marionette_tg
+import marionette
 
 # channel.bind("my_var") sets local variable my_var to a port number
 #   it bound to
@@ -8,7 +8,7 @@ def bind(channel, marionette_state, input_args):
     if marionette_state.get_local(local_var):
         port = marionette_state.get_local(local_var)
     else:
-        port = marionette_tg.channel.bind()
+        port = marionette.channel.bind()
         if port:
             marionette_state.set_local(local_var, port)
 

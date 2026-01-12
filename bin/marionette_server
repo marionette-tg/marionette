@@ -11,11 +11,11 @@ from twisted.python import log
 
 sys.path.append(".")
 
-import marionette_tg
-import marionette_tg.conf
-import marionette_tg.dsl
+import marionette
+import marionette.conf
+import marionette.dsl
 
-mar_files = marionette_tg.dsl.list_mar_files('server')
+mar_files = marionette.dsl.list_mar_files('server')
 ver_string = "Marionette proxy server.\nAvailable formats:\n"
 for mar_file in mar_files:
     ver_string += " %s\n" % (mar_file)
@@ -36,21 +36,21 @@ parser.add_argument('--debug', '-d', dest='debug', required=False, action='store
 args = parser.parse_args()
 
 if args.server_ip != None:
-    marionette_tg.conf.set('server.server_ip', str(args.server_ip))
+    marionette.conf.set('server.server_ip', str(args.server_ip))
 if args.proxy_ip != None:
-    marionette_tg.conf.set('server.proxy_ip', str(args.proxy_ip))
+    marionette.conf.set('server.proxy_ip', str(args.proxy_ip))
 if args.proxy_port != None:
-    marionette_tg.conf.set('server.proxy_port', int(args.proxy_port))
+    marionette.conf.set('server.proxy_port', int(args.proxy_port))
 if args.format != None:
-    marionette_tg.conf.set('general.format', str(args.format))
+    marionette.conf.set('general.format', str(args.format))
 if args.debug == True:
-    marionette_tg.conf.set('general.debug', args.debug)
+    marionette.conf.set('general.debug', args.debug)
 
-LOCAL_IP = marionette_tg.conf.get('server.server_ip')
-REMOTE_IP = marionette_tg.conf.get('server.proxy_ip')
-REMOTE_PORT = marionette_tg.conf.get('server.proxy_port')
+LOCAL_IP = marionette.conf.get('server.server_ip')
+REMOTE_IP = marionette.conf.get('server.proxy_ip')
+REMOTE_PORT = marionette.conf.get('server.proxy_port')
 
-FORMAT = marionette_tg.conf.get('general.format')
+FORMAT = marionette.conf.get('general.format')
 FORMAT_VERSION = None
 if ':' in FORMAT:
     FORMAT, FORMAT_VERSION = args.format.split(':', 1)
@@ -139,10 +139,10 @@ class ProxyServer(object):
 
 
 if __name__ == "__main__":
-    if marionette_tg.conf.get("general.debug"):
+    if marionette.conf.get("general.debug"):
         log.startLogging(sys.stdout)
 
-    server = marionette_tg.Server(FORMAT)
+    server = marionette.Server(FORMAT)
     server.factory = ProxyServer
 
     reactor.callFromThread(server.execute, reactor)
