@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding: utf-8
 
 import os
 import sys
 import time
-import httplib
+import http.client
 import unittest
 
 sys.path.append('.')
@@ -30,11 +30,11 @@ class Tests(unittest.TestCase):
 
     def do_probe(self, request_method, request_uri, expected_response):
         server_listen_ip = marionette_tg.conf.get("server.server_ip")
-        conn = httplib.HTTPConnection(
-            server_listen_ip, 8080, False, timeout=30)
+        conn = http.client.HTTPConnection(
+            server_listen_ip, 8080, timeout=30)
         conn.request(request_method, request_uri)
         response = conn.getresponse()
-        actual_response = response.read()
+        actual_response = response.read().decode('utf-8')
         conn.close()
 
         self.assertEqual(actual_response, expected_response)

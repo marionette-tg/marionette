@@ -1,9 +1,9 @@
 # marionette
 
-[![Python](https://img.shields.io/pypi/pyversions/marionette-tg.svg)](https://pypi.org/project/marionette-tg/)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PyPI](https://img.shields.io/pypi/v/marionette-tg.svg)](https://pypi.org/project/marionette-tg/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![CI](https://github.com/marionette-tg/marionette/actions/workflows/ci.yml/badge.svg)](https://github.com/marionette-tg/marionette/actions/workflows/ci.yml)
+[![Tests](https://github.com/marionette-tg/marionette/actions/workflows/ci.yml/badge.svg)](https://github.com/marionette-tg/marionette/actions/workflows/ci.yml)
 
 **This code is still pre-alpha and is NOT suitable for any real-world deployment.**
 
@@ -22,8 +22,6 @@ Marionette is a programmable client-server proxy that enables the user to contro
 
 ```console
 pip install marionette-tg
-```
-
 ### From Source
 
 ```console
@@ -31,8 +29,6 @@ git clone https://github.com/marionette-tg/marionette.git
 cd marionette
 pip install -r requirements.txt
 pip install -e .
-```
-
 ### System Dependencies
 
 #### Ubuntu/Debian
@@ -40,32 +36,18 @@ pip install -e .
 ```console
 sudo apt-get update
 sudo apt-get install libgmp-dev python3-dev libcurl4-openssl-dev
-```
-
 #### RedHat/Fedora/CentOS
 
 ```console
 sudo dnf install gmp-devel python3-devel libcurl-devel
-```
-
 #### macOS
 
 ```console
 brew install gmp curl
-```
-
 ### Sanity Check
 
 ```console
 python -m pytest marionette_tg/ -v
-```
-
-Or using setup.py:
-
-```console
-python setup.py test
-```
-
 ### Running
 
 And then testing with the servers...
@@ -75,8 +57,6 @@ And then testing with the servers...
 ./bin/marionette_server --server_ip 127.0.0.1 --proxy_ip 127.0.0.1 --proxy_port 8081 --format dummy &
 ./bin/marionette_client --server_ip 127.0.0.1 --client_ip 127.0.0.1 --client_port 8079 --format dummy &
 curl --socks4a 127.0.0.1:8079 example.com
-```
-
 A complete list of options is available with the `--help` parameter.
 
 
@@ -107,8 +87,6 @@ action [block_name]:
   [client | server] [module].[func](arg1, arg2, ...)
   [client | server] [module].[func](arg1, arg2, ...) [if regex_match_incoming(regex)]
 ...
-```
-
 The only `connection_type` currently supported is tcp. The port specifies the port that the server listens on and client connects to. The `block_name` specifies the named action that should be exected when transitioning from src to dst. A single error transition can be specified for each src and will be executed if all other potential transitions from src are impossible.
 
 Action blocks specify actions by either a client or server. For brevity we allow specification of an action, such as `fte.send`
@@ -141,8 +119,6 @@ action http_get:
 
 action http_ok:
   server fte.send("^HTTP/1\.1\ 200 OK\r\nContent-Type:\ ([a-zA-Z0-9]+)\r\n\r\n\C*$", 128)
-```
-
 ### HTTP with error transitions and conditionals
 
 We use error transitions in the following format to deal with incoming connections that aren't from a marionette client. The conditionals are used to match a regex aginst the incoming request.
@@ -165,8 +141,6 @@ action http_ok_err:
   server io.puts("HTTP/1.1 200 OK\r\n\r\nHello, World!") if regex_match_incoming("^GET /(index\.html)? HTTP/1\.(0|1).*")
   server io.puts("HTTP/1.1 404 File Not Found\r\n\r\nFile not found!") if regex_match_incoming("^GET /.* HTTP/1\.(0|1).*")
   server io.puts("HTTP/1.1 400 Bad Request\r\n\r\nBad request!") if regex_match_incoming("^.+")
-```
-
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
