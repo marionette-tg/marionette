@@ -51,23 +51,17 @@ def parse_conf():
 
 
 def get(key):
-    global conf_
-
     try:
         retval = conf_[key]
     except:
         parse_conf()
-    finally:
         retval = conf_[key]
 
     return retval
 
 def set(key, value):
-    global conf_
-
     try:
         conf_[key] = value
     except:
         parse_conf()
-    finally:
         conf_[key] = value
