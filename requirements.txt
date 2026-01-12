@@ -1,5 +1,5 @@
-twisted>=21.0.0
-fte>=0.1.0
-regex2dfa>=0.1.9
+# Core dependencies
+twisted>=25.5.0
+fte>=0.2.1
 ply>=3.11
-pycurl>=7.43.0
+pycurl>=7.45.0

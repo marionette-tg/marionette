@@ -11,7 +11,7 @@ from twisted.python import log
 
 sys.path.append('.')
 
-import regex2dfa
+import fte
 import fte.encoder
 import fte.bit_ops
 
@@ -314,7 +314,7 @@ class MarionetteSystemState(object):
     def get_fte_obj(self, regex, msg_len):
         fte_key = 'fte_obj-' + regex + str(msg_len)
         if not self.get_global(fte_key):
-            dfa = regex2dfa.regex2dfa(regex)
+            dfa = fte.regex2dfa.regex2dfa(regex)
             fte_obj = fte.encoder.DfaEncoder(dfa, msg_len)
             self.set_global(fte_key, fte_obj)
 

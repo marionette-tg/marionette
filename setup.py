@@ -22,11 +22,10 @@ setup(
     include_package_data=True,
     python_requires='>=3.8',
     install_requires=[
-        'twisted>=21.0.0',
-        'fte>=0.1.0',
-        'regex2dfa>=0.1.9',
+        'twisted>=25.5.0',
+        'fte>=0.2.1',
         'ply>=3.11',
-        'pycurl>=7.43.0',
+        'pycurl>=7.45.0',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
