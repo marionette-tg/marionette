@@ -5,8 +5,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://github.com/marionette-tg/marionette/actions/workflows/ci.yml/badge.svg)](https://github.com/marionette-tg/marionette/actions/workflows/ci.yml)
 
-> **Note:** This code is still pre-alpha and is NOT suitable for any real-world deployment.
-
 ## Overview
 
 Marionette is a programmable client-server proxy that enables the user to control network traffic features with a lightweight domain-specific language.
