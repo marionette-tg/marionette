@@ -3,6 +3,7 @@
 
 import sys
 import random
+import time
 sys.path.append('.')
 
 from twisted.internet import reactor
@@ -15,6 +16,7 @@ from . import conf
 
 EVENT_LOOP_FREQUENCY_S = 0.01
 AUTOUPDATE_DELAY = 5
+CLEANUP_INTERVAL_S = 60  # Run cleanup every 60 seconds
 
 
 class Server(object):
@@ -26,12 +28,16 @@ class Server(object):
         self.multiplexer_incoming_.addCallback(self.process_cell)
 
         self.factory_instances = {}
+        self.factory_last_activity = {}  # Track last activity time for each factory
 
         if self.check_for_update():
             self.do_update()
 
         self.set_driver(format_name)
         self.reload_ = False
+        
+        # Schedule periodic cleanup
+        reactor.callLater(CLEANUP_INTERVAL_S, self._periodic_cleanup, reactor)
 
     def set_driver(self, format_name):
         self.format_name_ = format_name
@@ -54,9 +60,13 @@ class Server(object):
         stream_id = cell_obj.get_stream_id()
 
         if cell_type == record_layer.END_OF_STREAM:
-            self.factory_instances[stream_id].connectionLost()
-            del self.factory_instances[stream_id]
+            if stream_id in self.factory_instances:
+                self.factory_instances[stream_id].connectionLost()
+            self._cleanup_factory(stream_id)
         elif cell_type == record_layer.NORMAL:
+            # Update last activity time
+            self.factory_last_activity[stream_id] = time.time()
+            
             if not self.factory_instances.get(stream_id):
                 stream = multiplexer.MarionetteStream(
                     self.multiplexer_incoming_, self.multiplexer_outgoing_,
@@ -88,3 +98,45 @@ class Server(object):
         update_server = conf.get("general.update_server")
         format_updater = updater.FormatUpdater(update_server, use_marionette=False, callback=callback)
         return format_updater.do_update()
+
+    def _cleanup_factory(self, stream_id):
+        """Clean up factory instance for a stream."""
+        if stream_id in self.factory_instances:
+            del self.factory_instances[stream_id]
+        if stream_id in self.factory_last_activity:
+            del self.factory_last_activity[stream_id]
+
+    def cleanup_orphaned_factories(self):
+        """
+        Clean up factory instances for streams that haven't been active recently.
+        Uses the same timeout as BufferIncoming.
+        Returns the number of factories cleaned up.
+        """
+        timeout = multiplexer.BufferIncoming.DEFAULT_STREAM_TIMEOUT
+        current_time = time.time()
+        orphaned_streams = []
+        
+        for stream_id, last_activity in list(self.factory_last_activity.items()):
+            if current_time - last_activity > timeout:
+                orphaned_streams.append(stream_id)
+        
+        for stream_id in orphaned_streams:
+            from twisted.python import log
+            log.msg("Cleaning up orphaned factory for stream %d (inactive for %.1f seconds)" %
+                   (stream_id, current_time - self.factory_last_activity.get(stream_id, 0)))
+            if stream_id in self.factory_instances:
+                self.factory_instances[stream_id].connectionLost()
+            self._cleanup_factory(stream_id)
+        
+        return len(orphaned_streams)
+
+    def _periodic_cleanup(self, reactor):
+        """Periodic cleanup task."""
+        # Clean up orphaned streams in BufferIncoming
+        self.multiplexer_incoming_.cleanup_orphaned_streams()
+        
+        # Clean up orphaned factory instances
+        self.cleanup_orphaned_factories()
+        
+        # Schedule next cleanup
+        reactor.callLater(CLEANUP_INTERVAL_S, self._periodic_cleanup, reactor)
