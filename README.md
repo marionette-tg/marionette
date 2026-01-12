@@ -5,76 +5,76 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://github.com/marionette-tg/marionette/actions/workflows/ci.yml/badge.svg)](https://github.com/marionette-tg/marionette/actions/workflows/ci.yml)
 
-**This code is still pre-alpha and is NOT suitable for any real-world deployment.**
+> **Note:** This code is still pre-alpha and is NOT suitable for any real-world deployment.
 
 ## Overview
 
-Marionette is a programmable client-server proxy that enables the user to control network traffic features with a lightweight domain-specific language. The marionette system is described in [2] and builds on ideas from other papers, such as Format-Transforming Encryption [1].
+Marionette is a programmable client-server proxy that enables the user to control network traffic features with a lightweight domain-specific language.
 
-1. Protocol Misidentification Made Easy with Format-Transforming Encryption
-   url: https://kpdyer.com/publications/ccs2013-fte.pdf
-2. Marionette: A Programmable Network Traffic Obfuscation System
-   url: https://kpdyer.com/publications/usenix2015-marionette.pdf
+### References
+
+1. [Protocol Misidentification Made Easy with Format-Transforming Encryption](https://kpdyer.com/publications/ccs2013-fte.pdf)
+2. [Marionette: A Programmable Network Traffic Obfuscation System](https://kpdyer.com/publications/usenix2015-marionette.pdf)
 
 ## Installation
 
 ### From PyPI
 
-```console
+```bash
 pip install marionette-tg
+```
+
 ### From Source
 
-```console
+```bash
 git clone https://github.com/marionette-tg/marionette.git
 cd marionette
 pip install -r requirements.txt
 pip install -e .
-### System Dependencies
+```
 
-#### Ubuntu/Debian
+### Verify Installation
 
-```console
-sudo apt-get update
-sudo apt-get install libgmp-dev python3-dev libcurl4-openssl-dev
-#### RedHat/Fedora/CentOS
-
-```console
-sudo dnf install gmp-devel python3-devel libcurl-devel
-#### macOS
-
-```console
-brew install gmp curl
-### Sanity Check
-
-```console
+```bash
 python -m pytest marionette_tg/ -v
-### Running
+```
 
-And then testing with the servers...
+## Quick Start
 
-```console
+Start the backend SOCKS server, marionette server, and marionette client:
+
+```bash
 ./bin/socksserver --local_port 8081 &
 ./bin/marionette_server --server_ip 127.0.0.1 --proxy_ip 127.0.0.1 --proxy_port 8081 --format dummy &
 ./bin/marionette_client --server_ip 127.0.0.1 --client_ip 127.0.0.1 --client_port 8079 --format dummy &
+```
+
+Test the connection:
+
+```bash
 curl --socks4a 127.0.0.1:8079 example.com
-A complete list of options is available with the `--help` parameter.
+```
 
+Use `--help` for a complete list of options.
 
-## marionette.conf
+## Configuration
 
-* `general.debug` - [boolean] print useful debug information to the console
-* `general.autoupdate` - [boolean] enable automatic checks for new marionette formats
-* `general.update_server` - [string] the remote address of the server we should use for marionette updates
-* `client.client_ip` - [string] the iface we should listen on if it isn't specified on the CLI
-* `client.client_port` - [int] the port we should listen on if it isn't specified on the CLI
-* `server.server_ip` - [string] the iface we should listen on if it isn't specified on the CLI
-* `server.proxy_ip` - [string] the iface we should forward connects to if it isn't specified on the CLI
-* `server.proxy_port` - [int] the port we should forward connects to if it isn't specified on the CLI
+The `marionette.conf` file supports the following options:
 
+| Option | Type | Description |
+|--------|------|-------------|
+| `general.debug` | boolean | Print debug information to the console |
+| `general.autoupdate` | boolean | Enable automatic checks for new marionette formats |
+| `general.update_server` | string | Remote address of the update server |
+| `client.client_ip` | string | Interface to listen on (client) |
+| `client.client_port` | int | Port to listen on (client) |
+| `server.server_ip` | string | Interface to listen on (server) |
+| `server.proxy_ip` | string | Interface to forward connections to |
+| `server.proxy_port` | int | Port to forward connections to |
 
 ## Marionette DSL
 
-Marionette's DSL is
+Marionette uses a domain-specific language to define traffic patterns:
 
 ```
 connection([connection_type], [port]):
@@ -86,27 +86,31 @@ connection([connection_type], [port]):
 action [block_name]:
   [client | server] [module].[func](arg1, arg2, ...)
   [client | server] [module].[func](arg1, arg2, ...) [if regex_match_incoming(regex)]
-...
-The only `connection_type` currently supported is tcp. The port specifies the port that the server listens on and client connects to. The `block_name` specifies the named action that should be exected when transitioning from src to dst. A single error transition can be specified for each src and will be executed if all other potential transitions from src are impossible.
+```
 
-Action blocks specify actions by either a client or server. For brevity we allow specification of an action, such as `fte.send`
+- **connection_type**: Currently only `tcp` is supported
+- **port**: The port the server listens on and client connects to
+- **block_name**: Named action executed when transitioning from src to dst
+- **error**: Special transition executed when all other transitions fail
 
-## Marionette Plugins
+## Plugins
 
-* `fte.send(regex, msg_len)` - sends a string on the channel that's encrypted with fte under `regex`.
-* `fte.send_async(regex, msg_len)` - sends a string on the channel that's encrypted with fte under `regex`, does not block receiver-side when waiting for the incoming message.
-* `tg.send(grammar_name)` - send a message using template grammar `grammar_name`
-* `io.puts(str)` - send string `str` on the channel.
-* `model.sleep(n)` - sleep for `n` seconds.
-* `model.spawn(format_name, n)` - spawn `n` instances of model `format_name`, blocks until completion.
+| Plugin | Description |
+|--------|-------------|
+| `fte.send(regex, msg_len)` | Send FTE-encrypted string matching `regex` |
+| `fte.send_async(regex, msg_len)` | Non-blocking FTE send |
+| `tg.send(grammar_name)` | Send using template grammar |
+| `io.puts(str)` | Send raw string on the channel |
+| `model.sleep(n)` | Sleep for `n` seconds |
+| `model.spawn(format_name, n)` | Spawn `n` instances of format, blocks until completion |
 
-*note*: by specifying a send or a puts, that implicitly invokes a recv or a gets on the receiver side.
+> **Note:** Specifying a send or puts implicitly invokes a recv or gets on the receiver side.
 
 ## Example Formats
 
 ### Simple HTTP
 
-The following format generates a TCP connection sends one upstream GET and is followed by a downstream OK.
+A basic HTTP format with one request-response cycle:
 
 ```
 connection(tcp, 80):
@@ -119,9 +123,11 @@ action http_get:
 
 action http_ok:
   server fte.send("^HTTP/1\.1\ 200 OK\r\nContent-Type:\ ([a-zA-Z0-9]+)\r\n\r\n\C*$", 128)
-### HTTP with error transitions and conditionals
+```
 
-We use error transitions in the following format to deal with incoming connections that aren't from a marionette client. The conditionals are used to match a regex aginst the incoming request.
+### HTTP with Error Handling
+
+Using error transitions and conditionals to handle non-marionette connections:
 
 ```
 connection(tcp, 8080):
@@ -141,6 +147,8 @@ action http_ok_err:
   server io.puts("HTTP/1.1 200 OK\r\n\r\nHello, World!") if regex_match_incoming("^GET /(index\.html)? HTTP/1\.(0|1).*")
   server io.puts("HTTP/1.1 404 File Not Found\r\n\r\nFile not found!") if regex_match_incoming("^GET /.* HTTP/1\.(0|1).*")
   server io.puts("HTTP/1.1 400 Bad Request\r\n\r\nBad request!") if regex_match_incoming("^.+")
+```
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
