@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding: utf-8
 
 from setuptools import setup, find_packages
@@ -17,11 +17,10 @@ setup(
     url='https://github.com/marionette-tg/marionette',
     license='MIT',
     scripts=['bin/marionette_client', 'bin/marionette_server'],
-    test_suite='marionette_tg',
     packages=find_packages(),
     package_data={'marionette_tg': ['marionette.conf', 'formats/*.mar', 'formats/**/*.mar', 'formats/**/**/*.mar']},
     include_package_data=True,
-    python_requires='>=3.7',
+    python_requires='>=3.8',
     install_requires=[
         'twisted>=21.0.0',
         'fte>=0.1.0',
@@ -35,11 +34,11 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Topic :: Internet :: Proxy Servers',
         'Topic :: Security',
     ],
