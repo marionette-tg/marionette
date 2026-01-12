@@ -3,6 +3,7 @@
 
 import sys
 import random
+import time
 sys.path.append('.')
 
 from twisted.internet import reactor
@@ -17,6 +18,7 @@ from . import conf
 
 EVENT_LOOP_FREQUENCY_S = 0.01
 AUTOUPDATE_DELAY = 5
+CLEANUP_INTERVAL_S = 60  # Run cleanup every 60 seconds
 
 
 class Client(object):
@@ -26,6 +28,7 @@ class Client(object):
         self.multiplexer_incoming_ = multiplexer.BufferIncoming()
         self.multiplexer_incoming_.addCallback(self.process_cell)
         self.streams_ = {}
+        self.stream_last_activity = {}  # Track last activity time for each stream
         self.stream_counter_ = random.randint(1,2**32-1)
 
         self.set_driver(format_name, format_version)
@@ -33,6 +36,9 @@ class Client(object):
 
         # first update must be
         reactor.callLater(AUTOUPDATE_DELAY, self.check_for_update)
+        
+        # Schedule periodic cleanup
+        reactor.callLater(CLEANUP_INTERVAL_S, self._periodic_cleanup, reactor)
 
     def set_driver(self, format_name, format_version=None):
         self.format_name_ = format_name
@@ -67,6 +73,9 @@ class Client(object):
         payload = cell_obj.get_payload()
         if payload:
             stream_id = cell_obj.get_stream_id()
+            # Update last activity time
+            self.stream_last_activity[stream_id] = time.time()
+            
             try:
                 self.streams_[stream_id].srv_queue.put(payload)
             except:
@@ -82,11 +91,51 @@ class Client(object):
             srv_queue)
         stream.host = self
         self.streams_[self.stream_counter_] = stream
+        self.stream_last_activity[self.stream_counter_] = time.time()
         self.stream_counter_ = random.randint(1,2**32-1)
         return stream
 
     def terminate(self, stream_id):
-        del self.streams_[stream_id]
+        self._cleanup_stream(stream_id)
+
+    def _cleanup_stream(self, stream_id):
+        """Clean up stream resources."""
+        if stream_id in self.streams_:
+            del self.streams_[stream_id]
+        if stream_id in self.stream_last_activity:
+            del self.stream_last_activity[stream_id]
+
+    def cleanup_orphaned_streams(self):
+        """
+        Clean up streams that haven't been active recently.
+        Uses the same timeout as BufferIncoming.
+        Returns the number of streams cleaned up.
+        """
+        timeout = multiplexer.BufferIncoming.DEFAULT_STREAM_TIMEOUT
+        current_time = time.time()
+        orphaned_streams = []
+        
+        for stream_id, last_activity in list(self.stream_last_activity.items()):
+            if current_time - last_activity > timeout:
+                orphaned_streams.append(stream_id)
+        
+        for stream_id in orphaned_streams:
+            log.msg("Cleaning up orphaned stream %d (inactive for %.1f seconds)" %
+                   (stream_id, current_time - self.stream_last_activity.get(stream_id, 0)))
+            self._cleanup_stream(stream_id)
+        
+        return len(orphaned_streams)
+
+    def _periodic_cleanup(self, reactor):
+        """Periodic cleanup task."""
+        # Clean up orphaned streams in BufferIncoming
+        self.multiplexer_incoming_.cleanup_orphaned_streams()
+        
+        # Clean up orphaned client streams
+        self.cleanup_orphaned_streams()
+        
+        # Schedule next cleanup
+        reactor.callLater(CLEANUP_INTERVAL_S, self._periodic_cleanup, reactor)
 
     # call this function if you want reload formats from disk
     # at the next possible time

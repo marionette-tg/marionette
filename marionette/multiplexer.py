@@ -4,6 +4,7 @@
 import random
 import threading
 import heapq
+import time
 
 from twisted.internet import reactor
 from twisted.python import log
@@ -169,11 +170,16 @@ class BufferOutgoing(object):
 
 class BufferIncoming(object):
 
-    def __init__(self):
+    # Default timeout for orphaned streams (seconds)
+    DEFAULT_STREAM_TIMEOUT = 300  # 5 minutes
+
+    def __init__(self, stream_timeout=None):
         self.fifo_ = ''
         self.fifo_len_ = 0
         self.output_q = {}
         self.curr_seq_id = {}
+        self.stream_last_activity = {}  # Track last activity time for each stream
+        self.stream_timeout = stream_timeout or self.DEFAULT_STREAM_TIMEOUT
         self.has_data_ = False
         self.callback_ = None
         self.lock_ = threading.RLock()
@@ -184,6 +190,9 @@ class BufferIncoming(object):
 
     def dequeue(self, cell_stream_id):
         with self.lock_:
+            # Update last activity time
+            self.stream_last_activity[cell_stream_id] = time.time()
+            
             remove_keys = set()
             while (len(self.output_q[cell_stream_id]) > 0 and
                 self.output_q[cell_stream_id][0].get_seq_id() == self.curr_seq_id[cell_stream_id]):
@@ -201,11 +210,13 @@ class BufferIncoming(object):
                 reactor.callFromThread(self.callback_, cell_obj)
 
             for key in remove_keys:
-                del self.output_q[key]
-                del self.curr_seq_id[key]
+                self._cleanup_stream(key)
 
     def enqueue(self, cell_obj, cell_stream_id):
         with self.lock_:
+            # Update last activity time
+            self.stream_last_activity[cell_stream_id] = time.time()
+            
             if cell_stream_id not in self.output_q:
                 self.output_q[cell_stream_id] = []
                 self.curr_seq_id[cell_stream_id] = 1
@@ -247,3 +258,33 @@ class BufferIncoming(object):
                 self.fifo_len_ = max(self.fifo_len_, 0)
 
         return cell_obj
+
+    def _cleanup_stream(self, stream_id):
+        """Clean up resources for a stream."""
+        with self.lock_:
+            if stream_id in self.output_q:
+                del self.output_q[stream_id]
+            if stream_id in self.curr_seq_id:
+                del self.curr_seq_id[stream_id]
+            if stream_id in self.stream_last_activity:
+                del self.stream_last_activity[stream_id]
+
+    def cleanup_orphaned_streams(self):
+        """
+        Clean up streams that haven't been active for longer than the timeout.
+        Returns the number of streams cleaned up.
+        """
+        with self.lock_:
+            current_time = time.time()
+            orphaned_streams = []
+            
+            for stream_id, last_activity in list(self.stream_last_activity.items()):
+                if current_time - last_activity > self.stream_timeout:
+                    orphaned_streams.append(stream_id)
+            
+            for stream_id in orphaned_streams:
+                log.msg("Cleaning up orphaned stream %d (inactive for %.1f seconds)" %
+                       (stream_id, current_time - self.stream_last_activity.get(stream_id, 0)))
+                self._cleanup_stream(stream_id)
+            
+            return len(orphaned_streams)
