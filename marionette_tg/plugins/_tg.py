@@ -8,7 +8,7 @@ import string
 
 from twisted.python import log
 
-import regex2dfa
+import fte
 import fte.encoder
 import fte.bit_ops
 import re
@@ -152,7 +152,7 @@ class RankerHandler(object):
 
         regex_key = regex + str(msg_len)
         if not regex_cache_.get(regex_key):
-            dfa = regex2dfa.regex2dfa(regex)
+            dfa = fte.regex2dfa.regex2dfa(regex)
             cDFA = fte.cDFA_py.DFA(dfa, msg_len)
             encoder = fte.dfa.DFA(cDFA, msg_len)
             regex_cache_[regex_key] = (dfa, encoder)
@@ -185,7 +185,7 @@ class FteHandler(object):
 
         fte_key = regex + str(msg_len)
         if not fte_cache_.get(fte_key):
-            dfa = regex2dfa.regex2dfa(regex)
+            dfa = fte.regex2dfa.regex2dfa(regex)
             encrypter = fte.encoder.DfaEncoder(dfa, msg_len)
             fte_cache_[fte_key] = (dfa, encrypter)
         (self.dfa_, self.fte_encrypter_) = fte_cache_[fte_key]
@@ -471,7 +471,7 @@ class AmazonMsgLensHandler(object):
 
         key = self.regex_ + str(self.min_len_)
         if not fte_cache_.get(key):
-            dfa = regex2dfa.regex2dfa(self.regex_)
+            dfa = fte.regex2dfa.regex2dfa(self.regex_)
             encoder = fte.encoder.DfaEncoder(dfa, self.min_len_)
             fte_cache_[key] = (dfa, encoder)
 
@@ -507,7 +507,7 @@ class AmazonMsgLensHandler(object):
         if self.target_len_ < self.min_len_ or self.target_len_ > self.max_len_:
             key = self.regex_ + str(self.target_len_)
             if not regex_cache_.get(key):
-                dfa = regex2dfa.regex2dfa(self.regex_)
+                dfa = fte.regex2dfa.regex2dfa(self.regex_)
                 cdfa_obj = fte.cDFA_py.DFA(dfa, self.target_len_)
                 encoder = fte.dfa.DFA(cdfa_obj, self.target_len_)
                 regex_cache_[key] = (dfa, encoder)
