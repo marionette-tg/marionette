@@ -32,15 +32,11 @@ jobs:
 
     - name: Run unit tests
       run: |
-<<<<<<< Updated upstream
         python -m pytest marionette/tests/ -v --ignore=marionette/tests/test_probe.py --ignore=marionette/tests/test_cli.py
 
     - name: Run example tests
       run: |
         python -m pytest examples/tests/ -v --ignore=examples/tests/__pycache__
-=======
-        python -m pytest marionette/dsl_tests.py marionette/record_layer_tests.py marionette/conf_tests.py marionette/multiplexer_tests.py marionette/exceptions_tests.py -v
->>>>>>> Stashed changes
 
   lint:
     runs-on: ubuntu-latest
