@@ -11,7 +11,7 @@ import marionette_tg.channel as channel
 
 class ServerThread(threading.Thread):
     def run(self):
-        print 'Starting server...'
+        print('Starting server...')
         self.channel_ = None
         while True:
             ch = channel.accept_new_channel(
@@ -28,7 +28,7 @@ class ClientThread(threading.Thread):
     channel_ = None
 
     def run(self):
-        print 'Starting client...'
+        print('Starting client...')
         self.channel_ = None
         channel.open_new_channel(
             'udp', 8080, self.set_channel)
@@ -50,18 +50,18 @@ def test_udp_send(msg_lens):
     if client.channel_ and server.channel_:
         if not already_sent:
             try:
-                print "Test: sending message %d bytes" % msg_lens[0]
+                print("Test: sending message %d bytes" % msg_lens[0])
                 client.send(expected_msg)
                 already_sent = True
             except:
-                print "FAILURE: Error sending message"
+                print("FAILURE: Error sending message")
                 reactor.stop()
                 return
 
         recvd = server.recv()
         if len(recvd) != 0:
             assert len(recvd) == len(expected_msg)
-            print 'SUCCESS'
+            print('SUCCESS')
             already_sent = False
             if len(msg_lens) > 1:
                 reactor.callFromThread(test_udp_send, msg_lens[1:])
@@ -74,7 +74,7 @@ def test_udp_send(msg_lens):
         reactor.callFromThread(test_udp_send, msg_lens)
 
 def timeout_failure():
-    print "FAILURE: time out"
+    print("FAILURE: time out")
     reactor.stop()
 
 if __name__ == '__main__':

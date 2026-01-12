@@ -4,7 +4,7 @@
 import os
 import sys
 import time
-import httplib
+import http.client
 import unittest
 import threading
 
@@ -19,11 +19,11 @@ def execute(cmd):
 
 def exec_download():
     client_listen_ip = marionette_tg.conf.get("client.client_ip")
-    conn = httplib.HTTPConnection(
-        client_listen_ip, 18079, False, timeout=30)
+    conn = http.client.HTTPConnection(
+        client_listen_ip, 18079, timeout=30)
     conn.request("GET", "/")
     response = conn.getresponse()
-    actual_response = response.read()
+    actual_response = response.read().decode('utf-8')
     conn.close()
 
     expected_response = ''

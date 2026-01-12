@@ -102,7 +102,8 @@ class MyClient(protocol.Protocol):
             log.msg("channel.Client: UDP Connection established %s:%d" 
                 % (self.host, self.port))
 
-    def datagramReceived(self, chunk, (host, port)):
+    def datagramReceived(self, chunk, addr):
+        host, port = addr
         log.msg("channel.Client: %d bytes received" % len(chunk))
         self.channel.appendToBuffer(chunk)
 
@@ -179,7 +180,8 @@ class MyServer(protocol.Protocol):
         self.channel.appendToBuffer(chunk)
         log.msg("channel.Server[%s]: %d bytes received" % (self.channel, len(chunk)))
 
-    def datagramReceived(self, chunk, (host, port)):
+    def datagramReceived(self, chunk, addr):
+        host, port = addr
         log.msg("channel.Server[%s]: %d bytes received" % (self.channel, len(chunk)))
         if self.channel.is_closed():
             self.connectionMade()

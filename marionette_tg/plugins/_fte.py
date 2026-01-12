@@ -34,7 +34,7 @@ def send(channel, marionette_state, input_args, blocking=True):
         bits_in_buffer = len(
             marionette_state.get_global("multiplexer_outgoing").peek(stream_id)) * 8
         min_cell_len_in_bytes = int(math.floor(fteObj.getCapacity() / 8.0)) \
-            - fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTTEXT \
+            - fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTEXT \
             - fte.encrypter.Encrypter._CTXT_EXPANSION
         min_cell_len_in_bits = min_cell_len_in_bytes * 8
 

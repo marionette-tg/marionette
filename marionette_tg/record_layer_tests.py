@@ -18,7 +18,7 @@ class Tests(unittest.TestCase):
         cell_expected.set_payload('XXX')
         cell_str = marionette_tg.record_layer.serialize(cell_expected)
         cell_actual = marionette_tg.record_layer.unserialize(cell_str)
-        self.assertEquals(cell_actual, cell_expected)
+        self.assertEqual(cell_actual, cell_expected)
 
     def test_serializeUnserialize_onBoundaries2(self):
         buffer = marionette_tg.multiplexer.BufferIncoming()
@@ -37,7 +37,7 @@ class Tests(unittest.TestCase):
             cell_expected = marionette_tg.record_layer.Cell(1, 1, 1, 0)
             cell_expected.set_payload('XXX' + str(i))
 
-            self.assertEquals(cell_actual, cell_expected)
+            self.assertEqual(cell_actual, cell_expected)
 
     def test_serializeUnserialize_offBoundaries1(self):
         buffer = marionette_tg.multiplexer.BufferIncoming()
@@ -59,7 +59,7 @@ class Tests(unittest.TestCase):
             cell_expected = marionette_tg.record_layer.Cell(1, 1, 1, 0)
             cell_expected.set_payload('XXX' + str(i))
 
-            self.assertEquals(cell_actual, cell_expected)
+            self.assertEqual(cell_actual, cell_expected)
 
     def test_pushPop_n1(self):
         cell_expected = marionette_tg.record_layer.Cell(1, 1, 1, 0)
@@ -71,7 +71,7 @@ class Tests(unittest.TestCase):
         n = 1024
         cell_actual = buffer.pop()
         cell_str = marionette_tg.record_layer.serialize(cell_actual, n)
-        self.assertEqual(len(cell_str), n / 8)
+        self.assertEqual(len(cell_str), n // 8)
 
     def test_pushPop_n2(self):
         buffer = marionette_tg.multiplexer.BufferIncoming()

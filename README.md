@@ -1,11 +1,13 @@
 # marionette
 
-[![Build Status](https://travis-ci.org/kpdyer/marionette.svg?branch=master)](https://travis-ci.org/kpdyer/marionette)
+[![Python](https://img.shields.io/pypi/pyversions/marionette-tg.svg)](https://pypi.org/project/marionette-tg/)
+[![PyPI](https://img.shields.io/pypi/v/marionette-tg.svg)](https://pypi.org/project/marionette-tg/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/marionette-tg/marionette/actions/workflows/ci.yml/badge.svg)](https://github.com/marionette-tg/marionette/actions/workflows/ci.yml)
 
 **This code is still pre-alpha and is NOT suitable for any real-world deployment.**
 
-Overview
---------
+## Overview
 
 Marionette is a programmable client-server proxy that enables the user to control network traffic features with a lightweight domain-specific language. The marionette system is described in [2] and builds on ideas from other papers, such as Format-Transforming Encryption [1].
 
@@ -14,56 +16,54 @@ Marionette is a programmable client-server proxy that enables the user to contro
 2. Marionette: A Programmable Network Traffic Obfuscation System
    url: https://kpdyer.com/publications/usenix2015-marionette.pdf
 
-Installation
-------------
+## Installation
 
-### Ubuntu
+### From PyPI
 
 ```console
-$ sudo apt-get update && sudo apt-get upgrade
-$ sudo apt-get install git libgmp-dev python-pip python-dev curl
-$ git clone https://github.com/kpdyer/marionette.git
-$ cd marionette
-$ sudo pip install -r requirements.txt
-$ python setup.py build
-$ sudo python setup.py install
+pip install marionette-tg
 ```
 
-### RedHat/Fedora/CentOS
+### From Source
 
 ```console
-$ sudo yum update
-$ yum install epel-release  # EPEL may be required for some distros
-$ sudo yum groupinstall "Development Tools"
-$ sudo yum install git gmp-devel python-pip python-devel curl
-$ git clone https://github.com/kpdyer/marionette.git
-$ cd marionette
-$ sudo pip install -r requirements.txt
-$ python setup.py build
-$ sudo python setup.py install
+git clone https://github.com/marionette-tg/marionette.git
+cd marionette
+pip install -r requirements.txt
+pip install -e .
 ```
 
+### System Dependencies
 
-###  OSX
-
-Requires homebrew.
+#### Ubuntu/Debian
 
 ```console
-$ brew install python gmp curl
-$ git clone https://github.com/kpdyer/marionette.git
-$ cd marionette
-$ python setup.py install
+sudo apt-get update
+sudo apt-get install libgmp-dev python3-dev libcurl4-openssl-dev
 ```
 
-### Sanity check
+#### RedHat/Fedora/CentOS
 
 ```console
-$ python setup.py test
-...
-----------------------------------------------------------------------
-Ran 13 tests in Xs
+sudo dnf install gmp-devel python3-devel libcurl-devel
+```
 
-OK
+#### macOS
+
+```console
+brew install gmp curl
+```
+
+### Sanity Check
+
+```console
+python -m pytest marionette_tg/ -v
+```
+
+Or using setup.py:
+
+```console
+python setup.py test
 ```
 
 ### Running
@@ -71,34 +71,28 @@ OK
 And then testing with the servers...
 
 ```console
-$ ./bin/socksserver --local_port 8081 &
-$ ./bin/marionette_server --server_ip 127.0.0.1 --proxy_ip 127.0.0.1 --proxy_port 8081 --format dummy&
-$ ./bin/marionette_client --server_ip 127.0.0.1 --client_ip 127.0.0.1 --client_port 8079 --format dummy&
-$ curl --socks4a 127.0.0.1:8079 example.com
+./bin/socksserver --local_port 8081 &
+./bin/marionette_server --server_ip 127.0.0.1 --proxy_ip 127.0.0.1 --proxy_port 8081 --format dummy &
+./bin/marionette_client --server_ip 127.0.0.1 --client_ip 127.0.0.1 --client_port 8079 --format dummy &
+curl --socks4a 127.0.0.1:8079 example.com
 ```
 
 A complete list of options is available with the `--help` parameter.
 
 
-marionette.conf
----------------
+## marionette.conf
 
-* ```general.debug``` - [boolean] print useful debug information to the console
-* ```general.autoupdate``` - [boolean] enable automatic checks for new marionette formats
-* ```general.update_server``` - [string] the remote address of the server we should use for marionette updates
-* ```client.client_ip``` - [string] the iface we should listen on if it isn't
-specified on the CLI
-* ```client.client_port``` - [int] the port we should listen on if it isn't
-specified on the CLI
-* ```server.server_ip``` - [string] the iface we should listen on if it isn't
-specified on the CLI
-* ```server.proxy_ip``` - [string] the iface we should forward connects to if it
-isn't specified on the CLI
-* ```server.proxy_port``` - [int] the port we should forward connects to if it isn't specified on the CLI
+* `general.debug` - [boolean] print useful debug information to the console
+* `general.autoupdate` - [boolean] enable automatic checks for new marionette formats
+* `general.update_server` - [string] the remote address of the server we should use for marionette updates
+* `client.client_ip` - [string] the iface we should listen on if it isn't specified on the CLI
+* `client.client_port` - [int] the port we should listen on if it isn't specified on the CLI
+* `server.server_ip` - [string] the iface we should listen on if it isn't specified on the CLI
+* `server.proxy_ip` - [string] the iface we should forward connects to if it isn't specified on the CLI
+* `server.proxy_port` - [int] the port we should forward connects to if it isn't specified on the CLI
 
 
-Marionette DSL
---------------
+## Marionette DSL
 
 Marionette's DSL is
 
@@ -115,24 +109,22 @@ action [block_name]:
 ...
 ```
 
-The only ```connection_type``` currently supported is tcp. The port specifies the port that the server listens on and client connects to. The ```block_name``` specifies the named action that should be exected when transitioning from src to dst. A single error transition can be specified for each src and will be executed if all other potential transitions from src are impossible.
+The only `connection_type` currently supported is tcp. The port specifies the port that the server listens on and client connects to. The `block_name` specifies the named action that should be exected when transitioning from src to dst. A single error transition can be specified for each src and will be executed if all other potential transitions from src are impossible.
 
-Action blocks specify actions by either a client or server. For brevity we allow specification of an action, such as ```fte.send```
+Action blocks specify actions by either a client or server. For brevity we allow specification of an action, such as `fte.send`
 
-Marionette Plugins
-------------------
+## Marionette Plugins
 
-* ```fte.send(regex, msg_len)``` - sends a string on the channel that's encrypted with fte under ```regex```.
-* ```fte.send_async(regex, msg_len)``` - sends a string on the channel that's encrypted with fte under ```regex```, does not block receiver-side when waiting for the incoming message.
-* ```tg.send(grammar_name)``` - send a message using template grammar ```grammar_name```
-* ```io.puts(str)``` - send string ```str``` on the channel.
-* ```model.sleep(n)``` - sleep for ```n``` seconds.
-* ```model.spawn(format_name, n)``` - spawn ```n``` instances of model ```format_name```, blocks until completion.
+* `fte.send(regex, msg_len)` - sends a string on the channel that's encrypted with fte under `regex`.
+* `fte.send_async(regex, msg_len)` - sends a string on the channel that's encrypted with fte under `regex`, does not block receiver-side when waiting for the incoming message.
+* `tg.send(grammar_name)` - send a message using template grammar `grammar_name`
+* `io.puts(str)` - send string `str` on the channel.
+* `model.sleep(n)` - sleep for `n` seconds.
+* `model.spawn(format_name, n)` - spawn `n` instances of model `format_name`, blocks until completion.
 
 *note*: by specifying a send or a puts, that implicitly invokes a recv or a gets on the receiver side.
 
-Example Formats
----------------
+## Example Formats
 
 ### Simple HTTP
 
@@ -174,3 +166,7 @@ action http_ok_err:
   server io.puts("HTTP/1.1 404 File Not Found\r\n\r\nFile not found!") if regex_match_incoming("^GET /.* HTTP/1\.(0|1).*")
   server io.puts("HTTP/1.1 400 Bad Request\r\n\r\nBad request!") if regex_match_incoming("^.+")
 ```
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.

@@ -106,6 +106,6 @@ class Client(object):
         # source (e.g., local computations)
 
         update_server = conf.get("general.update_server")
-        updater = updater.FormatUpdater(update_server, use_marionette=True, callback=callback)
-        return updater.do_update()
+        format_updater = updater.FormatUpdater(update_server, use_marionette=True, callback=callback)
+        return format_updater.do_update()
         

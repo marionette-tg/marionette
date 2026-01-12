@@ -153,7 +153,7 @@ class RankerHandler(object):
         regex_key = regex + str(msg_len)
         if not regex_cache_.get(regex_key):
             dfa = regex2dfa.regex2dfa(regex)
-            cDFA = fte.cDFA.DFA(dfa, msg_len)
+            cDFA = fte.cDFA_py.DFA(dfa, msg_len)
             encoder = fte.dfa.DFA(cDFA, msg_len)
             regex_cache_[regex_key] = (dfa, encoder)
         (self.dfa_, self.encoder_) = regex_cache_[regex_key]
@@ -171,7 +171,7 @@ class RankerHandler(object):
     def decode(self, marionette_state, ctxt):
         try:
             ptxt = self.encoder_.rank(ctxt)
-            ptxt = fte.bit_ops.long_to_bytes(ptxt, self.capacity() / 8)
+            ptxt = fte.bit_ops.long_to_bytes(ptxt, self.capacity() // 8)
         except Exception as e:
             pass
 
@@ -195,7 +195,7 @@ class FteHandler(object):
             retval = (2 ** 18) * 8
         else:
             cell_len_in_bytes = int(math.floor(self.fte_encrypter_.getCapacity(
-            ) / 8.0)) - fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTTEXT - fte.encrypter.Encrypter._CTXT_EXPANSION
+            ) / 8.0)) - fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTEXT - fte.encrypter.Encrypter._CTXT_EXPANSION
             cell_len_in_bits = cell_len_in_bytes * 8
             retval = cell_len_in_bits
 
@@ -219,7 +219,7 @@ class FteMsgLensHandler(FteHandler):
 
     def capacity(self):
         cell_len_in_bytes = int(math.floor(self.fte_encrypter_.getCapacity(
-        ) / 8.0)) - fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTTEXT - fte.encrypter.Encrypter._CTXT_EXPANSION
+        ) / 8.0)) - fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTEXT - fte.encrypter.Encrypter._CTXT_EXPANSION
         cell_len_in_bits = cell_len_in_bytes * 8
         return cell_len_in_bits
 
@@ -291,7 +291,7 @@ class SetDnsTransactionId(object):
         if marionette_state.get_local("dns_transaction_id"):
             dns_transaction_id =  marionette_state.get_local("dns_transaction_id")
         else:
-            dns_transaction_id = str(chr(random.randint(1,254)))+str(chr(random.randint(1,254)))
+            dns_transaction_id = chr(random.randint(1,254))+chr(random.randint(1,254))
             marionette_state.set_local("dns_transaction_id", dns_transaction_id)
         return str(dns_transaction_id)
 
@@ -326,7 +326,7 @@ class SetDnsIp(object):
         if marionette_state.get_local("dns_ip"):
             dns_ip =  marionette_state.get_local("dns_ip")
         else:
-            dns_ip = str(chr(random.randint(1,254)))+str(chr(random.randint(1,254)))+str(chr(random.randint(1,254)))+str(chr(random.randint(1,254)))
+            dns_ip = chr(random.randint(1,254))+chr(random.randint(1,254))+chr(random.randint(1,254))+chr(random.randint(1,254))
             marionette_state.set_local("dns_ip", dns_ip)
         return str(dns_ip)
 
@@ -455,7 +455,7 @@ amazon_msg_lens = {
         2041: 2
     }
 
-MIN_PTXT_LEN = fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTTEXT + \
+MIN_PTXT_LEN = fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTEXT + \
     fte.encrypter.Encrypter._CTXT_EXPANSION + 32
 
 class AmazonMsgLensHandler(object):
@@ -495,7 +495,7 @@ class AmazonMsgLensHandler(object):
             self.target_len_ = self.max_len_
 
         else:
-            ptxt_len = self.target_len_ - fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTTEXT 
+            ptxt_len = self.target_len_ - fte.encoder.DfaEncoderObject._COVERTEXT_HEADER_LEN_CIPHERTEXT 
             ptxt_len -= fte.encrypter.Encrypter._CTXT_EXPANSION
             ptxt_len = int(ptxt_len * 8.0)-1
 
@@ -508,7 +508,7 @@ class AmazonMsgLensHandler(object):
             key = self.regex_ + str(self.target_len_)
             if not regex_cache_.get(key):
                 dfa = regex2dfa.regex2dfa(self.regex_)
-                cdfa_obj = fte.cDFA.DFA(dfa, self.target_len_)
+                cdfa_obj = fte.cDFA_py.DFA(dfa, self.target_len_)
                 encoder = fte.dfa.DFA(cdfa_obj, self.target_len_)
                 regex_cache_[key] = (dfa, encoder)
 
@@ -553,7 +553,7 @@ conf = {}
 conf["http_request_keep_alive"] = {
     "grammar": "http_request_keep_alive",
     "handler_order": ["URL"],
-    "handlers": {"URL": RankerHandler("[a-zA-Z0-9\?\-\.\&]+", 2048), }
+    "handlers": {"URL": RankerHandler("[a-zA-Z0-9\\?\\-\\.\\&]+", 2048), }
 }
 
 conf["http_response_keep_alive"] = {
@@ -571,7 +571,7 @@ conf["http_response_keep_alive"] = {
 conf["http_request_close"] = {
     "grammar": "http_request_close",
     "handler_order": ["URL"],
-    "handlers": {"URL": RankerHandler("[a-zA-Z0-9\?\-\.\&]+", 2048), }
+    "handlers": {"URL": RankerHandler("[a-zA-Z0-9\\?\\-\\.\\&]+", 2048), }
 }
 
 conf["http_response_close"] = {
@@ -604,7 +604,7 @@ conf["pop3_password"] = {
 conf["http_request_keep_alive_with_msg_lens"] = {
     "grammar": "http_request_keep_alive",
     "handler_order": ["URL"],
-    "handlers": {"URL": FteMsgLensHandler("[a-zA-Z0-9\?\-\.\&]+", 2048), }
+    "handlers": {"URL": FteMsgLensHandler("[a-zA-Z0-9\\?\\-\\.\\&]+", 2048), }
 }
 
 conf["http_response_keep_alive_with_msg_lens"] = {
@@ -619,7 +619,7 @@ conf["http_response_keep_alive_with_msg_lens"] = {
 conf["http_amazon_request"] = {
     "grammar": "http_request_keep_alive",
     "handler_order": ["URL"],
-    "handlers": {"URL": RankerHandler("[a-zA-Z0-9\?\-\.\&]+", 2048), }
+    "handlers": {"URL": RankerHandler("[a-zA-Z0-9\\?\\-\\.\\&]+", 2048), }
 }
 
 conf["http_amazon_response"] = {
@@ -851,7 +851,7 @@ def validate_dns_domain(msg, dns_response=False):
     if not re.search("(com|net|org)\x00$", tmp_domain):
         return None
     # Check for valid domain characters
-    if not re.match("^[\w\d]+$", tmp_domain[1:-5]):
+    if not re.match("^[\\w\\d]+$", tmp_domain[1:-5]):
         return None
 
     return tmp_domain
@@ -911,4 +911,3 @@ def dns_response_parser(msg):
         retval = {}
 
     return retval
-
