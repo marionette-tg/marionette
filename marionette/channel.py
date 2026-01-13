@@ -51,6 +51,9 @@ class Channel(object):
             return self.buffer_
 
     def send(self, data):
+        # Convert string to bytes using latin-1 encoding (preserves byte values 0-255)
+        if isinstance(data, str):
+            data = data.encode('latin-1')
         if self.transport_protocol_ == 'tcp':
             self.protocol_.transport.write(data)
         else: #udp

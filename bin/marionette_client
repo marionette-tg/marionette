@@ -69,6 +69,9 @@ class ProxyClient(protocol.Protocol):
             "ProxyClient: writing %d bytes to original client" %
             len(chunk))
 
+        # Convert string to bytes using latin-1 encoding (preserves byte values 0-255)
+        if isinstance(chunk, str):
+            chunk = chunk.encode('latin-1')
         self.transport.write(chunk)
         self.srv_queue.get().addCallback(self.clientDataReceived)
 

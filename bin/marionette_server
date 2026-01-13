@@ -74,6 +74,9 @@ class ProxyServerProtocol(protocol.Protocol):
                 "ProxyServerProtocol: writing %d bytes to peer" %
                 len(chunk))
 
+            # Convert string to bytes using latin-1 encoding (preserves byte values 0-255)
+            if isinstance(chunk, str):
+                chunk = chunk.encode('latin-1')
             self.transport.write(chunk)
             self.cli_queue.get().addCallback(self.serverDataReceived)
         else:
