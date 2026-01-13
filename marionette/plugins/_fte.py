@@ -53,6 +53,9 @@ def send(channel, marionette_state, input_args, blocking=True):
             ptxt = ptxt.encode('latin-1')
 
         ctxt = fteObj.encode(ptxt)
+        # FTE.encode() returns bytes, ensure it stays as bytes for channel.sendall()
+        if not isinstance(ctxt, bytes):
+            ctxt = ctxt.encode('latin-1') if isinstance(ctxt, str) else bytes(ctxt)
         ctxt_len = len(ctxt)
         bytes_sent = channel.sendall(ctxt)
         retval = (ctxt_len == bytes_sent)
