@@ -48,6 +48,9 @@ def send(channel, marionette_state, input_args, blocking=True):
             marionette_state.get_local("model_instance_id"),
             cell_len_in_bits)
         ptxt = cell.to_string()
+        # Convert string to bytes using latin-1 encoding (preserves byte values 0-255)
+        if isinstance(ptxt, str):
+            ptxt = ptxt.encode('latin-1')
 
         ctxt = fteObj.encode(ptxt)
         ctxt_len = len(ctxt)
@@ -67,7 +70,15 @@ def recv(channel, marionette_state, input_args, blocking=True):
     try:
         ctxt = channel.recv()
         if len(ctxt) > 0:
+            # Convert string to bytes using latin-1 encoding (preserves byte values 0-255)
+            if isinstance(ctxt, str):
+                ctxt = ctxt.encode('latin-1')
             [ptxt, remainder] = fteObj.decode(ctxt)
+            # Convert bytes back to string for compatibility
+            if isinstance(ptxt, bytes):
+                ptxt = ptxt.decode('latin-1')
+            if isinstance(remainder, bytes):
+                remainder = remainder.decode('latin-1')
 
             cell_obj = marionette.record_layer.unserialize(ptxt)
             assert cell_obj.get_model_uuid() == marionette_state.get_local(
