@@ -74,6 +74,9 @@ class ProxyServerProtocol(protocol.Protocol):
                 "ProxyServerProtocol: writing %d bytes to peer" %
                 len(chunk))
 
+            # Convert string to bytes using latin-1 encoding (preserves byte values 0-255)
+            if isinstance(chunk, str):
+                chunk = chunk.encode('latin-1')
             self.transport.write(chunk)
             self.cli_queue.get().addCallback(self.serverDataReceived)
         else:
@@ -123,8 +126,10 @@ class ProxyServer(object):
 
     def clientDataReceived(self, chunk):
         log.msg(
-            "ProxyServer.clientDataReceived: writing %d bytes to original client" %
+            "ProxyServer.clientDataReceived: pushing %d bytes to marionette stream" %
             len(chunk))
+        # chunk is bytes from srv_queue (from upstream proxy)
+        # BufferOutgoing.push handles bytes correctly
         self.marionette_stream.push(chunk)
         self.srv_queue.get().addCallback(self.clientDataReceived)
 

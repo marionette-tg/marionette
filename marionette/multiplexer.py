@@ -60,6 +60,9 @@ class BufferOutgoing(object):
         with self.lock_:
             if not self.fifo_.get(stream_id):
                 self.fifo_[stream_id] = ''
+            # Convert bytes to string using latin-1 encoding (preserves byte values 0-255)
+            if isinstance(s, bytes):
+                s = s.decode('latin-1')
             self.fifo_[stream_id] += s
 
             if s:
@@ -225,6 +228,9 @@ class BufferIncoming(object):
 
     def push(self, s):
         with self.lock_:
+            # Convert bytes to string using latin-1 encoding (preserves byte values 0-255)
+            if isinstance(s, bytes):
+                s = s.decode('latin-1')
             self.fifo_ += s
             self.fifo_len_ += len(s)
 
