@@ -126,8 +126,10 @@ class ProxyServer(object):
 
     def clientDataReceived(self, chunk):
         log.msg(
-            "ProxyServer.clientDataReceived: writing %d bytes to original client" %
+            "ProxyServer.clientDataReceived: pushing %d bytes to marionette stream" %
             len(chunk))
+        # chunk is bytes from srv_queue (from upstream proxy)
+        # BufferOutgoing.push handles bytes correctly
         self.marionette_stream.push(chunk)
         self.srv_queue.get().addCallback(self.clientDataReceived)
 
