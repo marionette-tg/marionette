@@ -6,8 +6,6 @@
 
 **Marionette** is a programmable client-server proxy that enables the user to control network traffic features with a lightweight domain-specific language.
 
-> ⚠️ **Pre-alpha software** - Not suitable for real-world deployment.
-
 ## Installation
 
 ```bash
