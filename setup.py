@@ -8,7 +8,7 @@ with open("PYPI_README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name='marionette-tg',
-    version='0.1.1',
+    version='0.2.0',
     description='Marionette - The polymorphic, programmable proxy.',
     long_description=long_description,
     long_description_content_type="text/markdown",
