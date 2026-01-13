@@ -228,6 +228,9 @@ class BufferIncoming(object):
 
     def push(self, s):
         with self.lock_:
+            # Convert bytes to string using latin-1 encoding (preserves byte values 0-255)
+            if isinstance(s, bytes):
+                s = s.decode('latin-1')
             self.fifo_ += s
             self.fifo_len_ += len(s)
 
