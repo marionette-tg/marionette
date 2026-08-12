@@ -10,6 +10,8 @@ from twisted.python import log
 
 import fte
 import fte.encoder
+import fte.encrypter
+import fte.dfa
 import fte.bit_ops
 import re
 
@@ -153,13 +155,12 @@ class RankerHandler(object):
         regex_key = regex + str(msg_len)
         if not regex_cache_.get(regex_key):
             dfa = fte.regex2dfa.regex2dfa(regex)
-            cDFA = fte.cDFA_py.DFA(dfa, msg_len)
-            encoder = fte.dfa.DFA(cDFA, msg_len)
+            encoder = fte.dfa.DFA(dfa, msg_len)
             regex_cache_[regex_key] = (dfa, encoder)
         (self.dfa_, self.encoder_) = regex_cache_[regex_key]
 
     def capacity(self):
-        cell_len_in_bytes = int(math.floor(self.encoder_.getCapacity() / 8.0))
+        cell_len_in_bytes = int(math.floor(self.encoder_.capacity / 8.0))
         cell_len_in_bits = cell_len_in_bytes * 8
         return cell_len_in_bits
 
@@ -508,13 +509,12 @@ class AmazonMsgLensHandler(object):
             key = self.regex_ + str(self.target_len_)
             if not regex_cache_.get(key):
                 dfa = fte.regex2dfa.regex2dfa(self.regex_)
-                cdfa_obj = fte.cDFA_py.DFA(dfa, self.target_len_)
-                encoder = fte.dfa.DFA(cdfa_obj, self.target_len_)
+                encoder = fte.dfa.DFA(dfa, self.target_len_)
                 regex_cache_[key] = (dfa, encoder)
 
             (dfa, encoder) = regex_cache_[key]
 
-            to_unrank = random.randint(0, encoder.getNumWordsInSlice(self.target_len_))
+            to_unrank = random.randint(0, encoder.num_words_in_language(self.target_len_, self.target_len_))
             ctxt = encoder.unrank(to_unrank)
 
         else:
