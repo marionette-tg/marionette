@@ -136,9 +136,9 @@ class PIOA(object):
             except Exception as e:
                 log.msg("EXCEPTION: %s" % (str(e)))
                 fatal += 1
-            finally:
-                if success:
-                    break
+
+            if success:
+                break
 
         # if all potential transitions are fatal, attempt the error transition
         if not success and fatal == len(potential_transitions):
