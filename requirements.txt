@@ -1,6 +1,6 @@
 # Core dependencies
 twisted>=26.4.0
-fte>=0.3.0
+fte>=0.4.0
 ply>=3.11
 requests>=2.34.2
 PySocks>=1.7.1
